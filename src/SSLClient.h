@@ -40,7 +40,17 @@
 
 template <class C>
 class SSLClient : public Client {
+/** static type checks
+ * I'm a java developer, so I want to ensure that my inheritance is safe.
+ * These checks ensure that all the functions we use on class C are
+ * actually present on class C. It does this by first checking that the
+ * class inherits from Client, and then that it contains a status() function.
+ */
+static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
+static_assert(std::is_function(decltype(C::status))::value, "C must have a status() function!");
+
 public:
+
     /** Ctor
      * Creates a new dynamically allocated Client object based on the
      * one passed to client
@@ -48,7 +58,6 @@ public:
      * is going to exists past the inital creation of the SSLClient.
      * @param client the (Ethernet)client object
      */
-    static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
     SSLClient(const C &client):
         m_client(client)
     {
@@ -61,7 +70,7 @@ public:
      * Most of them smply pass through
      */
 	virtual int availableForWrite(void) const { return m_client.availableForWrite(); };
-	virtual operator bool() const { return static_cast<bool>(m_client); }
+	virtual operator bool() const { return m_client.bool(); }
 	virtual bool operator==(const bool value) const { return bool() == value; }
 	virtual bool operator!=(const bool value) const { return bool() != value; }
 	virtual bool operator==(const C& rhs) const { return m_client.operator==(rhs); }
@@ -87,6 +96,8 @@ public:
 	virtual void stop();
 	virtual uint8_t connected();
     
+    /** get the client object */
+    C& getClient() { return m_client; }
 
 private:
     // create a copy of the class

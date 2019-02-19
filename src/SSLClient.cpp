@@ -19,4 +19,3 @@
  */
 
 #include "SSLClient.h"
-
