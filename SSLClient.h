@@ -31,12 +31,66 @@
  * And then call the functions they normally would with EthernetClient using SSLCLient.
  */
 
+#include <type_traits>
 #include "bearssl.h"
+#include "Client.h"
 
 #ifdef SSLClient_H_
 #define SSLClient_H_
 
+template <class C>
+class SSLClient : public Client {
+public:
+    /** Ctor
+     * Creates a new dynamically allocated Client object based on the
+     * one passed to client
+     * We copy the client because we aren't sure the Client object
+     * is going to exists past the inital creation of the SSLClient.
+     * @param client the (Ethernet)client object
+     */
+    static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
+    SSLClient(const C &client):
+        m_client(client)
+    {
+    }
 
+    /** Dtor is implicit since unique_ptr handles it fine */
 
+    /** 
+     * The virtual functions defining a Client are below 
+     * Most of them smply pass through
+     */
+	virtual int availableForWrite(void) const { return m_client.availableForWrite(); };
+	virtual operator bool() const { return static_cast<bool>(m_client); }
+	virtual bool operator==(const bool value) const { return bool() == value; }
+	virtual bool operator!=(const bool value) const { return bool() != value; }
+	virtual bool operator==(const C& rhs) const { return m_client.operator==(rhs); }
+	virtual bool operator!=(const C& rhs) const { return !this->operator==(rhs); }
+	virtual uint16_t localPort() const { return m_client.localPort(); }
+	virtual IPAddress remoteIP() const { return m_client.remoteIP(); }
+	virtual uint16_t remotePort() const { return m_client.remotePort(); }
+	virtual void setConnectionTimeout(uint16_t timeout) { m_client.setConnectionTimeout(timeout); }
+
+    /** functions specific to the EthernetClient which I'll have to override */
+    uint8_t status() const;
+    uint8_t getSocketNumber() const;
+    /** functions dealing with read/write that BearSSL will be injected into */
+    virtual int connect(IPAddress ip, uint16_t port);
+	virtual int connect(const char *host, uint16_t port);
+    virtual size_t write(uint8_t);
+	virtual size_t write(const uint8_t *buf, size_t size);
+	virtual int available();
+	virtual int read();
+	virtual int read(uint8_t *buf, size_t size);
+	virtual int peek();
+	virtual void flush();
+	virtual void stop();
+	virtual uint8_t connected();
+    
+
+private:
+    // create a copy of the class
+    C m_client;
+};
 
 #endif /** SSLClient_H_ */
