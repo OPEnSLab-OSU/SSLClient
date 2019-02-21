@@ -2736,6 +2736,24 @@ void br_ssl_client_init_full(br_ssl_client_context *cc,
 	const br_x509_trust_anchor *trust_anchors, size_t trust_anchors_num);
 
 /**
+ * \brief SSL client profile: TLS1.2 minus weak ciphers
+ *
+ * This function initialises the provided SSL client context with
+ * most (see brief) supported algorithms and cipher suites. It also initialises
+ * a companion X.509 validation engine with most supported algorithms,
+ * and the provided trust anchors; the X.509 engine will be used by
+ * the client context to validate the server's certificate.
+ *
+ * \param cc                  client context to initialise.
+ * \param xc                  X.509 validation context to initialise.
+ * \param trust_anchors       trust anchors to use.
+ * \param trust_anchors_num   number of trust anchors.
+ */
+void br_client_init_TLS12_only(br_ssl_client_context *cc,
+	br_x509_minimal_context *xc,
+	const br_x509_trust_anchor *trust_anchors, size_t trust_anchors_num);
+
+/**
  * \brief Clear the complete contents of a SSL client context.
  *
  * Everything is cleared, including the reference to the configured buffer,
@@ -4135,6 +4153,20 @@ int br_sslio_flush(br_sslio_context *cc);
  * \return  0 on success, or -1 on error.
  */
 int br_sslio_close(br_sslio_context *cc);
+
+/*
+ * Run the engine, until the specified target state is achieved, or
+ * an error occurs. The target state is SENDAPP, RECVAPP, or the
+ * combination of both (the combination matches either). When a match is
+ * achieved, this function returns 0. On error, it returns -1.
+ * 
+ * Static function made public since we would like to be able to
+ * initialize the ssl socket in a single function
+ * 
+ * \return  0 on success, or -1 on error.
+ */
+int
+br_run_until(br_sslio_context *ctx, unsigned target);
 
 /* ===================================================================== */
 

@@ -49,18 +49,18 @@
  */
 
 void
-TLS12_only_profile(br_ssl_client_context *cc
+br_client_init_TLS12_only(br_ssl_client_context *cc,
 	br_x509_minimal_context *xc,
 	const br_x509_trust_anchor *trust_anchors, size_t trust_anchors_num)
 {
 	/*
-	 * The "full" profile supports all implemented cipher suites.
+	 * The TLS1.2 profile supports widely used implemented cipher suites.
 	 *
 	 * Rationale for suite order, from most important to least
 	 * important rule:
 	 *
 	 * -- Only support TLS 1.2
-	 * -- Don't support RSA and 3DES as they are weaker protocols
+	 * -- Don't support RSA and 3DES as primary encryption as they are weaker protocols
 	 * -- Try to have Forward Secrecy (ECDHE suite) if possible.
 	 * -- When not using Forward Secrecy, ECDH key exchange is
 	 *    better than RSA key exchange (slightly more expensive on the

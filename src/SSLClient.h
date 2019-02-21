@@ -50,18 +50,22 @@ static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
 static_assert(std::is_function(decltype(C::status))::value, "C must have a status() function!");
 
 public:
-
-    /** Ctor
-     * Creates a new dynamically allocated Client object based on the
-     * one passed to client
+    /**
+     * @brief copies the client object and initializes SSL contexts for bearSSL
      * We copy the client because we aren't sure the Client object
      * is going to exists past the inital creation of the SSLClient.
      * @param client the (Ethernet)client object
+     * @param trust_anchors Trust anchors used in the verification 
+     * of the SSL server certificate, generated using the `brssl` command
+     * line utility. For more information see the samples or bearssl.org
+     * @param trust_anchors_num The number of trust anchors stored
+     * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    SSLClient(const C &client):
-        m_client(client)
-    {
-    }
+    SSLClient(const C &client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true)
+        : m_client(client)
+        , m_trust_anchors(trust_anchors)
+        , m_trust_anchors_num(trust_anchors_num)
+        , m_debug(debug);
 
     /** Dtor is implicit since unique_ptr handles it fine */
 
@@ -83,10 +87,50 @@ public:
     /** functions specific to the EthernetClient which I'll have to override */
     uint8_t status() const;
     uint8_t getSocketNumber() const;
+
     /** functions dealing with read/write that BearSSL will be injected into */
-    virtual int connect(IPAddress ip, uint16_t port);
-	virtual int connect(const char *host, uint16_t port);
-    virtual size_t write(uint8_t);
+    /**
+     * @brief Connect over SSL to a host specified by an ip address
+     * 
+     * SSLClient::connect(host, port) should be preffered over this function, 
+     * as verifying the domain name is a step in ensuring the certificate is 
+     * legitimate, which is important to the security of the device. Additionally,
+     * SSL sessions cannot be resumed, which can drastically increase initial
+     * connect time.
+     * 
+     * This function initializes EthernetClient by calling EthernetClient::connect
+     * with the parameters supplied, then once the socket is open initializes
+     * the appropriete bearssl contexts using the TLS_only_profile. Due to the 
+     * design of the SSL standard, this function will probably take an extended 
+     * period (1-2sec) to negotiate the handshake and finish the connection. 
+     * 
+     * @param ip The ip address to connect to
+     * @param port the port to connect to
+     * @returns 1 if success, 0 if failure (as found in EthernetClient)
+     */
+    virtual int connect(IPAddress ip, uint16_t port = 443);
+    /**
+     * @brief Connect over SSL using connect(ip, port), but use a DNS lookup to
+     * get the IP Address first. 
+     * 
+     * This function initializes EthernetClient by calling EthernetClient::connect
+     * with the parameters supplied, then once the socket is open initializes
+     * the appropriete bearssl contexts using the TLS_only_profile. 
+     * 
+     * Due to the design of the SSL standard, this function will probably take an 
+     * extended period (1-2sec) to negotiate the handshake and finish the 
+     * connection. Since the hostname is provided, however, BearSSL is able to keep
+     * a session cache of the clients we have connected to. This should reduce
+     * connection time greatly. In order to use this feature, you must reuse the
+     * same SSLClient object to connect to the reused host. Doing this will allow 
+     * BearSSL to automatically match the hostname to a cached session.
+     * 
+     * @param host The cstring host ("www.google.com")
+     * @param port the port to connect to
+     * @returns 1 of success, 0 if failure (as found in EthernetClient)
+     */
+	virtual int connect(const char *host, uint16_t port = 443);
+    virtual size_t write(uint8_t b) { return write(&b, 1); }
 	virtual size_t write(const uint8_t *buf, size_t size);
 	virtual int available();
 	virtual int read();
@@ -100,8 +144,26 @@ public:
     C& getClient() { return m_client; }
 
 private:
+    /** @brief debugging print function, only prints if m_debug is true */
+    template<type T>
+    constexpr void m_print(const T str) { 
+        if (m_debug) {
+            Serial.print("SSLClient: "); 
+            Serial.println(str); 
+        }
+    }
+    /** Callback function pointing to m_client.read to be used by the br_sslio API */
+    int m_readraw(void *ctx, unsigned char *buf, size_t len);
+    /** Callback function pointing to m_client.write to be used by the br_sslio API */
+    int m_writeraw(void *ctx, unsigned char *buf, size_t len);
     // create a copy of the client
     C m_client;
+    // store pointers to the trust anchors
+    // should not be computed at runtime
+    constexpr br_x509_trust_anchor *m_trust_anchors;
+    constexpr size_t m_trust_anchors_num;
+    // store whether to enable debug logging
+    constexpr bool m_debug;
     // store the context values required for SSL
     br_ssl_client_context m_sslctx;
     br_x509_minimal_context m_x509ctx;

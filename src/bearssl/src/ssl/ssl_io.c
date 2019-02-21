@@ -48,8 +48,8 @@ br_sslio_init(br_sslio_context *ctx,
  * combination of both (the combination matches either). When a match is
  * achieved, this function returns 0. On error, it returns -1.
  */
-static int
-run_until(br_sslio_context *ctx, unsigned target)
+int
+br_run_until(br_sslio_context *ctx, unsigned target)
 {
 	for (;;) {
 		unsigned state;
@@ -152,7 +152,7 @@ br_sslio_read(br_sslio_context *ctx, void *dst, size_t len)
 	if (len == 0) {
 		return 0;
 	}
-	if (run_until(ctx, BR_SSL_RECVAPP) < 0) {
+	if (br_run_until(ctx, BR_SSL_RECVAPP) < 0) {
 		return -1;
 	}
 	buf = br_ssl_engine_recvapp_buf(ctx->engine, &alen);
@@ -194,7 +194,7 @@ br_sslio_write(br_sslio_context *ctx, const void *src, size_t len)
 	if (len == 0) {
 		return 0;
 	}
-	if (run_until(ctx, BR_SSL_SENDAPP) < 0) {
+	if (br_run_until(ctx, BR_SSL_SENDAPP) < 0) {
 		return -1;
 	}
 	buf = br_ssl_engine_sendapp_buf(ctx->engine, &alen);
@@ -238,7 +238,7 @@ br_sslio_flush(br_sslio_context *ctx)
 	 * first sent down the wire before considering anything else.
 	 */
 	br_ssl_engine_flush(ctx->engine, 0);
-	return run_until(ctx, BR_SSL_SENDAPP | BR_SSL_RECVAPP);
+	return br_run_until(ctx, BR_SSL_SENDAPP | BR_SSL_RECVAPP);
 }
 
 /* see bearssl_ssl.h */
@@ -252,7 +252,7 @@ br_sslio_close(br_sslio_context *ctx)
 		 */
 		size_t len;
 
-		run_until(ctx, BR_SSL_RECVAPP);
+		br_run_until(ctx, BR_SSL_RECVAPP);
 		if (br_ssl_engine_recvapp_buf(ctx->engine, &len) != NULL) {
 			br_ssl_engine_recvapp_ack(ctx->engine, len);
 		}
