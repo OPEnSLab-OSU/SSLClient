@@ -100,8 +100,13 @@ public:
     C& getClient() { return m_client; }
 
 private:
-    // create a copy of the class
+    // create a copy of the client
     C m_client;
+    // store the context values required for SSL
+    br_ssl_client_context m_sslctx;
+    br_x509_minimal_context m_x509ctx;
+    unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO];
+    br_sslio_context m_ioctx;
 };
 
 #endif /** SSLClient_H_ */

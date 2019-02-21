@@ -47,9 +47,8 @@
  * substantially more efficient than 32-bit multiplications that yield
  * 64-bit results. This is typically the case on low-end ARM Cortex M
  * systems (M0, M0+, M1, and arguably M3 and M4 as well).
- *
-#define BR_LOMUL   1
  */
+#define BR_LOMUL   1
 
 /*
  * When BR_SLOW_MUL is enabled, multiplications are assumed to be
@@ -159,9 +158,8 @@
  * This is meant for the low-end cores (Cortex M0, M0+, M1, M3).
  * Note: if BR_LOMUL is not explicitly enabled or disabled, then
  * enabling BR_ARMEL_CORTEXM_GCC also enables BR_LOMUL.
- *
-#define BR_ARMEL_CORTEXM_GCC   1
  */
+#define BR_ARMEL_CORTEXM_GCC   1
 
 /*
  * When BR_AES_X86NI is enabled, the AES implementation using the x86 "NI"
