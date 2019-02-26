@@ -35,7 +35,7 @@
 #include "bearssl.h"
 #include "Client.h"
 
-#ifdef SSLClient_H_
+#ifndef SSLClient_H_
 #define SSLClient_H_
 
 template <class C>
@@ -46,20 +46,23 @@ class SSLClient : public Client {
  * actually present on class C. It does this by first checking that the
  * class inherits from Client, and then that it contains a status() function.
  */
-static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
-static_assert(std::is_function(decltype(C::status))::value, "C must have a status() function!");
+//static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
+//static_assert(std::is_function(decltype(C::status))::value, "C must have a status() function!");
 
 /** error enums
  * Static constants defining the possible errors encountered
  * Read from getWriteError();
  */
+/*
 enum Error {
     SSL_OK = 0,
     SSL_CLIENT_CONNECT_FAIL,
     SSL_BR_CONNECT_FAIL,
     SSL_CLIENT_WRTIE_ERROR,
     SSL_BR_WRITE_ERROR,
+    SSL_INTERNAL_ERROR
 };
+*/
 
 public:
     /**
@@ -77,12 +80,7 @@ public:
      * @param trust_anchors_num The number of trust anchors stored
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    SSLClient(const C client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true)
-        : m_client(client)
-        , m_trust_anchors(trust_anchors)
-        , m_trust_anchors_num(trust_anchors_num)
-        , m_debug(debug);
-
+    explicit SSLClient(const C client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true);
     /** Dtor is implicit since unique_ptr handles it fine */
 
     /** 
@@ -127,7 +125,7 @@ public:
      * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
      * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
      */
-    virtual int connect(IPAddress ip, uint16_t port = 443);
+    virtual int connect(IPAddress ip, uint16_t port);
     /**
      * @brief Connect over SSL using connect(ip, port), but use a DNS lookup to
      * get the IP Address first. 
@@ -151,11 +149,11 @@ public:
      * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
      * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
      */
-	virtual int connect(const char *host, uint16_t port = 443);
+	virtual int connect(const char *host, uint16_t port);
     virtual size_t write(uint8_t b) { return write(&b, 1); }
 	virtual size_t write(const uint8_t *buf, size_t size);
 	virtual int available();
-	virtual int read();
+	virtual int read() { int peeked = peek(); if(peek != -1) br_ssl_engine_recvapp_ack(m_sslctx->engine, 1); return peek; }
 	virtual int read(uint8_t *buf, size_t size);
 	virtual int peek();
 	virtual void flush();
@@ -167,8 +165,8 @@ public:
 
 private:
     /** @brief debugging print function, only prints if m_debug is true */
-    template<type T>
-    constexpr void m_print(const T str) { 
+    template<typename T>
+    constexpr void m_print(const T str) const { 
         if (m_debug) {
             Serial.print("SSLClient: "); 
             Serial.println(str); 
@@ -177,15 +175,15 @@ private:
     /** run the bearssl engine until a certain state */
     int m_run_until(const unsigned target);
     /** proxy for availble that returns the state */
-    int m_update_engine(); 
+    unsigned m_update_engine(); 
     // create a copy of the client
-    const C m_client;
+    C m_client;
     // store pointers to the trust anchors
     // should not be computed at runtime
-    constexpr br_x509_trust_anchor *m_trust_anchors;
-    constexpr size_t m_trust_anchors_num;
+    const br_x509_trust_anchor *m_trust_anchors;
+    const size_t m_trust_anchors_num;
     // store whether to enable debug logging
-    constexpr bool m_debug;
+    const bool m_debug;
     // store the context values required for SSL
     br_ssl_client_context m_sslctx;
     br_x509_minimal_context m_x509ctx;
@@ -194,8 +192,11 @@ private:
     // or shrink to below BR_SSL_BUFSIZE_MONO, and bearSSL will adapt automatically
     // simply edit this value to change the buffer size to the desired value
     unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO];
-    static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI);
-    br_sslio_context m_ioctx;
+    // static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI);
+    // store the index of where we are writing in the buffer
+    // so we can send our records all at once to prevent
+    // weird timing issues
+    size_t m_write_idx;
 };
 
 #endif /** SSLClient_H_ */
