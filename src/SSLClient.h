@@ -49,19 +49,35 @@ class SSLClient : public Client {
 static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
 static_assert(std::is_function(decltype(C::status))::value, "C must have a status() function!");
 
+/** error enums
+ * Static constants defining the possible errors encountered
+ * Read from getWriteError();
+ */
+enum Error {
+    SSL_OK = 0,
+    SSL_CLIENT_CONNECT_FAIL,
+    SSL_BR_CONNECT_FAIL,
+    SSL_CLIENT_WRTIE_ERROR,
+    SSL_BR_WRITE_ERROR,
+};
+
 public:
     /**
      * @brief copies the client object and initializes SSL contexts for bearSSL
+     * 
      * We copy the client because we aren't sure the Client object
      * is going to exists past the inital creation of the SSLClient.
-     * @param client the (Ethernet)client object
+     * 
+     * @pre The client class must be able to access the internet, as SSLClient
+     * cannot manage this for you.
+     * 
      * @param trust_anchors Trust anchors used in the verification 
      * of the SSL server certificate, generated using the `brssl` command
      * line utility. For more information see the samples or bearssl.org
      * @param trust_anchors_num The number of trust anchors stored
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    SSLClient(const C &client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true)
+    SSLClient(const C client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true)
         : m_client(client)
         , m_trust_anchors(trust_anchors)
         , m_trust_anchors_num(trust_anchors_num)
@@ -107,6 +123,9 @@ public:
      * @param ip The ip address to connect to
      * @param port the port to connect to
      * @returns 1 if success, 0 if failure (as found in EthernetClient)
+     * 
+     * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
+     * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
      */
     virtual int connect(IPAddress ip, uint16_t port = 443);
     /**
@@ -128,6 +147,9 @@ public:
      * @param host The cstring host ("www.google.com")
      * @param port the port to connect to
      * @returns 1 of success, 0 if failure (as found in EthernetClient)
+     * 
+     * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
+     * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
      */
 	virtual int connect(const char *host, uint16_t port = 443);
     virtual size_t write(uint8_t b) { return write(&b, 1); }
@@ -140,7 +162,7 @@ public:
 	virtual void stop();
 	virtual uint8_t connected();
     
-    /** get the client object */
+    //! get the client object
     C& getClient() { return m_client; }
 
 private:
@@ -152,12 +174,12 @@ private:
             Serial.println(str); 
         }
     }
-    /** Callback function pointing to m_client.read to be used by the br_sslio API */
-    int m_readraw(void *ctx, unsigned char *buf, size_t len);
-    /** Callback function pointing to m_client.write to be used by the br_sslio API */
-    int m_writeraw(void *ctx, unsigned char *buf, size_t len);
+    /** run the bearssl engine until a certain state */
+    int m_run_until(const unsigned target);
+    /** proxy for availble that returns the state */
+    int m_update_engine(); 
     // create a copy of the client
-    C m_client;
+    const C m_client;
     // store pointers to the trust anchors
     // should not be computed at runtime
     constexpr br_x509_trust_anchor *m_trust_anchors;
@@ -167,7 +189,12 @@ private:
     // store the context values required for SSL
     br_ssl_client_context m_sslctx;
     br_x509_minimal_context m_x509ctx;
+    // use a mono-directional buffer by default to cut memory in half
+    // can expand to a bi-directional buffer with maximum of BR_SSL_BUFSIZE_BIDI
+    // or shrink to below BR_SSL_BUFSIZE_MONO, and bearSSL will adapt automatically
+    // simply edit this value to change the buffer size to the desired value
     unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO];
+    static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI);
     br_sslio_context m_ioctx;
 };
 
