@@ -33,6 +33,7 @@
 
 #include <type_traits>
 #include "bearssl.h"
+#include "Arduino.h"
 #include "Client.h"
 
 #ifndef SSLClient_H_
@@ -46,14 +47,14 @@ class SSLClient : public Client {
  * actually present on class C. It does this by first checking that the
  * class inherits from Client, and then that it contains a status() function.
  */
-//static_assert(std::is_base_of(Client, C)::value, "C must be a Client Class!");
-//static_assert(std::is_function(decltype(C::status))::value, "C must have a status() function!");
+static_assert(std::is_base_of<Client, C>::value, "C must be a Client Class!");
+// static_assert(std::is_function<decltype(C::status)>::value, "C must have a status() function!");
 
 /** error enums
  * Static constants defining the possible errors encountered
  * Read from getWriteError();
  */
-/*
+
 enum Error {
     SSL_OK = 0,
     SSL_CLIENT_CONNECT_FAIL,
@@ -62,7 +63,6 @@ enum Error {
     SSL_BR_WRITE_ERROR,
     SSL_INTERNAL_ERROR
 };
-*/
 
 public:
     /**
@@ -80,27 +80,27 @@ public:
      * @param trust_anchors_num The number of trust anchors stored
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    explicit SSLClient(const C client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true);
+    explicit SSLClient(const C &client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true);
     /** Dtor is implicit since unique_ptr handles it fine */
 
     /** 
      * The virtual functions defining a Client are below 
      * Most of them smply pass through
      */
-	virtual int availableForWrite(void) const { return m_client.availableForWrite(); };
-	virtual operator bool() const { return m_client.bool(); }
-	virtual bool operator==(const bool value) const { return bool() == value; }
-	virtual bool operator!=(const bool value) const { return bool() != value; }
-	virtual bool operator==(const C& rhs) const { return m_client.operator==(rhs); }
-	virtual bool operator!=(const C& rhs) const { return !this->operator==(rhs); }
-	virtual uint16_t localPort() const { return m_client.localPort(); }
-	virtual IPAddress remoteIP() const { return m_client.remoteIP(); }
-	virtual uint16_t remotePort() const { return m_client.remotePort(); }
+	virtual int availableForWrite(void) { return m_client.availableForWrite(); };
+	virtual operator bool() { return static_cast<bool>(m_client); }
+	// virtual bool operator==(const bool value) { return bool() == value; }
+	// virtual bool operator!=(const bool value) { return bool() != value; }
+	// virtual bool operator==(const C& rhs) const { return m_client.operator==(rhs); }
+	// virtual bool operator!=(const C& rhs) const { return !this->operator==(rhs); }
+	virtual uint16_t localPort() { return m_client.localPort(); }
+	virtual IPAddress remoteIP() { return m_client.remoteIP(); }
+	virtual uint16_t remotePort() { return m_client.remotePort(); }
 	virtual void setConnectionTimeout(uint16_t timeout) { m_client.setConnectionTimeout(timeout); }
 
     /** functions specific to the EthernetClient which I'll have to override */
-    uint8_t status() const;
-    uint8_t getSocketNumber() const;
+    // uint8_t status();
+    // uint8_t getSocketNumber() const;
 
     /** functions dealing with read/write that BearSSL will be injected into */
     /**
@@ -153,7 +153,7 @@ public:
     virtual size_t write(uint8_t b) { return write(&b, 1); }
 	virtual size_t write(const uint8_t *buf, size_t size);
 	virtual int available();
-	virtual int read() { int peeked = peek(); if(peek != -1) br_ssl_engine_recvapp_ack(m_sslctx->engine, 1); return peek; }
+	virtual int read() { int peeked = peek(); if(peeked != -1) br_ssl_engine_recvapp_ack(&m_sslctx.eng, 1); return peeked; }
 	virtual int read(uint8_t *buf, size_t size);
 	virtual int peek();
 	virtual void flush();
@@ -192,7 +192,7 @@ private:
     // or shrink to below BR_SSL_BUFSIZE_MONO, and bearSSL will adapt automatically
     // simply edit this value to change the buffer size to the desired value
     unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO];
-    // static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI);
+    static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI, "m_iobuf must be below maximum buffer size");
     // store the index of where we are writing in the buffer
     // so we can send our records all at once to prevent
     // weird timing issues

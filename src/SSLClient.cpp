@@ -34,8 +34,8 @@ SSLClient<C>::SSLClient(const C &client, const br_x509_trust_anchor *trust_ancho
     // initlalize the various bearssl libraries so they're ready to go when we connect
     br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // check if the buffer size is half or full duplex
-    constexpr auto duplex = sizeof iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
-    br_ssl_engine_set_buffer(&m_sslctx, m_iobuf, sizeof m_iobuf, duplex);
+    constexpr auto duplex = sizeof m_iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
+    br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
 }
 
 /* see SSLClient.h */
@@ -53,7 +53,7 @@ int SSLClient<C>::connect(IPAddress ip, uint16_t port) {
         return 0;
     }
     // reset the client context, and look for previous sessions
-    br_ssl_client_reset(&sc, NULL, 1);
+    br_ssl_client_reset(&m_sslctx, NULL, 1);
     // initlalize the SSL socket over the network
     // normally this would happen in br_sslio_write, but I think it makes
     // a little more structural sense to put it here
@@ -72,6 +72,7 @@ int SSLClient<C>::connect(IPAddress ip, uint16_t port) {
 template<class C>
 int SSLClient<C>::connect(const char *host, uint16_t port) {
     // reset indexs for saftey
+    
     m_write_idx = 0;
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
@@ -81,7 +82,7 @@ int SSLClient<C>::connect(const char *host, uint16_t port) {
         return 0;
     }
     // reset the client context, and look for previous sessions
-    br_ssl_client_reset(&sc, host, 1);
+    br_ssl_client_reset(&m_sslctx, host, 1);
     // initlalize the SSL socket over the network
     // normally this would happen in br_sslio_write, but I think it makes
     // a little more structural sense to put it here
@@ -100,15 +101,13 @@ int SSLClient<C>::connect(const char *host, uint16_t port) {
 template<class C>
 size_t SSLClient<C>::write(const uint8_t *buf, size_t size) {
     // check if the socket is still open and such
-    if(!m_client.connected()) {
-        m_print("Client is not connected! Perhaps something has happened?");
-        br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
-        setWriteError(SSL_CLIENT_CONNECT_FAIL);
+    if(!connected()) {
+        m_print("Client is not connected! Perhaps something has happened?");       
         return 0;
     }
     // add to the bearssl io buffer, simply appending whatever we want to write
     size_t alen;
-    unsigned char *br_buf = br_ssl_engine_sendapp_buf(m_sslctx->engine, &alen);
+    unsigned char *br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
     size_t cur_idx = 0;
     // while there are still elements to write
     while (cur_idx < size) {
@@ -121,12 +120,11 @@ size_t SSLClient<C>::write(const uint8_t *buf, size_t size) {
                 return 0;
             }
             // reset the buffer pointer
-            br_ssl_engine_sendapp_buf(m_sslctx->engine, &alen);
+            br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
         }
         // sanity check
         if(br_buf == NULL || alen == 0) {
             m_print("Error: recieved null buffer or zero alen in write");
-            br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
             setWriteError(SSL_BR_WRITE_ERROR);
             return 0;
         }
@@ -139,7 +137,7 @@ size_t SSLClient<C>::write(const uint8_t *buf, size_t size) {
         // else increment
         else m_write_idx += cpamount;
         // increment the buffer pointer
-        cur_size += cpamount;
+        cur_idx += cpamount;
     } 
     // works oky
     return size;
@@ -148,28 +146,27 @@ size_t SSLClient<C>::write(const uint8_t *buf, size_t size) {
 /** see SSLClient.h */
 template<class C>
 int SSLClient<C>::available() {
-    if (!m_client.connected()) {
+    // connection check
+    if (!connected()) {
         m_print("Warn: Cannot check available of disconnected client");
-        br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
-        setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
     }
     // run the SSL engine until we are waiting for either user input or a server response
     unsigned state = m_update_engine();
-    if(state & BR_SSL_RECVAPP) {
+    if (state == 0) {
+        m_print("Error: SSL engine failed: ");
+        m_print(br_ssl_engine_last_error(&m_sslctx.eng));
+        setWriteError(SSL_BR_WRITE_ERROR);
+    }
+    else if(state & BR_SSL_RECVAPP) {
         // return how many received bytes we have
         size_t alen;
-        br_ssl_engine_recvapp_buf(m_sslctx->engine, &alen);
+        br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
         return (int)(alen);
     }
     else if (state == BR_SSL_CLOSED) m_print("Error: Tried to check available when engine is closed");
     // flush the buffer if it's stuck in the SENDAPP state
-    else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(m_sslctx->engine, 0);
-    else if (state == 0) {
-        m_print("Error: SSL engine failed: ");
-        m_print(br_ssl_engine_last_error(&m_sslctx));
-        setWriteError(SSL_BR_WRITE_ERROR);
-    }
+    else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
     // other state, or client is closed
     return 0;
 }
@@ -178,40 +175,36 @@ int SSLClient<C>::available() {
 template<class C>
 int SSLClient<C>::read(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
-    else if (available()) {
-        // read the buffer, send the ack, and return the bytes read
-        size_t alen;
-        unsigned char* br_buf = br_ssl_engine_recvapp_buf(m_sslctx->engine, &alen);
-        const size_t read_amount = size > alen ? alen : size;
-        memcpy(buf, br_buf, read_amount);
-        // tell engine we read that many bytes
-        br_ssl_engine_sendapp_ack(m_sslctx->engine, read_amount);
-        // tell the user we read that many bytes
-        return read_amount;
-    }
-    return -1;
+    if (available() <= 0) return -1;
+    // read the buffer, send the ack, and return the bytes read
+    size_t alen;
+    unsigned char* br_buf = br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
+    const size_t read_amount = size > alen ? alen : size;
+    memcpy(buf, br_buf, read_amount);
+    // tell engine we read that many bytes
+    br_ssl_engine_sendapp_ack(&m_sslctx.eng, read_amount);
+    // tell the user we read that many bytes
+    return read_amount;
 }
 
 /** see SSLClient.h */
 template<class C>
 int SSLClient<C>::peek() {
     // check that the engine is ready to read
-    if (available()) {
-        // read the buffer, send the ack, and return the bytes read
-        size_t alen;
-        uint8_t read_num;
-        read_num = br_ssl_engine_recvapp_buf(m_sslctx->engine, &alen)[0];
-        // tell the user we read that many bytes
-        return (int)read_num;
-    }
-    return -1;
+    if (available() <= 0) return -1; 
+    // read the buffer, send the ack, and return the bytes read
+    size_t alen;
+    uint8_t read_num;
+    read_num = br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen)[0];
+    // tell the user we read that many bytes
+    return (int)read_num;
 }
 
 /** see SSLClient.h */
 template<class C>
 void SSLClient<C>::flush() {
     // trigger a flush, incase there's any leftover data
-    br_ssl_engine_flush(m_sslctx->engine, 0);
+    br_ssl_engine_flush(&m_sslctx.eng, 0);
     // run until application data is ready for pickup
     if(m_run_until(BR_SSL_RECVAPP) < 0) m_print("Error: could not flush write buffer!");
 }
@@ -220,20 +213,37 @@ void SSLClient<C>::flush() {
 template<class C>
 void SSLClient<C>::stop() {
     // tell the SSL connection to gracefully close
-    br_ssl_engine_close(m_sslctx->engine);
-    while (br_ssl_engine_current_state(m_sslctx->engine) != BR_SSL_CLOSED) {
+    br_ssl_engine_close(&m_sslctx.eng);
+    while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED) {
 		/*
 		 * Discard any incoming application data.
 		 */
 		size_t len;
 
 		m_run_until(BR_SSL_RECVAPP);
-		if (br_ssl_engine_recvapp_buf(m_sslctx->engine, &len) != NULL) {
-			br_ssl_engine_recvapp_ack(m_sslctx->engine, len);
+		if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != NULL) {
+			br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
 		}
 	}
     // close the ethernet socket
     m_client.stop();
+}
+
+template<class C>
+uint8_t SSLClient<C>::connected() {
+    // check all of the error cases 
+    const auto c_con = m_client.connected();
+    const auto br_con = br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED;
+    const auto wr_ok = getWriteError() == 0;
+    // if we're in an error state, close the connection and set a write error
+    if ((br_con && !c_con) || !wr_ok) {
+        m_print("Error: Socket was unexpectedly interrupted");
+        m_print("Terminated with: ");
+        m_print(m_client.getWriteError());
+        setWriteError(SSL_CLIENT_WRTIE_ERROR);
+        stop();
+    }
+    return c_con && br_con && wr_ok;
 }
 
 /** see SSLClient.h */
@@ -258,14 +268,13 @@ int SSLClient<C>::m_run_until(const unsigned target) {
 		 */
 		if (state & BR_SSL_RECVAPP && target & BR_SSL_SENDAPP) {
             size_t len;
-            if (br_ssl_engine_recvapp_buf(m_sslctx->engine, &len) != NULL) {
+            if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != NULL) {
                 m_write_idx = 0;
                 m_print("Warn: discarded unread data to favor a write operation");
-                br_ssl_engine_recvapp_ack(m_sslctx->engine, len);
+                br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
             }
             else {
                 m_print("Error: ssl engine state is RECVAPP, however the buffer was null!");
-                br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
                 setWriteError(SSL_BR_WRITE_ERROR);
                 return -1;
             }
@@ -278,16 +287,16 @@ int SSLClient<C>::m_run_until(const unsigned target) {
 		 * the buffered data to "make room" for a new incoming
 		 * record.
 		 */
-		if (state & SENDAPP && target & RECVAPP) br_ssl_engine_flush(m_sslctx->engine, 0);
+		if (state & BR_SSL_SENDAPP && target & BR_SSL_RECVAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
 	}
 }
 
 /** see SSLClient.h */
 template<class C>
-unsigned SSLClient::m_update_engine() {
+unsigned SSLClient<C>::m_update_engine() {
     for(;;) {
         // get the state
-        unsigned state = br_ssl_engine_current_state(m_sslctx->engine);
+        unsigned state = br_ssl_engine_current_state(&m_sslctx.eng);
         if (state & BR_SSL_CLOSED) return state;
         /*
         * If there is some record data to send, do it. This takes
@@ -298,7 +307,7 @@ unsigned SSLClient::m_update_engine() {
             size_t len;
             int wlen;
 
-            buf = br_ssl_engine_sendrec_buf(m_sslctx->engine, &len);
+            buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
             wlen = m_client.write(buf, len);
             if (wlen < 0) {
                 m_print("Error writing to m_client");
@@ -309,15 +318,14 @@ unsigned SSLClient::m_update_engine() {
                     * the peer is allowed by RFC 5246 not to
                     * wait for it.
                     */
-                if (!m_sslctx->engine->shutdown_recv) {
-                    br_ssl_engine_fail(
-                        m_sslctx->engine, BR_ERR_IO);
+                if (!&m_sslctx.eng.shutdown_recv) {
+                   return 0;
                 }
                 setWriteError(SSL_BR_WRITE_ERROR);
                 return 0;
             }
             if (wlen > 0) {
-                br_ssl_engine_sendrec_ack(m_sslctx->engine, wlen);
+                br_ssl_engine_sendrec_ack(&m_sslctx.eng, wlen);
             }
             continue;
         }
@@ -331,25 +339,22 @@ unsigned SSLClient::m_update_engine() {
             // data has been written to the io buffer, something is wrong
             if (!(state & BR_SSL_SENDAPP)) {
                 m_print("Error m_write_idx > 0 but the ssl engine is not ready for data");
-                br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
                 setWriteError(SSL_BR_WRITE_ERROR);
                 return 0;
             }
             // else time to send the application data
             else if (state & BR_SSL_SENDAPP) {
 	            size_t alen;
-                unsigned char *buf = br_ssl_engine_sendapp_buf(m_sslctx->engine, &alen);
+                unsigned char *buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
                 // engine check
                 if (alen == 0 || buf == NULL) {
                     m_print("Error: engine set write flag but returned null buffer");
-                    br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
                     setWriteError(SSL_BR_WRITE_ERROR);
                     return 0;
                 }
                 // sanity check
                 if (alen < m_write_idx) {
                     m_print("Error: alen is less than m_write_idx");
-                    br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
                     setWriteError(SSL_INTERNAL_ERROR);
                     return 0;
                 }
@@ -359,7 +364,7 @@ unsigned SSLClient::m_update_engine() {
                 // encryption step.
                 // this will encrypt the data and presumably spit it out
                 // for BR_SSL_SENDREC to send over ethernet.
-                br_ssl_engine_sendapp_ack(m_sslctx->engine, m_write_idx);
+                br_ssl_engine_sendapp_ack(&m_sslctx.eng, m_write_idx);
                 // reset the iobuffer index
                 m_write_idx = 0;
                 // loop again!
@@ -374,19 +379,18 @@ unsigned SSLClient::m_update_engine() {
          */
         if (state & BR_SSL_RECVREC) {
 			size_t len;
-			unsigned char * buf = br_ssl_engine_recvrec_buf(m_sslctx->engine, &len);
+			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
             if (m_client.available() >= len) {
                 // I suppose so!
                 int rlen = m_client.readBytes((char *)buf, len);
                 if (rlen < 0) {
                     m_print("Error reading bytes from m_client");
-                    br_ssl_engine_fail(m_sslctx->engine, BR_ERR_IO);
                     setWriteError(SSL_BR_WRITE_ERROR);
                     return 0;
                 }
                 if (rlen > 0) {
-                    br_ssl_engine_recvrec_ack(m_sslctx->engine, rlen);
+                    br_ssl_engine_recvrec_ack(&m_sslctx.eng, rlen);
                 }
                 continue;
             }
