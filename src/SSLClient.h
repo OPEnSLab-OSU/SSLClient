@@ -29,6 +29,10 @@
  * simply need to start with:
  * SSLCLient client(ethCLient);
  * And then call the functions they normally would with EthernetClient using SSLCLient.
+ * 
+ * This file specifically controls the class templating used to allow SSLClient to interface
+ * with all of the CLient-based classes. To see details on the implementations of the functions
+ * in SSLClient, please see {@link ./SSLClientImpl.h}.
  */
 
 #include <type_traits>
