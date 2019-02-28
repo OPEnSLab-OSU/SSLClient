@@ -24,6 +24,7 @@
 
 #include "bearssl.h"
 #include "bearssl_ssl.h"
+#include "time_macros.h"
 
 /*
  * A "profile" is an initialisation function for a SSL context, that
@@ -421,6 +422,24 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 		trust_anchors, trust_anchors_num);
 
 	/*
+	 * Set a fixed epoch time to validate certificates against.
+	 * Since we are working with an embedded device, there isn't
+	 * really a reliable source of time. To remedy this, we simply
+	 * store the time this program was compiled, and assume that
+	 * any certificate valid under that time is also valid at the
+	 * current time. This is vulnerable to the use of expired
+	 * certificates, however an attacker would have to use a 
+	 * certificate valid after the compile date, which is fairly
+	 * difficult given the lifespan of projects here at the lab.
+	 * For now, this solution is good enough.
+	 */
+	br_x509_minimal_set_time(xc, 
+		// days since 1970 + days from 1970 to year 0
+		(UNIX_TIMESTAMP_UTC / SEC_PER_DAY) + 719528UL,
+		// seconds over start of day
+		UNIX_TIMESTAMP_UTC % SEC_PER_DAY);
+
+	/*
 	 * Set suites and asymmetric crypto implementations. We use the
 	 * "i31" code for RSA (it is somewhat faster than the "i32"
 	 * implementation). These implementations are used for
@@ -431,11 +450,12 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * the RSA verification function below.
 	 */
 	// br_x509_minimal_set_rsa(xc, &br_rsa_i31_pkcs1_vrfy);
-	br_x509_minimal_set_rsa(xc, &br_rsa_i15_pkcs1_vrfy);
+	br_x509_minimal_set_rsa(xc, br_ssl_engine_get_rsavrfy(&cc->eng));
 	// br_x509_minimal_set_ecdsa(xc,
 	//	&br_ec_prime_i31, &br_ecdsa_i31_vrfy_asn1);
 	br_x509_minimal_set_ecdsa(xc,
-		&br_ec_all_m15, &br_ecdsa_i15_vrfy_asn1);
+		br_ssl_engine_get_ec(&cc->eng),
+		br_ssl_engine_get_ecdsa(&cc->eng));
 
 	/*
 	 * Set supported hash functions. These are for signatures on
@@ -447,11 +467,11 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * Note: the engine explicitly rejects signatures that use MD5.
 	 * Thus, there is no need for MD5 here.
 	 */
-	// br_ssl_engine_set_hash(xc, br_sha1_ID, &br_sha1_vtable);
-	br_ssl_engine_set_hash(xc, br_sha224_ID, &br_sha224_vtable);
-	br_ssl_engine_set_hash(xc, br_sha256_ID, &br_sha256_vtable);
-	br_ssl_engine_set_hash(xc, br_sha384_ID, &br_sha384_vtable);
-	// br_ssl_engine_set_hash(xc, br_sha512_ID, &br_sha512_vtable);
+	// br_x509_minimal_set_hash(xc, br_sha1_ID, &br_sha1_vtable);
+	br_x509_minimal_set_hash(xc, br_sha224_ID, &br_sha224_vtable);
+	br_x509_minimal_set_hash(xc, br_sha256_ID, &br_sha256_vtable);
+	br_x509_minimal_set_hash(xc, br_sha384_ID, &br_sha384_vtable);
+	// br_x509_minimal_set_hash(xc, br_sha512_ID, &br_sha512_vtable);
 
 	/*
 	 * Link the X.509 engine in the SSL engine.

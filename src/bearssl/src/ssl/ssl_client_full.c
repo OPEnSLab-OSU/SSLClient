@@ -23,6 +23,7 @@
  */
 
 #include "inner.h"
+#include "time_macros.h"
 
 /* see bearssl_ssl.h */
 void
@@ -154,6 +155,24 @@ br_ssl_client_init_full(br_ssl_client_context *cc,
 		br_ssl_engine_set_hash(&cc->eng, id, hc);
 		br_x509_minimal_set_hash(xc, id, hc);
 	}
+
+	/*
+	 * Set a fixed epoch time to validate certificates against.
+	 * Since we are working with an embedded device, there isn't
+	 * really a reliable source of time. To remedy this, we simply
+	 * store the time this program was compiled, and assume that
+	 * any certificate valid under that time is also valid at the
+	 * current time. This is vulnerable to the use of expired
+	 * certificates, however an attacker would have to use a 
+	 * certificate valid after the compile date, which is fairly
+	 * difficult given the lifespan of projects here at the lab.
+	 * For now, this solution is good enough.
+	 */
+	br_x509_minimal_set_time(xc, 
+		// days since 1970 + days from 1970 to year 0
+		(UNIX_TIMESTAMP_UTC / SEC_PER_DAY) + 719528UL,
+		// seconds over start of day
+		UNIX_TIMESTAMP_UTC % SEC_PER_DAY);
 
 	/*
 	 * Link the X.509 engine in the SSL engine.

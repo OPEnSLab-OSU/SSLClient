@@ -32,8 +32,8 @@ SSLClientImpl::SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_a
     // zero the iobuf just in case it's still garbage
     memset(m_iobuf, 0, sizeof m_iobuf);
     // initlalize the various bearssl libraries so they're ready to go when we connect
-    // br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
-    br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
+    br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
+    // br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // check if the buffer size is half or full duplex
     constexpr auto duplex = sizeof m_iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
     br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
@@ -74,7 +74,7 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
 /** see SSLClientImpl.h*/
 size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
     // check if the socket is still open and such
-    if(!connected()) {
+    if(br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED || getWriteError()) {
         m_print("Client is not connected! Perhaps something has happened?");       
         return 0;
     }
@@ -119,7 +119,7 @@ size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
 /** see SSLClientImpl.h*/
 int SSLClientImpl::available() {
     // connection check
-    if (!connected()) {
+    if (br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED || getWriteError()) {
         m_print("Warn: Cannot check available of disconnected client");
         return 0;
     }
@@ -153,7 +153,7 @@ int SSLClientImpl::read(uint8_t *buf, size_t size) {
     const size_t read_amount = size > alen ? alen : size;
     memcpy(buf, br_buf, read_amount);
     // tell engine we read that many bytes
-    br_ssl_engine_sendapp_ack(&m_sslctx.eng, read_amount);
+    br_ssl_engine_recvapp_ack(&m_sslctx.eng, read_amount);
     // tell the user we read that many bytes
     return read_amount;
 }
@@ -221,7 +221,6 @@ int SSLClientImpl::m_start_ssl(const char* host) {
     // take the bottom 8 bits of the analog read
     for (uint8_t i = 0; i < sizeof rng_seeds; i++) rng_seeds[i] = static_cast<uint8_t>(analogRead(m_analog_pin));
     br_ssl_engine_inject_entropy(&m_sslctx.eng, rng_seeds, sizeof rng_seeds);
-    // reset the client context, and look for previous sessions
     auto ret = br_ssl_client_reset(&m_sslctx, host, 1);
     if (!ret) {
         m_print("Error: reset failed");
@@ -232,11 +231,13 @@ int SSLClientImpl::m_start_ssl(const char* host) {
     // a little more structural sense to put it here
     if (m_run_until(BR_SSL_SENDAPP) < 0) {
 		m_print("Error: Failed to initlalize the SSL layer");
+        m_print(br_ssl_engine_last_error(&m_sslctx.eng));
         setWriteError(SSL_BR_CONNECT_FAIL);
         return 0;
 	}
     // all good to go! the SSL socket should be up and running
     m_print("SSL Initialized");
+    m_print(m_sslctx.eng.selected_protocol);
     setWriteError(SSL_OK);
     return 1;
 }
@@ -246,12 +247,12 @@ int SSLClientImpl::m_run_until(const unsigned target) {
     unsigned lastState = 0;
     size_t lastLen = 0;
     for (;;) {
+        unsigned state = m_update_engine();
 		// error check
-        if (!connected()) {
+        if (state == BR_SSL_CLOSED || getWriteError()) {
             m_print("Error: tried to run_until when the engine is closed");
             return -1;
         }
-        unsigned state = m_update_engine();
         // debug
         if (state != lastState) {
             lastState = state;
@@ -304,10 +305,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
 		 * record.
 		 */
 		if (state & BR_SSL_SENDAPP && target & BR_SSL_RECVAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
-
-        // debug delay
-        delay(500);
-	}
+    }
 }
 
 /** see SSLClientImpl.h*/
@@ -327,6 +325,7 @@ unsigned SSLClientImpl::m_update_engine() {
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
             wlen = m_client->write(buf, len);
+            // let the chip recover
             if (wlen < 0) {
                 m_print("Error writing to m_client");
                 /*
@@ -404,16 +403,7 @@ unsigned SSLClientImpl::m_update_engine() {
                 m_print("Read bytes from client: ");
                 m_print(avail);
                 m_print(len);
-                /*
-                unsigned char debug[avail];
-                m_client->read(debug, avail);
-                for (size_t i = 0; i < avail; i++) {
-                    Serial.print("0x");
-                    Serial.print(debug[i], HEX);
-                    Serial.print(", ");
-                }
-                while(true) {}
-                */
+                
                 // I suppose so!
                 int rlen = m_client->read(buf, len);
                 if (rlen <= 0) {
@@ -428,8 +418,12 @@ unsigned SSLClientImpl::m_update_engine() {
             }
             // guess not, tell the state we're waiting still
 			else {
-                m_print("Bytes avail: ");
-                m_print(avail);
+                // m_print("Bytes avail: ");
+                // m_print(avail);
+                // m_print("Bytes needed: ");
+                // m_print(len);
+                // add a delay since spamming m_client->availible breaks the poor wiz chip
+                delay(10);
                 return state;
             }
         }
