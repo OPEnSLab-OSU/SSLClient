@@ -20,9 +20,8 @@
 
 #include "SSLClient.h"
 
-/** see SSLClient.h */
-template<class C>
-SSLClient<C>::SSLClient(const C &client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug)
+/** see SSLClientImpl.h */
+SSLClientImpl::SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug)
     : m_client(client)
     , m_trust_anchors(trust_anchors)
     , m_trust_anchors_num(trust_anchors_num)
@@ -38,16 +37,15 @@ SSLClient<C>::SSLClient(const C &client, const br_x509_trust_anchor *trust_ancho
     br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
 }
 
-/* see SSLClient.h */
-template<class C>
-int SSLClient<C>::connect(IPAddress ip, uint16_t port) {
+/* see SSLClientImpl.h*/
+int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
     // reset indexs for saftey
     m_write_idx = 0;
     // Warning for security
     m_print("Warning! Using a raw IP Address for an SSL connection bypasses some important verification steps\nYou should use a domain name (www.google.com) whenever possible.");
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
-    if (!this->m_client.connect(ip, port)) {
+    if (!m_client->connect(ip, port)) {
         m_print("Failed to connect using m_client");
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
@@ -68,15 +66,13 @@ int SSLClient<C>::connect(IPAddress ip, uint16_t port) {
     return 1;
 }
 
-/* see SSLClient.h */
-template<class C>
-int SSLClient<C>::connect(const char *host, uint16_t port) {
+/* see SSLClientImpl.h*/
+int SSLClientImpl::connect(const char *host, uint16_t port) {
     // reset indexs for saftey
-    
     m_write_idx = 0;
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
-    if (!this->m_client.connect(host, port)) {
+    if (!m_client->connect(host, port)) {
         m_print("Failed to connect using m_client");
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
@@ -97,9 +93,8 @@ int SSLClient<C>::connect(const char *host, uint16_t port) {
     return 1;
 }
 
-/** see SSLClient.h */
-template<class C>
-size_t SSLClient<C>::write(const uint8_t *buf, size_t size) {
+/** see SSLClientImpl.h*/
+size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
     // check if the socket is still open and such
     if(!connected()) {
         m_print("Client is not connected! Perhaps something has happened?");       
@@ -143,9 +138,8 @@ size_t SSLClient<C>::write(const uint8_t *buf, size_t size) {
     return size;
 }
 
-/** see SSLClient.h */
-template<class C>
-int SSLClient<C>::available() {
+/** see SSLClientImpl.h*/
+int SSLClientImpl::available() {
     // connection check
     if (!connected()) {
         m_print("Warn: Cannot check available of disconnected client");
@@ -171,9 +165,8 @@ int SSLClient<C>::available() {
     return 0;
 }
 
-/** see SSLClient.h */
-template<class C>
-int SSLClient<C>::read(uint8_t *buf, size_t size) {
+/** see SSLClientImpl.h */
+int SSLClientImpl::read(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
     if (available() <= 0) return -1;
     // read the buffer, send the ack, and return the bytes read
@@ -187,9 +180,8 @@ int SSLClient<C>::read(uint8_t *buf, size_t size) {
     return read_amount;
 }
 
-/** see SSLClient.h */
-template<class C>
-int SSLClient<C>::peek() {
+/** see SSLClientImpl.h */
+int SSLClientImpl::peek() {
     // check that the engine is ready to read
     if (available() <= 0) return -1; 
     // read the buffer, send the ack, and return the bytes read
@@ -200,18 +192,16 @@ int SSLClient<C>::peek() {
     return (int)read_num;
 }
 
-/** see SSLClient.h */
-template<class C>
-void SSLClient<C>::flush() {
+/** see SSLClientImpl.h*/
+void SSLClientImpl::flush() {
     // trigger a flush, incase there's any leftover data
     br_ssl_engine_flush(&m_sslctx.eng, 0);
     // run until application data is ready for pickup
     if(m_run_until(BR_SSL_RECVAPP) < 0) m_print("Error: could not flush write buffer!");
 }
 
-/** see SSLClient.h */
-template<class C>
-void SSLClient<C>::stop() {
+/** see SSLClientImpl.h*/
+void SSLClientImpl::stop() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED) {
@@ -226,29 +216,27 @@ void SSLClient<C>::stop() {
 		}
 	}
     // close the ethernet socket
-    m_client.stop();
+    m_client->stop();
 }
 
-template<class C>
-uint8_t SSLClient<C>::connected() {
+uint8_t SSLClientImpl::connected() {
     // check all of the error cases 
-    const auto c_con = m_client.connected();
+    const auto c_con = m_client->connected();
     const auto br_con = br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED;
     const auto wr_ok = getWriteError() == 0;
     // if we're in an error state, close the connection and set a write error
     if ((br_con && !c_con) || !wr_ok) {
         m_print("Error: Socket was unexpectedly interrupted");
         m_print("Terminated with: ");
-        m_print(m_client.getWriteError());
+        m_print(m_client->getWriteError());
         setWriteError(SSL_CLIENT_WRTIE_ERROR);
         stop();
     }
     return c_con && br_con && wr_ok;
 }
 
-/** see SSLClient.h */
-template<class C>
-int SSLClient<C>::m_run_until(const unsigned target) {
+/** see SSLClientImpl.h*/
+int SSLClientImpl::m_run_until(const unsigned target) {
     for (;;) {
         unsigned state = m_update_engine();
 		/*
@@ -291,9 +279,8 @@ int SSLClient<C>::m_run_until(const unsigned target) {
 	}
 }
 
-/** see SSLClient.h */
-template<class C>
-unsigned SSLClient<C>::m_update_engine() {
+/** see SSLClientImpl.h*/
+unsigned SSLClientImpl::m_update_engine() {
     for(;;) {
         // get the state
         unsigned state = br_ssl_engine_current_state(&m_sslctx.eng);
@@ -308,7 +295,7 @@ unsigned SSLClient<C>::m_update_engine() {
             int wlen;
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
-            wlen = m_client.write(buf, len);
+            wlen = m_client->write(buf, len);
             if (wlen < 0) {
                 m_print("Error writing to m_client");
                 /*
@@ -381,9 +368,9 @@ unsigned SSLClient<C>::m_update_engine() {
 			size_t len;
 			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
-            if (m_client.available() >= len) {
+            if (m_client->available() >= len) {
                 // I suppose so!
-                int rlen = m_client.readBytes((char *)buf, len);
+                int rlen = m_client->readBytes((char *)buf, len);
                 if (rlen < 0) {
                     m_print("Error reading bytes from m_client");
                     setWriteError(SSL_BR_WRITE_ERROR);

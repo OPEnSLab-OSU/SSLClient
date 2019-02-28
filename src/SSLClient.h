@@ -36,29 +36,16 @@
  */
 
 #include <type_traits>
-#include "bearssl.h"
-#include "Arduino.h"
 #include "Client.h"
+#include "SSLClientImpl.h"
 
 #ifndef SSLClient_H_
 #define SSLClient_H_
-
-template <class C>
-class SSLClient : public Client {
-/** static type checks
- * I'm a java developer, so I want to ensure that my inheritance is safe.
- * These checks ensure that all the functions we use on class C are
- * actually present on class C. It does this by first checking that the
- * class inherits from Client, and then that it contains a status() function.
- */
-static_assert(std::is_base_of<Client, C>::value, "C must be a Client Class!");
-// static_assert(std::is_function<decltype(C::status)>::value, "C must have a status() function!");
 
 /** error enums
  * Static constants defining the possible errors encountered
  * Read from getWriteError();
  */
-
 enum Error {
     SSL_OK = 0,
     SSL_CLIENT_CONNECT_FAIL,
@@ -68,9 +55,35 @@ enum Error {
     SSL_INTERNAL_ERROR
 };
 
+/**
+ * \brief This class serves as a templating proxy class for the SSLClientImpl to do the real work.
+ * 
+ * A problem arose when writing this class: I wanted the user to be able to construct
+ * this class in a single line of code (e.g. SSLClient(EthernetClient())), but I also
+ * wanted to avoid the use of dynamic memory if possible. In an attempt to solve this
+ * problem I used a templated classes. However, becuase of the Arduino build process 
+ * this meant that the implementations for all the functions had to be in a header 
+ * file (a weird effect of using templated classes and linking) which would slow down
+ * the build quite a bit. As a comprimise, I instead decided to build the main class (SSLCLient)
+ * as a templated class, and have use a not templated implementation class (SSLClientImpl)
+ * that would be able to reside in a seperate file. This gets the best of both worlds
+ * from the client side, however from the developer side it can be a bit confusing.
+ */
+
+template <class C>
+class SSLClient : public SSLClientImpl {
+/** static type checks
+ * I'm a java developer, so I want to ensure that my inheritance is safe.
+ * These checks ensure that all the functions we use on class C are
+ * actually present on class C. It does this by first checking that the
+ * class inherits from Client, and then that it contains a status() function.
+ */
+static_assert(std::is_base_of<Client, C>::value, "C must be a Client Class!");
+// static_assert(std::is_function<decltype(C::status)>::value, "C must have a status() function!");
+
 public:
     /**
-     * @brief copies the client object and initializes SSL contexts for bearSSL
+     * @brief copies the client object, and passes the various parameters to the SSLCLientImpl functions.
      * 
      * We copy the client because we aren't sure the Client object
      * is going to exists past the inital creation of the SSLClient.
@@ -84,123 +97,36 @@ public:
      * @param trust_anchors_num The number of trust anchors stored
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    explicit SSLClient(const C &client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true);
-    /** Dtor is implicit since unique_ptr handles it fine */
-
+    SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true)
+    : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, debug) 
+    , m_client(client)
+    {
+        // since we are copying the client in the ctor, we have to set
+        // the client pointer after the class is constructed
+        set_client(&m_client);
+    }
+    
     /** 
-     * The virtual functions defining a Client are below 
+     * The special functions most clients have are below
      * Most of them smply pass through
      */
-	virtual int availableForWrite(void) { return m_client.availableForWrite(); };
-	virtual operator bool() { return static_cast<bool>(m_client); }
-	// virtual bool operator==(const bool value) { return bool() == value; }
-	// virtual bool operator!=(const bool value) { return bool() != value; }
-	// virtual bool operator==(const C& rhs) const { return m_client.operator==(rhs); }
-	// virtual bool operator!=(const C& rhs) const { return !this->operator==(rhs); }
+	virtual int availableForWrite(void) { return m_client.availableForWrite(); }
+	virtual operator bool() { return connected() > 0; }
+	virtual bool operator==(const bool value) { return bool() == value; }
+	virtual bool operator!=(const bool value) { return bool() != value; }
+	virtual bool operator==(const C& rhs) { return m_client == rhs; }
+	virtual bool operator!=(const C& rhs) { return m_client != rhs; }
 	virtual uint16_t localPort() { return m_client.localPort(); }
 	virtual IPAddress remoteIP() { return m_client.remoteIP(); }
 	virtual uint16_t remotePort() { return m_client.remotePort(); }
 	virtual void setConnectionTimeout(uint16_t timeout) { m_client.setConnectionTimeout(timeout); }
 
-    /** functions specific to the EthernetClient which I'll have to override */
-    // uint8_t status();
-    // uint8_t getSocketNumber() const;
-
-    /** functions dealing with read/write that BearSSL will be injected into */
-    /**
-     * @brief Connect over SSL to a host specified by an ip address
-     * 
-     * SSLClient::connect(host, port) should be preffered over this function, 
-     * as verifying the domain name is a step in ensuring the certificate is 
-     * legitimate, which is important to the security of the device. Additionally,
-     * SSL sessions cannot be resumed, which can drastically increase initial
-     * connect time.
-     * 
-     * This function initializes EthernetClient by calling EthernetClient::connect
-     * with the parameters supplied, then once the socket is open initializes
-     * the appropriete bearssl contexts using the TLS_only_profile. Due to the 
-     * design of the SSL standard, this function will probably take an extended 
-     * period (1-2sec) to negotiate the handshake and finish the connection. 
-     * 
-     * @param ip The ip address to connect to
-     * @param port the port to connect to
-     * @returns 1 if success, 0 if failure (as found in EthernetClient)
-     * 
-     * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
-     * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
-     */
-    virtual int connect(IPAddress ip, uint16_t port);
-    /**
-     * @brief Connect over SSL using connect(ip, port), but use a DNS lookup to
-     * get the IP Address first. 
-     * 
-     * This function initializes EthernetClient by calling EthernetClient::connect
-     * with the parameters supplied, then once the socket is open initializes
-     * the appropriete bearssl contexts using the TLS_only_profile. 
-     * 
-     * Due to the design of the SSL standard, this function will probably take an 
-     * extended period (1-2sec) to negotiate the handshake and finish the 
-     * connection. Since the hostname is provided, however, BearSSL is able to keep
-     * a session cache of the clients we have connected to. This should reduce
-     * connection time greatly. In order to use this feature, you must reuse the
-     * same SSLClient object to connect to the reused host. Doing this will allow 
-     * BearSSL to automatically match the hostname to a cached session.
-     * 
-     * @param host The cstring host ("www.google.com")
-     * @param port the port to connect to
-     * @returns 1 of success, 0 if failure (as found in EthernetClient)
-     * 
-     * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
-     * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
-     */
-	virtual int connect(const char *host, uint16_t port);
-    virtual size_t write(uint8_t b) { return write(&b, 1); }
-	virtual size_t write(const uint8_t *buf, size_t size);
-	virtual int available();
-	virtual int read() { int peeked = peek(); if(peeked != -1) br_ssl_engine_recvapp_ack(&m_sslctx.eng, 1); return peeked; }
-	virtual int read(uint8_t *buf, size_t size);
-	virtual int peek();
-	virtual void flush();
-	virtual void stop();
-	virtual uint8_t connected();
-    
     //! get the client object
     C& getClient() { return m_client; }
 
 private:
-    /** @brief debugging print function, only prints if m_debug is true */
-    template<typename T>
-    constexpr void m_print(const T str) const { 
-        if (m_debug) {
-            Serial.print("SSLClient: "); 
-            Serial.println(str); 
-        }
-    }
-    /** run the bearssl engine until a certain state */
-    int m_run_until(const unsigned target);
-    /** proxy for availble that returns the state */
-    unsigned m_update_engine(); 
     // create a copy of the client
     C m_client;
-    // store pointers to the trust anchors
-    // should not be computed at runtime
-    const br_x509_trust_anchor *m_trust_anchors;
-    const size_t m_trust_anchors_num;
-    // store whether to enable debug logging
-    const bool m_debug;
-    // store the context values required for SSL
-    br_ssl_client_context m_sslctx;
-    br_x509_minimal_context m_x509ctx;
-    // use a mono-directional buffer by default to cut memory in half
-    // can expand to a bi-directional buffer with maximum of BR_SSL_BUFSIZE_BIDI
-    // or shrink to below BR_SSL_BUFSIZE_MONO, and bearSSL will adapt automatically
-    // simply edit this value to change the buffer size to the desired value
-    unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO];
-    static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI, "m_iobuf must be below maximum buffer size");
-    // store the index of where we are writing in the buffer
-    // so we can send our records all at once to prevent
-    // weird timing issues
-    size_t m_write_idx;
 };
 
 #endif /** SSLClient_H_ */

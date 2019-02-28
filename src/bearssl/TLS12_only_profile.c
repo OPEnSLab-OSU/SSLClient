@@ -23,6 +23,7 @@
  */
 
 #include "bearssl.h"
+#include "bearssl_ssl.h"
 
 /*
  * A "profile" is an initialisation function for a SSL context, that
@@ -234,7 +235,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	// br_ssl_engine_set_default_ecdsa(&cc->eng);
 	//* Alternate: set implementations explicitly.
 	// br_ssl_client_set_rsapub(cc, &br_rsa_i31_public);
-	br_ssl_client_set_rsavrfy(cc, &br_rsa_i15_pkcs1_vrfy);
+	br_ssl_engine_set_rsavrfy(&cc->eng, &br_rsa_i15_pkcs1_vrfy);
 	br_ssl_engine_set_ec(&cc->eng, &br_ec_all_m15);
 	br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 	//*/
