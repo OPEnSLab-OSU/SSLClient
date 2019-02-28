@@ -21,17 +21,19 @@
 #include "SSLClient.h"
 
 /** see SSLClientImpl.h */
-SSLClientImpl::SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug)
+SSLClientImpl::SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const bool debug)
     : m_client(client)
     , m_trust_anchors(trust_anchors)
     , m_trust_anchors_num(trust_anchors_num)
+    , m_analog_pin(analog_pin)
     , m_debug(debug)
     , m_write_idx(0) {
     
     // zero the iobuf just in case it's still garbage
     memset(m_iobuf, 0, sizeof m_iobuf);
     // initlalize the various bearssl libraries so they're ready to go when we connect
-    br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
+    // br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
+    br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // check if the buffer size is half or full duplex
     constexpr auto duplex = sizeof m_iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
     br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
@@ -46,24 +48,12 @@ int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
     if (!m_client->connect(ip, port)) {
-        m_print("Failed to connect using m_client");
+        m_print("Error: Failed to connect using m_client");
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
     }
-    // reset the client context, and look for previous sessions
-    br_ssl_client_reset(&m_sslctx, NULL, 1);
-    // initlalize the SSL socket over the network
-    // normally this would happen in br_sslio_write, but I think it makes
-    // a little more structural sense to put it here
-    if (m_run_until(BR_SSL_SENDAPP) < 0) {
-		m_print("Failed to initlalize the SSL layer");
-        setWriteError(SSL_BR_CONNECT_FAIL);
-        return 0;
-	}
-    // all good to go! the SSL socket should be up and running
-    m_print("SSL Initialized");
-    setWriteError(SSL_OK);
-    return 1;
+    m_print("Base ethernet client connected!");
+    return m_start_ssl();
 }
 
 /* see SSLClientImpl.h*/
@@ -73,24 +63,12 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
     if (!m_client->connect(host, port)) {
-        m_print("Failed to connect using m_client");
+        m_print("Error: Failed to connect using m_client");
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
     }
-    // reset the client context, and look for previous sessions
-    br_ssl_client_reset(&m_sslctx, host, 1);
-    // initlalize the SSL socket over the network
-    // normally this would happen in br_sslio_write, but I think it makes
-    // a little more structural sense to put it here
-    if (m_run_until(BR_SSL_SENDAPP) < 0) {
-		m_print("Failed to initlalize the SSL layer");
-        setWriteError(SSL_BR_CONNECT_FAIL);
-        return 0;
-	}
-    // all good to go! the SSL socket should be up and running
-    m_print("SSL Initialized");
-    setWriteError(SSL_OK);
-    return 1;
+    m_print("Base ethernet client connected!");
+    return m_start_ssl(host);
 }
 
 /** see SSLClientImpl.h*/
@@ -235,11 +213,60 @@ uint8_t SSLClientImpl::connected() {
     return c_con && br_con && wr_ok;
 }
 
+/** see SSLClientImpl.h */
+int SSLClientImpl::m_start_ssl(const char* host) {
+    // get some random data by reading the analog pin we've been handed
+    // we want 128 bits to be safe, as recommended by the bearssl docs
+    uint8_t rng_seeds[16];
+    // take the bottom 8 bits of the analog read
+    for (uint8_t i = 0; i < sizeof rng_seeds; i++) rng_seeds[i] = static_cast<uint8_t>(analogRead(m_analog_pin));
+    br_ssl_engine_inject_entropy(&m_sslctx.eng, rng_seeds, sizeof rng_seeds);
+    // reset the client context, and look for previous sessions
+    auto ret = br_ssl_client_reset(&m_sslctx, host, 1);
+    if (!ret) {
+        m_print("Error: reset failed");
+        m_print(br_ssl_engine_last_error(&m_sslctx.eng));
+    } 
+    // initlalize the SSL socket over the network
+    // normally this would happen in br_sslio_write, but I think it makes
+    // a little more structural sense to put it here
+    if (m_run_until(BR_SSL_SENDAPP) < 0) {
+		m_print("Error: Failed to initlalize the SSL layer");
+        setWriteError(SSL_BR_CONNECT_FAIL);
+        return 0;
+	}
+    // all good to go! the SSL socket should be up and running
+    m_print("SSL Initialized");
+    setWriteError(SSL_OK);
+    return 1;
+}
+
 /** see SSLClientImpl.h*/
 int SSLClientImpl::m_run_until(const unsigned target) {
+    unsigned lastState = 0;
+    size_t lastLen = 0;
     for (;;) {
+		// error check
+        if (!connected()) {
+            m_print("Error: tried to run_until when the engine is closed");
+            return -1;
+        }
         unsigned state = m_update_engine();
-		/*
+        // debug
+        if (state != lastState) {
+            lastState = state;
+            m_print("m_run stuck:");
+            printState(state);
+        }
+        if (state & BR_SSL_RECVREC) {
+            size_t len;
+            unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
+            if (lastLen != len) {
+                m_print("Expected bytes count: ");
+                m_print(lastLen = len);
+            }
+        }
+        /*
 		 * If we reached our target, then we are finished.
 		 */
 		if (state & target) return 0;
@@ -260,6 +287,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
                 m_write_idx = 0;
                 m_print("Warn: discarded unread data to favor a write operation");
                 br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
+                continue;
             }
             else {
                 m_print("Error: ssl engine state is RECVAPP, however the buffer was null!");
@@ -276,6 +304,9 @@ int SSLClientImpl::m_run_until(const unsigned target) {
 		 * record.
 		 */
 		if (state & BR_SSL_SENDAPP && target & BR_SSL_RECVAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
+
+        // debug delay
+        delay(500);
 	}
 }
 
@@ -368,10 +399,24 @@ unsigned SSLClientImpl::m_update_engine() {
 			size_t len;
 			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
-            if (m_client->available() >= len) {
+            const auto avail = m_client->available();
+            if (avail >= len) {
+                m_print("Read bytes from client: ");
+                m_print(avail);
+                m_print(len);
+                /*
+                unsigned char debug[avail];
+                m_client->read(debug, avail);
+                for (size_t i = 0; i < avail; i++) {
+                    Serial.print("0x");
+                    Serial.print(debug[i], HEX);
+                    Serial.print(", ");
+                }
+                while(true) {}
+                */
                 // I suppose so!
-                int rlen = m_client->readBytes((char *)buf, len);
-                if (rlen < 0) {
+                int rlen = m_client->read(buf, len);
+                if (rlen <= 0) {
                     m_print("Error reading bytes from m_client");
                     setWriteError(SSL_BR_WRITE_ERROR);
                     return 0;
@@ -382,7 +427,11 @@ unsigned SSLClientImpl::m_update_engine() {
                 continue;
             }
             // guess not, tell the state we're waiting still
-			else return state;
+			else {
+                m_print("Bytes avail: ");
+                m_print(avail);
+                return state;
+            }
         }
         // if it's not any of the above states, then it must be waiting to send or recieve app data
         // in which case we return 

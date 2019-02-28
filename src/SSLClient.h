@@ -89,16 +89,18 @@ public:
      * is going to exists past the inital creation of the SSLClient.
      * 
      * @pre The client class must be able to access the internet, as SSLClient
-     * cannot manage this for you.
+     * cannot manage this for you. Additionally it is recommended that the analog_pin
+     * be set to input.
      * 
      * @param trust_anchors Trust anchors used in the verification 
      * of the SSL server certificate, generated using the `brssl` command
      * line utility. For more information see the samples or bearssl.org
      * @param trust_anchors_num The number of trust anchors stored
+     * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const bool debug = true)
-    : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, debug) 
+    explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const bool debug = true)
+    : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, debug) 
     , m_client(client)
     {
         // since we are copying the client in the ctor, we have to set
