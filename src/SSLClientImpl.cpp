@@ -31,6 +31,8 @@ SSLClientImpl::SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_a
     
     // zero the iobuf just in case it's still garbage
     memset(m_iobuf, 0, sizeof m_iobuf);
+    // zero the session parameters for similar reason
+    memset(&m_ses_param, 0, sizeof m_ses_param);
     // initlalize the various bearssl libraries so they're ready to go when we connect
     br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
@@ -182,13 +184,14 @@ void SSLClientImpl::flush() {
 void SSLClientImpl::stop() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
-    while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED) {
-		/*
+    // if the engine isn't closed, and the socket is still open
+    while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
+        && m_run_until(BR_SSL_RECVAPP) == 0) {
+        /*
 		 * Discard any incoming application data.
 		 */
 		size_t len;
 
-		m_run_until(BR_SSL_RECVAPP);
 		if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != NULL) {
 			br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
 		}
@@ -221,13 +224,19 @@ int SSLClientImpl::m_start_ssl(const char* host) {
     // take the bottom 8 bits of the analog read
     for (uint8_t i = 0; i < sizeof rng_seeds; i++) rng_seeds[i] = static_cast<uint8_t>(analogRead(m_analog_pin));
     br_ssl_engine_inject_entropy(&m_sslctx.eng, rng_seeds, sizeof rng_seeds);
-    auto ret = br_ssl_client_reset(&m_sslctx, host, 1);
+    // inject session parameters for faster reconnection, if we have any
+    if(m_ses_param.session_id_len > 0) {
+        m_print("Set session!");
+        br_ssl_engine_set_session_parameters(&m_sslctx.eng, &m_ses_param);
+    }
+    // reset the engine, but make sure that it reset successfully
+    int ret = br_ssl_client_reset(&m_sslctx, host, 1);
     if (!ret) {
         m_print("Error: reset failed");
         m_print(br_ssl_engine_last_error(&m_sslctx.eng));
-    } 
+    }
     // initlalize the SSL socket over the network
-    // normally this would happen in br_sslio_write, but I think it makes
+    // normally this would happen in write, but I think it makes
     // a little more structural sense to put it here
     if (m_run_until(BR_SSL_SENDAPP) < 0) {
 		m_print("Error: Failed to initlalize the SSL layer");
@@ -236,8 +245,16 @@ int SSLClientImpl::m_start_ssl(const char* host) {
         return 0;
 	}
     // all good to go! the SSL socket should be up and running
-    m_print("SSL Initialized");
-    m_print(m_sslctx.eng.selected_protocol);
+    // debug print the session parameters to see if they exist
+    br_ssl_engine_get_session_parameters(&m_sslctx.eng, &m_ses_param);
+    m_print("Session:");
+    for (uint8_t i = 0; i < m_ses_param.session_id_len; i++) {
+        Serial.print(", 0x");
+        Serial.print(m_ses_param.session_id[i], HEX);
+    }
+    Serial.println();
+    Serial.println(m_ses_param.cipher_suite, HEX);
+    // clear the error flag: we've connected!
     setWriteError(SSL_OK);
     return 1;
 }
@@ -324,6 +341,15 @@ unsigned SSLClientImpl::m_update_engine() {
             int wlen;
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
+            Serial.print("Payload: ");
+            for (int i = 0; i < len; i++) {
+                if (buf[i] <= 0x0f) Serial.print("0x0");
+                else Serial.print("0x");
+                Serial.print(buf[i], HEX);
+                Serial.print(", ");
+            }
+            Serial.println();
+            //delay(100);
             wlen = m_client->write(buf, len);
             // let the chip recover
             if (wlen < 0) {

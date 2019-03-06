@@ -173,8 +173,8 @@ private:
     // so we can send our records all at once to prevent
     // weird timing issues
     size_t m_write_idx;
-    // store the last error code
-
+    // store the last SSL session, so reconnection later is speedy fast
+    br_ssl_session_parameters m_ses_param;
 };
 
 #endif /* SSLClientImpl_H_ */
