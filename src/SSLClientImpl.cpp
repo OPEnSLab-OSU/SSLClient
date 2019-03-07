@@ -70,6 +70,9 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
         return 0;
     }
     m_print("Base ethernet client connected!");
+    // clear the write error
+    setWriteError(SSL_OK);
+    // start ssl!
     return m_start_ssl(host);
 }
 
@@ -254,8 +257,6 @@ int SSLClientImpl::m_start_ssl(const char* host) {
     }
     Serial.println();
     Serial.println(m_ses_param.cipher_suite, HEX);
-    // clear the error flag: we've connected!
-    setWriteError(SSL_OK);
     return 1;
 }
 
