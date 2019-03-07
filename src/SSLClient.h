@@ -108,20 +108,18 @@ public:
         set_client(&m_client);
     }
     
-    /** 
+    /*
      * The special functions most clients have are below
      * Most of them smply pass through
      */
-	virtual int availableForWrite(void) { return m_client.availableForWrite(); }
 	virtual operator bool() { return connected() > 0; }
 	virtual bool operator==(const bool value) { return bool() == value; }
 	virtual bool operator!=(const bool value) { return bool() != value; }
 	virtual bool operator==(const C& rhs) { return m_client == rhs; }
 	virtual bool operator!=(const C& rhs) { return m_client != rhs; }
-	virtual uint16_t localPort() { return m_client.localPort(); }
-	virtual IPAddress remoteIP() { return m_client.remoteIP(); }
-	virtual uint16_t remotePort() { return m_client.remotePort(); }
-	virtual void setConnectionTimeout(uint16_t timeout) { m_client.setConnectionTimeout(timeout); }
+	virtual uint16_t localPort() { return std::is_member_function_pointer<decltype(&C::localPort)>::value ? m_client.localPort() : 0; }
+	virtual IPAddress remoteIP() { return std::is_member_function_pointer<decltype(&C::remoteIP)>::value ? m_client.remoteIP() : INADDR_NONE; }
+	virtual uint16_t remotePort() { return std::is_member_function_pointer<decltype(&C::remotePort)>::value ? m_client.remotePort() : 0; }
 
     //! get the client object
     C& getClient() { return m_client; }

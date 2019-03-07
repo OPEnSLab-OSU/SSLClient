@@ -19,8 +19,9 @@
  */
 
 #include "bearssl.h"
-#include "Client.h"
 #include "Arduino.h"
+#include "Client.h"
+#include "SSLSession.h"
 
 #ifndef SSLClientImpl_H_
 #define SSLClientImpl_H_
@@ -44,9 +45,13 @@ public:
      * line utility. For more information see the samples or bearssl.org
      * @param trust_anchors_num The number of trust anchors stored
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG
+     * @param get_remote_ip Function pointer to get the remote ip from the client. We
+     * need this value since the Client abstract class has no remoteIP() function,
+     * however most of the arduino internet client implementations do.
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    explicit SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const bool debug = true);
+    explicit SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, 
+        const size_t trust_anchors_num, const int analog_pin, const bool debug = true);
     /** Dtor is implicit since unique_ptr handles it fine */
 
     /** functions specific to the EthernetClient which I'll have to override */
@@ -111,6 +116,10 @@ public:
 	virtual void stop();
 	virtual uint8_t connected();
 
+    // stub virtual functions to get things from the client
+    virtual uint16_t localPort() = 0;
+	virtual IPAddress remoteIP() = 0;
+	virtual uint16_t remotePort() = 0;
 protected:
     /** 
      * @brief set the pointer to the Client class that we wil use
@@ -120,6 +129,7 @@ protected:
      * is critical that this function is called before anything else
      */
     void set_client(Client* c) { m_client = c; }
+
 private:
 
     /** @brief debugging print function, only prints if m_debug is true */
@@ -174,7 +184,7 @@ private:
     // weird timing issues
     size_t m_write_idx;
     // store the last SSL session, so reconnection later is speedy fast
-    br_ssl_session_parameters m_ses_param;
+    SSLSession m_session;
 };
 
 #endif /* SSLClientImpl_H_ */
