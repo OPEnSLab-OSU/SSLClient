@@ -52,7 +52,7 @@ class SSLSession : public br_ssl_session_parameters {
 public:
     explicit SSLSession()
         : m_valid_session(false)
-        , m_hostname({})
+        , m_hostname{}
         , m_ip(INADDR_NONE) {}
 
     /**
@@ -75,14 +75,14 @@ public:
     /**
      * \pre must check isValidSession
      */
-    const char* const get_hostname() const { return m_hostname; }
+    const char* get_hostname() const { return m_hostname; }
 
     /**
      * \pre must check isValidSession
      */
     const IPAddress& get_ip() const { return m_ip; }
 
-    const bool is_valid_session() const { return m_valid_session; }
+    bool is_valid_session() const { return m_valid_session; }
 private:
     bool m_valid_session;
     // aparently a hostname has a max length of 256 chars. Go figure.

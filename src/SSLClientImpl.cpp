@@ -28,13 +28,13 @@ SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_a
     , m_trust_anchors_num(trust_anchors_num)
     , m_analog_pin(analog_pin)
     , m_debug(debug)
-    , m_write_idx(0)
-    , m_session() {
+    , m_write_idx(0) {
     
     // zero the iobuf just in case it's still garbage
     memset(m_iobuf, 0, sizeof m_iobuf);
     // initlalize the various bearssl libraries so they're ready to go when we connect
     br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
+    // comment the above line and uncomment the line below if you're having trouble connecting over SSL
     // br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // check if the buffer size is half or full duplex
     constexpr auto duplex = sizeof m_iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
@@ -43,6 +43,11 @@ SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_a
 
 /* see SSLClientImpl.h*/
 int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
+    // connection check
+    if (connected()) {
+        m_print("Error: cannot have two connections at the same time! Please create another SSLClient instance.");
+        return -1;
+    }
     // reset indexs for saftey
     m_write_idx = 0;
     // Warning for security
@@ -55,21 +60,26 @@ int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
         return 0;
     }
     m_print("Base ethernet client connected!");
-    return m_start_ssl();
+    return m_start_ssl(NULL, getSession(NULL, ip));
 }
 
 /* see SSLClientImpl.h*/
 int SSLClientImpl::connect(const char *host, uint16_t port) {
+    // connection check
+    if (connected()) {
+        m_print("Error: cannot have two connections at the same time! Please create another SSLClient instance.");
+        return -1;
+    }
     // reset indexs for saftey
     m_write_idx = 0;
     // first, if we have a session, check if we're trying to resolve the same host
     // as before
     bool connect_ok;
-    if (m_session.is_valid_session() 
-        && strcmp(m_session.get_hostname(), host) == 0) {
+    SSLSession& ses = getSession(host, INADDR_NONE);
+    if (ses.is_valid_session()) {
         // if so, then connect using the stored session
         m_print("Connecting using a cached IP");
-        connect_ok = m_client->connect(m_session.get_ip(), port);
+        connect_ok = m_client->connect(ses.get_ip(), port);
     }
     // else connect with the provided hostname
     else connect_ok = m_client->connect(host, port);
@@ -82,7 +92,7 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
     }
     m_print("Base ethernet client connected!");
     // start ssl!
-    return m_start_ssl(host);
+    return m_start_ssl(host, ses);
 }
 
 /** see SSLClientImpl.h*/
@@ -229,7 +239,7 @@ uint8_t SSLClientImpl::connected() {
 }
 
 /** see SSLClientImpl.h */
-int SSLClientImpl::m_start_ssl(const char* host) {
+int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     // clear the write error
     setWriteError(SSL_OK);
     // get some random data by reading the analog pin we've been handed
@@ -239,8 +249,8 @@ int SSLClientImpl::m_start_ssl(const char* host) {
     for (uint8_t i = 0; i < sizeof rng_seeds; i++) rng_seeds[i] = static_cast<uint8_t>(analogRead(m_analog_pin));
     br_ssl_engine_inject_entropy(&m_sslctx.eng, rng_seeds, sizeof rng_seeds);
     // inject session parameters for faster reconnection, if we have any
-    if(m_session.is_valid_session()) {
-        br_ssl_engine_set_session_parameters(&m_sslctx.eng, m_session.to_br_session());
+    if(ssl_ses.is_valid_session()) {
+        br_ssl_engine_set_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
         m_print("Set session!");
     }
     // reset the engine, but make sure that it reset successfully
@@ -259,17 +269,18 @@ int SSLClientImpl::m_start_ssl(const char* host) {
         return 0;
 	}
     // all good to go! the SSL socket should be up and running
-    // debug print the session parameters to see if they exist
-    br_ssl_engine_get_session_parameters(&m_sslctx.eng, m_session.to_br_session());
+    // overwrite the session we got with new parameters
+    br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
     // set the hostname and ip in the session as well
-    m_session.set_parameters(remoteIP(), host);
+    ssl_ses.set_parameters(remoteIP(), host);
+    // print the session details
     m_print("Session:");
-    for (uint8_t i = 0; i < m_session.session_id_len; i++) {
+    for (uint8_t i = 0; i < ssl_ses.session_id_len; i++) {
         Serial.print(", 0x");
-        Serial.print(m_session.session_id[i], HEX);
+        Serial.print(ssl_ses.session_id[i], HEX);
     }
     Serial.println();
-    Serial.println(m_session.cipher_suite, HEX);
+    Serial.println(ssl_ses.cipher_suite, HEX);
     return 1;
 }
 
@@ -292,7 +303,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         }
         if (state & BR_SSL_RECVREC) {
             size_t len;
-            unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
+            br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             if (lastLen != len) {
                 m_print("Expected bytes count: ");
                 m_print(lastLen = len);
@@ -355,15 +366,6 @@ unsigned SSLClientImpl::m_update_engine() {
             int wlen;
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
-            Serial.print("Payload: ");
-            for (int i = 0; i < len; i++) {
-                if (buf[i] <= 0x0f) Serial.print("0x0");
-                else Serial.print("0x");
-                Serial.print(buf[i], HEX);
-                Serial.print(", ");
-            }
-            Serial.println();
-            //delay(100);
             wlen = m_client->write(buf, len);
             // let the chip recover
             if (wlen < 0) {

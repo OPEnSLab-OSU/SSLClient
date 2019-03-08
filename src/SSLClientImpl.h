@@ -120,6 +120,9 @@ public:
     virtual uint16_t localPort() = 0;
 	virtual IPAddress remoteIP() = 0;
 	virtual uint16_t remotePort() = 0;
+
+    // as well as store and retrieve session data
+    virtual SSLSession& getSession(const char* host, const IPAddress& addr) = 0;
 protected:
     /** 
      * @brief set the pointer to the Client class that we wil use
@@ -130,8 +133,6 @@ protected:
      */
     void set_client(Client* c) { m_client = c; }
 
-private:
-
     /** @brief debugging print function, only prints if m_debug is true */
     template<typename T>
     constexpr void m_print(const T str) const { 
@@ -140,6 +141,8 @@ private:
             Serial.println(str); 
         }
     }
+
+private:
 
     void printState(unsigned state) const {
         if(m_debug) {
@@ -155,7 +158,7 @@ private:
         }
     }
     /** start the ssl engine on the connected client */
-    int m_start_ssl(const char* host = NULL);
+    int m_start_ssl(const char* host, SSLSession& ssl_ses);
     /** run the bearssl engine until a certain state */
     int m_run_until(const unsigned target);
     /** proxy for availble that returns the state */
@@ -183,8 +186,6 @@ private:
     // so we can send our records all at once to prevent
     // weird timing issues
     size_t m_write_idx;
-    // store the last SSL session, so reconnection later is speedy fast
-    SSLSession m_session;
 };
 
 #endif /* SSLClientImpl_H_ */
