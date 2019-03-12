@@ -67,6 +67,7 @@ class SSLClient : public SSLClientImpl {
  */
 static_assert(std::is_base_of<Client, C>::value, "C must be a Client Class!");
 static_assert(SessionCache > 0 && SessionCache < 255, "There can be no less than one and no more than 255 sessions in the cache!");
+static_assert(SessionCache <= 3, "You need to decrease the size of m_iobuf in order to have more than 3 sessions at once, otherwise memory issues will occur.");
 // static_assert(std::is_function<decltype(C::status)>::value, "C must have a status() function!");
 
 public:
@@ -90,12 +91,16 @@ public:
     explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_ERROR)
     : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, debug) 
     , m_client(client)
-    , m_sessions{}
+    , m_sessions{SSLSession()}
     , m_index(0)
     {
+        // for (uint8_t i = 0; i < SessionCache; i++) m_sessions[i] = SSLSession();
         // since we are copying the client in the ctor, we have to set
         // the client pointer after the class is constructed
         set_client(&m_client);
+        // set the timeout to a reasonable number (it can always be changes later)
+        // SSL Connections take a really long time so we don't want to time out a legitimate thing
+        setTimeout(10 * 1000);
     }
     
     /*
@@ -114,38 +119,13 @@ public:
     //! get the client object
     C& getClient() { return m_client; }
 
-    virtual SSLSession& getSession(const char* host, const IPAddress& addr) {
-        // search for a matching session with the IP
-        int temp_index = -1;
-        for (size_t i = 0; i < SessionCache; i++) {
-            // if we're looking at a real session
-            if (m_sessions[i].is_valid_session() 
-                && (
-                    // and the hostname matches, or
-                    (host != NULL && strcmp(host, m_sessions[i].get_hostname()) == 0)
-                    // there is no hostname and the IP address matches    
-                    || (host == NULL && addr == m_sessions[i].get_ip())
-                )) {
+    virtual SSLSession& getSession(const char* host, const IPAddress& addr);
 
-                temp_index = i;
-                break;
-            }
-        }
-        // if none are availible, use m_index
-        if (temp_index == -1) {
-            temp_index = m_index;
-            // reset the session so we don't try to send one sites session to another
-            m_sessions[temp_index] = SSLSession();
-        }
-        // increment m_index so the session cache is a circular buffer
-        if (temp_index == m_index && ++m_index >= SessionCache) m_index = 0;
-        // return the pointed to value
-        m_info("Using session index: ", __func__);
-        Serial.println(temp_index);
-        return m_sessions[temp_index];
-    }
+    virtual void removeSession(const char* host, const IPAddress& addr);
 
 private:
+    // utility function to find a session index based off of a host and IP
+    int m_getSessionIndex(const char* host, const IPAddress& addr) const;
     // create a copy of the client
     C m_client;
     // also store an array of SSLSessions, so we can resume communication with multiple websites
@@ -153,5 +133,57 @@ private:
     // store an index of where a new session can be placed if we don't have any corresponding sessions
     size_t m_index;
 };
+
+template <class C, size_t SessionCache>
+SSLSession& SSLClient<C, SessionCache>::getSession(const char* host, const IPAddress& addr) {
+    const char* func_name = __func__;
+    // search for a matching session with the IP
+    int temp_index = m_getSessionIndex(host, addr);
+    // if none are availible, use m_index
+    if (temp_index == -1) {
+        temp_index = m_index;
+        // reset the session so we don't try to send one sites session to another
+        m_sessions[temp_index] = SSLSession();
+    }
+    // increment m_index so the session cache is a circular buffer
+    if (temp_index == m_index && ++m_index >= SessionCache) m_index = 0;
+    // return the pointed to value
+    m_info("Using session index: ", func_name);
+    Serial.println(temp_index);
+    return m_sessions[temp_index];
+}
+
+template <class C, size_t SessionCache>
+void SSLClient<C, SessionCache>::removeSession(const char* host, const IPAddress& addr) {
+    const char* func_name = __func__;
+    int temp_index = m_getSessionIndex(host, addr);
+    if (temp_index != -1) {
+        m_info(" Deleted session ", func_name);
+        m_info(temp_index, func_name);
+        m_sessions[temp_index] = SSLSession();
+    }
+}
+
+template <class C, size_t SessionCache>
+int SSLClient<C, SessionCache>::m_getSessionIndex(const char* host, const IPAddress& addr) const {
+    const char* func_name = __func__;
+    // search for a matching session with the IP
+    for (uint8_t i = 0; i < SessionCache; i++) {
+        // if we're looking at a real session
+        if (m_sessions[i].is_valid_session() 
+            && (
+                // and the hostname matches, or
+                (host != NULL && strcmp(host, m_sessions[i].get_hostname()) == 0)
+                // there is no hostname and the IP address matches    
+                || (host == NULL && addr == m_sessions[i].get_ip())
+            )) {
+            m_info("Found session match: ", func_name);
+            m_info(m_sessions[i].get_hostname(), func_name);
+            return i;
+        }
+    }
+    // none found
+    return -1;
+}
 
 #endif /** SSLClient_H_ */

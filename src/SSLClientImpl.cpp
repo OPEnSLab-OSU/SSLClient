@@ -45,7 +45,7 @@ SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_a
 int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
     const char* func_name = __func__;
     // connection check
-    if (connected()) {
+    if (m_client->connected()) {
         m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
         return -1;
     }
@@ -68,7 +68,7 @@ int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
 int SSLClientImpl::connect(const char *host, uint16_t port) {
     const char* func_name = __func__;
     // connection check
-    if (connected()) {
+    if (m_client->connected()) {
         m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
         return -1;
     }
@@ -148,7 +148,7 @@ int SSLClientImpl::available() {
         br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
         return (int)(alen);
     }
-    else if (state == BR_SSL_CLOSED) m_warn("Engine closed after update", func_name);
+    else if (state == BR_SSL_CLOSED) m_info("Engine closed after update", func_name);
     // flush the buffer if it's stuck in the SENDAPP state
     else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
     // other state, or client is closed
@@ -194,8 +194,6 @@ void SSLClientImpl::flush() {
 void SSLClientImpl::stop() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
-    // info about the socket connection
-    if (br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED) m_info("Socket was terminated before graceful closure (probably fine)", __func__);
     // if the engine isn't closed, and the socket is still open
     while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
         && m_run_until(BR_SSL_RECVAPP) == 0) {
@@ -220,8 +218,14 @@ uint8_t SSLClientImpl::connected() {
     const auto wr_ok = getWriteError() == 0;
     // if we're in an error state, close the connection and set a write error
     if (br_con && !c_con) {
-        m_error("Socket was unexpectedly interrupted. m_client error: ", func_name);
-        m_error(m_client->getWriteError(), func_name);
+        // If we've got a write error, the client probably failed for some reason
+        if (m_client->getWriteError()) {
+            m_error("Socket was unexpectedly interrupted. m_client error: ", func_name);
+            m_error(m_client->getWriteError(), func_name);
+        }
+        // Else tell the user the endpoint closed the socket on us (ouch)
+        else m_warn("Socket was dropped unexpectedly (this can be an alternative to closing the connection)", func_name);
+        // set the write error so the engine doesn't try to close the connection
         setWriteError(SSL_CLIENT_WRTIE_ERROR);
         stop();
     }
@@ -280,11 +284,18 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
         m_print_br_error(br_ssl_engine_last_error(&m_sslctx.eng), SSL_ERROR);
         return 0;
 	}
+    m_info("Connection successful!", func_name);
     // all good to go! the SSL socket should be up and running
     // overwrite the session we got with new parameters
     br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
     // set the hostname and ip in the session as well
     ssl_ses.set_parameters(remoteIP(), host);
+    // print the handshake cipher chioce
+    m_info("Cipher suite: ", func_name);
+    if (m_debug >= SSL_INFO) {
+        m_print_prefix(func_name, SSL_INFO);
+        Serial.println(ssl_ses.cipher_suite, HEX);
+    }
     return 1;
 }
 
@@ -293,6 +304,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
     const char* func_name = __func__;
     unsigned lastState = 0;
     size_t lastLen = 0;
+    const unsigned long start = millis();
     for (;;) {
         unsigned state = m_update_engine();
 		// error check
@@ -300,11 +312,20 @@ int SSLClientImpl::m_run_until(const unsigned target) {
             m_warn("Tried to run_until when the engine is closed", func_name);
             return -1;
         }
+        // timeout check
+        if (millis() - start > getTimeout()) {
+            m_error("SSL internals timed out! This could be an internal error or bad data sent from the server", func_name);
+            setWriteError(SSL_BR_WRITE_ERROR);
+            stop();
+            return -1;
+        }
         // debug
         if (state != lastState) {
             lastState = state;
-            m_info("m_run waiting:", func_name);
+            m_info("m_run changed state:", func_name);
             printState(state);
+            m_info("Memory: ", func_name);
+            m_info(freeMemory(), func_name);
         }
         if (state & BR_SSL_RECVREC) {
             size_t len;
@@ -455,7 +476,8 @@ unsigned SSLClientImpl::m_update_engine() {
                 m_info("Read bytes from client: ", func_name);
                 m_info(avail, func_name);
                 m_info(len, func_name);
-                
+                m_info("Memory: ", func_name);
+                m_info(freeMemory(), func_name);
                 // I suppose so!
                 int rlen = m_client->read(buf, len);
                 if (rlen <= 0) {
@@ -495,20 +517,20 @@ void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level
     Serial.print("(SSLClient)");
     // print the debug level
     switch (level) {
-        case SSL_INFO: Serial.print("SSL_INFO"); break;
-        case SSL_WARN: Serial.print("SSL_WARN"); break;
-        case SSL_ERROR: Serial.print("SSL_ERROR"); break;
-        default: Serial.print("Unknown level");
+        case SSL_INFO: Serial.print("(SSL_INFO)"); break;
+        case SSL_WARN: Serial.print("(SSL_WARN)"); break;
+        case SSL_ERROR: Serial.print("(SSL_ERROR)"); break;
+        default: Serial.print("(Unknown level)");
     }
     // print the function name
+    Serial.print("(");
     Serial.print(func_name);
-    // get ready
-    Serial.print(": ");
+    Serial.print("): ");
 }
 
 /** See SSLClientImpl.h */
 void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel level) const {
-    if (level < m_debug) return;
+    if (level > m_debug) return;
     m_print_prefix(__func__, level);
     switch(ssl_error) {
         case SSL_OK: Serial.println("SSL_OK"); break;
@@ -522,7 +544,7 @@ void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel leve
 
 /* See SSLClientImpl.h */
 void SSLClientImpl::m_print_br_error(const unsigned br_error_code, const DebugLevel level) const {
-  if (level < m_debug) return;
+  if (level > m_debug) return;
   m_print_prefix(__func__, level);
   switch (br_error_code) {
     case BR_ERR_BAD_PARAM: Serial.println("Caller-provided parameter is incorrect."); break;

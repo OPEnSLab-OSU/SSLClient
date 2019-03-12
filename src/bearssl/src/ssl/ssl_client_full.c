@@ -119,6 +119,7 @@ br_ssl_client_init_full(br_ssl_client_context *cc,
 	 * to TLS-1.2 (inclusive).
 	 */
 	br_ssl_client_zero(cc);
+	memset(xc, 0, sizeof *xc);
 	br_ssl_engine_set_versions(&cc->eng, BR_TLS10, BR_TLS12);
 
 	/*

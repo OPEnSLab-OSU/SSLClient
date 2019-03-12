@@ -45,10 +45,30 @@ enum Error {
  */
 enum DebugLevel {
     SSL_NONE = 0,
-    SSL_INFO = 1,
+    SSL_ERROR = 1,
     SSL_WARN = 2,
-    SSL_ERROR = 3
+    SSL_INFO = 3,
 };
+
+
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char* sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif  // __arm__
+ 
+static int freeMemory() {
+  char top;
+#ifdef __arm__
+  return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+  return &top - __brkval;
+#else  // __arm__
+  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif  // __arm__
+}
+
 
 /** TODO: Write what this is */
 
@@ -170,7 +190,7 @@ protected:
     template<typename T>
     void m_print(const T str, const char* func_name, const DebugLevel level) const { 
         // check the current debug level
-        if (level < m_debug) return;
+        if (level > m_debug) return;
         // print prefix
         m_print_prefix(func_name, level);
         // print the message
@@ -226,7 +246,9 @@ private:
     // can expand to a bi-directional buffer with maximum of BR_SSL_BUFSIZE_BIDI
     // or shrink to below BR_SSL_BUFSIZE_MONO, and bearSSL will adapt automatically
     // simply edit this value to change the buffer size to the desired value
-    unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO];
+    // additionally, we need to correct buffer size based off of how many sessions we decide to cache
+    // since SSL takes so much memory if we don't it will cause the stack and heap to collide 
+    unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO / 4];
     static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI, "m_iobuf must be below maximum buffer size");
     // store the index of where we are writing in the buffer
     // so we can send our records all at once to prevent

@@ -418,6 +418,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * supported hash function is appropriate; here we use SHA-256.
 	 * The trust an
 	 */
+	memset(xc, 0, sizeof *xc);
 	br_x509_minimal_init(xc, &br_sha256_vtable,
 		trust_anchors, trust_anchors_num);
 
