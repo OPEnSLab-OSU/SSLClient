@@ -26,6 +26,30 @@
 #ifndef SSLClientImpl_H_
 #define SSLClientImpl_H_
 
+/** error enums
+ * Static constants defining the possible errors encountered
+ * Read from getWriteError();
+ */
+enum Error {
+    SSL_OK = 0,
+    SSL_CLIENT_CONNECT_FAIL,
+    SSL_BR_CONNECT_FAIL,
+    SSL_CLIENT_WRTIE_ERROR,
+    SSL_BR_WRITE_ERROR,
+    SSL_INTERNAL_ERROR
+};
+
+/** Debug level enum
+ * Static enum defining the debugging levels to print
+ * into the Serial monitor
+ */
+enum DebugLevel {
+    SSL_NONE = 0,
+    SSL_INFO = 1,
+    SSL_WARN = 2,
+    SSL_ERROR = 3
+};
+
 /** TODO: Write what this is */
 
 class SSLClientImpl : public Client {
@@ -51,7 +75,7 @@ public:
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
     explicit SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, 
-        const size_t trust_anchors_num, const int analog_pin, const bool debug = true);
+        const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
     /** Dtor is implicit since unique_ptr handles it fine */
 
     /** functions specific to the EthernetClient which I'll have to override */
@@ -133,30 +157,52 @@ protected:
      */
     void set_client(Client* c) { m_client = c; }
 
+    /** @brief Prints a debugging prefix to all logs, so we can attatch them to useful information */
+    void m_print_prefix(const char* func_name, const DebugLevel level) const;
+
+    /** @brief Prints the string associated with a write error */
+    void m_print_ssl_error(const int ssl_error, const DebugLevel level) const;
+
+    /** @brief Print the text string associated with a BearSSL error code */
+    void m_print_br_error(const unsigned br_error_code, const DebugLevel level) const;
+
     /** @brief debugging print function, only prints if m_debug is true */
     template<typename T>
-    constexpr void m_print(const T str) const { 
-        if (m_debug) {
-            Serial.print("SSLClientImpl: "); 
-            Serial.println(str); 
-        }
+    void m_print(const T str, const char* func_name, const DebugLevel level) const { 
+        // check the current debug level
+        if (level < m_debug) return;
+        // print prefix
+        m_print_prefix(func_name, level);
+        // print the message
+        Serial.println(str);
     }
 
-private:
+    /** @brief Prints a info message to serial, if info messages are enabled */
+    template<typename T>
+    void m_info(const T str, const char* func_name) const { m_print(str, func_name, SSL_INFO); }
 
+    template<typename T>
+    void m_warn(const T str, const char* func_name) const { m_print(str, func_name, SSL_WARN); }
+
+    template<typename T>
+    void m_error(const T str, const char* func_name) const { m_print(str, func_name, SSL_ERROR); }
+
+private:
     void printState(unsigned state) const {
-        if(m_debug) {
-            m_print("State: ");
-            if(state == 0) m_print("    Invalid");
-            else if (state & BR_SSL_CLOSED) m_print("   Connection closed");
+        if(m_debug == DebugLevel::SSL_INFO) {
+            m_info("State: ", __func__);
+            if(state == 0) Serial.println("    Invalid");
+            else if (state & BR_SSL_CLOSED) Serial.println("   Connection closed");
             else {
-                if (state & BR_SSL_SENDREC) m_print("   SENDREC");
-                if (state & BR_SSL_RECVREC) m_print("   RECVREC");
-                if (state & BR_SSL_SENDAPP) m_print("   SENDAPP");
-                if (state & BR_SSL_RECVAPP) m_print("   RECVAPP");
+                if (state & BR_SSL_SENDREC) Serial.println("   SENDREC");
+                if (state & BR_SSL_RECVREC) Serial.println("   RECVREC");
+                if (state & BR_SSL_SENDAPP) Serial.println("   SENDAPP");
+                if (state & BR_SSL_RECVAPP) Serial.println("   RECVAPP");
             }
         }
     }
+    /** Returns whether or not the engine is connected, without polling the client over SPI or other (as opposed to connected()) */
+    bool m_soft_connected(const char* func_name);
     /** start the ssl engine on the connected client */
     int m_start_ssl(const char* host, SSLSession& ssl_ses);
     /** run the bearssl engine until a certain state */
@@ -172,7 +218,7 @@ private:
     // store the pin to fetch an RNG see from
     const int m_analog_pin;
     // store whether to enable debug logging
-    const bool m_debug;
+    const DebugLevel m_debug;
     // store the context values required for SSL
     br_ssl_client_context m_sslctx;
     br_x509_minimal_context m_x509ctx;

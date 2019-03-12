@@ -42,19 +42,6 @@
 #ifndef SSLClient_H_
 #define SSLClient_H_
 
-/** error enums
- * Static constants defining the possible errors encountered
- * Read from getWriteError();
- */
-enum Error {
-    SSL_OK = 0,
-    SSL_CLIENT_CONNECT_FAIL,
-    SSL_BR_CONNECT_FAIL,
-    SSL_CLIENT_WRTIE_ERROR,
-    SSL_BR_WRITE_ERROR,
-    SSL_INTERNAL_ERROR
-};
-
 /**
  * \brief This class serves as a templating proxy class for the SSLClientImpl to do the real work.
  * 
@@ -100,7 +87,7 @@ public:
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const bool debug = true)
+    explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_ERROR)
     : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, debug) 
     , m_client(client)
     , m_sessions{}
@@ -153,8 +140,8 @@ public:
         // increment m_index so the session cache is a circular buffer
         if (temp_index == m_index && ++m_index >= SessionCache) m_index = 0;
         // return the pointed to value
-        m_print("Using index: ");
-        m_print(temp_index);
+        m_info("Using session index: ", __func__);
+        Serial.println(temp_index);
         return m_sessions[temp_index];
     }
 

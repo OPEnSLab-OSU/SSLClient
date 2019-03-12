@@ -22,7 +22,7 @@
 
 /** see SSLClientImpl.h */
 SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_anchors, 
-    const size_t trust_anchors_num, const int analog_pin, const bool debug)
+    const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug)
     : m_client(client)
     , m_trust_anchors(trust_anchors)
     , m_trust_anchors_num(trust_anchors_num)
@@ -43,31 +43,33 @@ SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_a
 
 /* see SSLClientImpl.h*/
 int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
+    const char* func_name = __func__;
     // connection check
     if (connected()) {
-        m_print("Error: cannot have two connections at the same time! Please create another SSLClient instance.");
+        m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
         return -1;
     }
     // reset indexs for saftey
     m_write_idx = 0;
     // Warning for security
-    m_print("Warning! Using a raw IP Address for an SSL connection bypasses some important verification steps\nYou should use a domain name (www.google.com) whenever possible.");
+    m_warn("Using a raw IP Address for an SSL connection bypasses some important verification steps. You should use a domain name (www.google.com) whenever possible.", func_name);
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
     if (!m_client->connect(ip, port)) {
-        m_print("Error: Failed to connect using m_client");
+        m_error("Failed to connect using m_client. Are you connected to the internet?", func_name);
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
     }
-    m_print("Base ethernet client connected!");
+    m_info("Base client connected!", func_name);
     return m_start_ssl(NULL, getSession(NULL, ip));
 }
 
 /* see SSLClientImpl.h*/
 int SSLClientImpl::connect(const char *host, uint16_t port) {
+    const char* func_name = __func__;
     // connection check
     if (connected()) {
-        m_print("Error: cannot have two connections at the same time! Please create another SSLClient instance.");
+        m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
         return -1;
     }
     // reset indexs for saftey
@@ -78,7 +80,7 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
     SSLSession& ses = getSession(host, INADDR_NONE);
     if (ses.is_valid_session()) {
         // if so, then connect using the stored session
-        m_print("Connecting using a cached IP");
+        m_info("Connecting using a cached IP", func_name);
         connect_ok = m_client->connect(ses.get_ip(), port);
     }
     // else connect with the provided hostname
@@ -86,22 +88,20 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
     if (!connect_ok) {
-        m_print("Error: Failed to connect using m_client");
+        m_error("Failed to connect using m_client. Are you connected to the internet?", func_name);
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;
     }
-    m_print("Base ethernet client connected!");
+    m_info("Base client connected!", func_name);
     // start ssl!
     return m_start_ssl(host, ses);
 }
 
 /** see SSLClientImpl.h*/
 size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
+    const char* func_name = __func__;
     // check if the socket is still open and such
-    if(br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED || getWriteError()) {
-        m_print("Client is not connected! Perhaps something has happened?");       
-        return 0;
-    }
+    if (!m_soft_connected(func_name)) return 0;
     // add to the bearssl io buffer, simply appending whatever we want to write
     size_t alen;
     unsigned char *br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
@@ -112,21 +112,15 @@ size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
         // to the buffer in which we conclude it's already safe to write
         if(m_write_idx == 0) {
             if (m_run_until(BR_SSL_SENDAPP) < 0) {
-                m_print("Error: could not run until sendapp");
-                setWriteError(SSL_BR_WRITE_ERROR);
+                m_error("Failed while waiting for the engine to enter BR_SSL_SENDAPP", func_name);
                 return 0;
             }
             // reset the buffer pointer
             br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
         }
-        // sanity check
-        if(br_buf == NULL || alen == 0) {
-            m_print("Error: recieved null buffer or zero alen in write");
-            setWriteError(SSL_BR_WRITE_ERROR);
-            return 0;
-        }
         // if we're about to fill the buffer, we need to send the data and then wait
         // for another oppurtinity to send
+        // so we only send the smallest of the buffer size or our data size - how much we've already sent
         const size_t cpamount = m_write_idx + (size - cur_idx) > alen ? alen : size - cur_idx;
         memcpy(br_buf + m_write_idx, buf + cur_idx, cpamount);
         // if we filled the buffer, reset m_write_idx
@@ -142,25 +136,19 @@ size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
 
 /** see SSLClientImpl.h*/
 int SSLClientImpl::available() {
+    const char* func_name = __func__;
     // connection check
-    if (br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED || getWriteError()) {
-        m_print("Warn: Cannot check available of disconnected client");
-        return 0;
-    }
+    if (!m_soft_connected(func_name)) return 0;
     // run the SSL engine until we are waiting for either user input or a server response
     unsigned state = m_update_engine();
-    if (state == 0) {
-        m_print("Error: SSL engine failed: ");
-        m_print(br_ssl_engine_last_error(&m_sslctx.eng));
-        setWriteError(SSL_BR_WRITE_ERROR);
-    }
+    if (state == 0) m_error("SSL engine failed to update.", func_name);
     else if(state & BR_SSL_RECVAPP) {
         // return how many received bytes we have
         size_t alen;
         br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
         return (int)(alen);
     }
-    else if (state == BR_SSL_CLOSED) m_print("Error: Tried to check available when engine is closed");
+    else if (state == BR_SSL_CLOSED) m_warn("Engine closed after update", func_name);
     // flush the buffer if it's stuck in the SENDAPP state
     else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
     // other state, or client is closed
@@ -199,13 +187,15 @@ void SSLClientImpl::flush() {
     // trigger a flush, incase there's any leftover data
     br_ssl_engine_flush(&m_sslctx.eng, 0);
     // run until application data is ready for pickup
-    if(m_run_until(BR_SSL_RECVAPP) < 0) m_print("Error: could not flush write buffer!");
+    if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
 }
 
 /** see SSLClientImpl.h*/
 void SSLClientImpl::stop() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
+    // info about the socket connection
+    if (br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED) m_info("Socket was terminated before graceful closure (probably fine)", __func__);
     // if the engine isn't closed, and the socket is still open
     while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
         && m_run_until(BR_SSL_RECVAPP) == 0) {
@@ -223,23 +213,44 @@ void SSLClientImpl::stop() {
 }
 
 uint8_t SSLClientImpl::connected() {
+    const char* func_name = __func__;
     // check all of the error cases 
     const auto c_con = m_client->connected();
     const auto br_con = br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED;
     const auto wr_ok = getWriteError() == 0;
     // if we're in an error state, close the connection and set a write error
-    if ((br_con && !c_con) || !wr_ok) {
-        m_print("Error: Socket was unexpectedly interrupted");
-        m_print("Terminated with: ");
-        m_print(m_client->getWriteError());
+    if (br_con && !c_con) {
+        m_error("Socket was unexpectedly interrupted. m_client error: ", func_name);
+        m_error(m_client->getWriteError(), func_name);
         setWriteError(SSL_CLIENT_WRTIE_ERROR);
         stop();
+    }
+    else if (!wr_ok) {
+        m_error("Not connected because write error is set", func_name);
     }
     return c_con && br_con && wr_ok;
 }
 
+bool SSLClientImpl::m_soft_connected(const char* func_name) {
+    // check if the socket is still open and such
+    if (getWriteError()) {
+        m_error("Cannot operate if the write error is not reset: ", func_name); 
+        m_print_ssl_error(getWriteError(), SSL_ERROR);      
+        return false;
+    }
+    // check if the ssl engine is still open
+    if(br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED) {
+        m_error("Cannot operate on a closed SSL connection.", func_name);
+        int error = br_ssl_engine_last_error(&m_sslctx.eng);
+        if(error != BR_ERR_OK) m_print_br_error(error, SSL_ERROR);   
+        return false;
+    }
+    return true;
+}
+
 /** see SSLClientImpl.h */
 int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
+    const char* func_name = __func__;
     // clear the write error
     setWriteError(SSL_OK);
     // get some random data by reading the analog pin we've been handed
@@ -251,21 +262,22 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     // inject session parameters for faster reconnection, if we have any
     if(ssl_ses.is_valid_session()) {
         br_ssl_engine_set_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
-        m_print("Set session!");
+        m_info("Set SSL session!", func_name);
     }
     // reset the engine, but make sure that it reset successfully
     int ret = br_ssl_client_reset(&m_sslctx, host, 1);
     if (!ret) {
-        m_print("Error: reset failed");
-        m_print(br_ssl_engine_last_error(&m_sslctx.eng));
+        m_error("Reset of bearSSL failed (is bearssl setup properly?)", func_name);
+        m_print_br_error(br_ssl_engine_last_error(&m_sslctx.eng), SSL_ERROR);
+        setWriteError(SSL_BR_CONNECT_FAIL);
+        return 0;
     }
     // initlalize the SSL socket over the network
     // normally this would happen in write, but I think it makes
     // a little more structural sense to put it here
     if (m_run_until(BR_SSL_SENDAPP) < 0) {
-		m_print("Error: Failed to initlalize the SSL layer");
-        m_print(br_ssl_engine_last_error(&m_sslctx.eng));
-        setWriteError(SSL_BR_CONNECT_FAIL);
+		m_error("Failed to initlalize the SSL layer", func_name);
+        m_print_br_error(br_ssl_engine_last_error(&m_sslctx.eng), SSL_ERROR);
         return 0;
 	}
     // all good to go! the SSL socket should be up and running
@@ -273,40 +285,33 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
     // set the hostname and ip in the session as well
     ssl_ses.set_parameters(remoteIP(), host);
-    // print the session details
-    m_print("Session:");
-    for (uint8_t i = 0; i < ssl_ses.session_id_len; i++) {
-        Serial.print(", 0x");
-        Serial.print(ssl_ses.session_id[i], HEX);
-    }
-    Serial.println();
-    Serial.println(ssl_ses.cipher_suite, HEX);
     return 1;
 }
 
 /** see SSLClientImpl.h*/
 int SSLClientImpl::m_run_until(const unsigned target) {
+    const char* func_name = __func__;
     unsigned lastState = 0;
     size_t lastLen = 0;
     for (;;) {
         unsigned state = m_update_engine();
 		// error check
         if (state == BR_SSL_CLOSED || getWriteError()) {
-            m_print("Error: tried to run_until when the engine is closed");
+            m_warn("Tried to run_until when the engine is closed", func_name);
             return -1;
         }
         // debug
         if (state != lastState) {
             lastState = state;
-            m_print("m_run stuck:");
+            m_info("m_run waiting:", func_name);
             printState(state);
         }
         if (state & BR_SSL_RECVREC) {
             size_t len;
             br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             if (lastLen != len) {
-                m_print("Expected bytes count: ");
-                m_print(lastLen = len);
+                m_info("Expected bytes count: ", func_name);
+                m_info(lastLen = len, func_name);
             }
         }
         /*
@@ -328,13 +333,14 @@ int SSLClientImpl::m_run_until(const unsigned target) {
             size_t len;
             if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != NULL) {
                 m_write_idx = 0;
-                m_print("Warn: discarded unread data to favor a write operation");
+                m_warn("Discarded unread data to favor a write operation", func_name);
                 br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
                 continue;
             }
             else {
-                m_print("Error: ssl engine state is RECVAPP, however the buffer was null!");
+                m_error("SSL engine state is RECVAPP, however the buffer was null! (This is a problem with BearSSL internals)", func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
+                stop();
                 return -1;
             }
         }
@@ -352,6 +358,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
 
 /** see SSLClientImpl.h*/
 unsigned SSLClientImpl::m_update_engine() {
+    const char* func_name = __func__;
     for(;;) {
         // get the state
         unsigned state = br_ssl_engine_current_state(&m_sslctx.eng);
@@ -369,7 +376,9 @@ unsigned SSLClientImpl::m_update_engine() {
             wlen = m_client->write(buf, len);
             // let the chip recover
             if (wlen < 0) {
-                m_print("Error writing to m_client");
+                m_error("Error writing to m_client", func_name);
+                m_error(m_client->getWriteError(), func_name);
+                setWriteError(SSL_CLIENT_WRTIE_ERROR);
                 /*
                     * If we received a close_notify and we
                     * still send something, then we have our
@@ -377,10 +386,8 @@ unsigned SSLClientImpl::m_update_engine() {
                     * the peer is allowed by RFC 5246 not to
                     * wait for it.
                     */
-                if (!&m_sslctx.eng.shutdown_recv) {
-                   return 0;
-                }
-                setWriteError(SSL_BR_WRITE_ERROR);
+                if (!&m_sslctx.eng.shutdown_recv) return 0;
+                stop();
                 return 0;
             }
             if (wlen > 0) {
@@ -397,8 +404,9 @@ unsigned SSLClientImpl::m_update_engine() {
             // if we've reached the point where BR_SSL_SENDAPP is off but
             // data has been written to the io buffer, something is wrong
             if (!(state & BR_SSL_SENDAPP)) {
-                m_print("Error m_write_idx > 0 but the ssl engine is not ready for data");
+                m_error("Error m_write_idx > 0 but the ssl engine is not ready for data", func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
+                stop();
                 return 0;
             }
             // else time to send the application data
@@ -407,14 +415,16 @@ unsigned SSLClientImpl::m_update_engine() {
                 unsigned char *buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
                 // engine check
                 if (alen == 0 || buf == NULL) {
-                    m_print("Error: engine set write flag but returned null buffer");
+                    m_error("Engine set write flag but returned null buffer", func_name);
                     setWriteError(SSL_BR_WRITE_ERROR);
+                    stop();
                     return 0;
                 }
                 // sanity check
                 if (alen < m_write_idx) {
-                    m_print("Error: alen is less than m_write_idx");
+                    m_error("Alen is less than m_write_idx", func_name);
                     setWriteError(SSL_INTERNAL_ERROR);
+                    stop();
                     return 0;
                 }
                 // all good? lets send the data
@@ -442,15 +452,17 @@ unsigned SSLClientImpl::m_update_engine() {
             // do we have the record you're looking for?
             const auto avail = m_client->available();
             if (avail >= len) {
-                m_print("Read bytes from client: ");
-                m_print(avail);
-                m_print(len);
+                m_info("Read bytes from client: ", func_name);
+                m_info(avail, func_name);
+                m_info(len, func_name);
                 
                 // I suppose so!
                 int rlen = m_client->read(buf, len);
                 if (rlen <= 0) {
-                    m_print("Error reading bytes from m_client");
-                    setWriteError(SSL_BR_WRITE_ERROR);
+                    m_error("Error reading bytes from m_client. Write Error: ", func_name);
+                    m_error(m_client->getWriteError(), func_name);
+                    setWriteError(SSL_CLIENT_WRTIE_ERROR);
+                    stop();
                     return 0;
                 }
                 if (rlen > 0) {
@@ -473,4 +485,104 @@ unsigned SSLClientImpl::m_update_engine() {
         // in which case we return 
         return state;
     }
+}
+
+
+/** See SSLClientImpl.h */
+void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level) const
+{
+    // print the sslclient prefix
+    Serial.print("(SSLClient)");
+    // print the debug level
+    switch (level) {
+        case SSL_INFO: Serial.print("SSL_INFO"); break;
+        case SSL_WARN: Serial.print("SSL_WARN"); break;
+        case SSL_ERROR: Serial.print("SSL_ERROR"); break;
+        default: Serial.print("Unknown level");
+    }
+    // print the function name
+    Serial.print(func_name);
+    // get ready
+    Serial.print(": ");
+}
+
+/** See SSLClientImpl.h */
+void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel level) const {
+    if (level < m_debug) return;
+    m_print_prefix(__func__, level);
+    switch(ssl_error) {
+        case SSL_OK: Serial.println("SSL_OK"); break;
+        case SSL_CLIENT_CONNECT_FAIL: Serial.println("SSL_CLIENT_CONNECT_FAIL"); break;
+        case SSL_BR_CONNECT_FAIL: Serial.println("SSL_BR_CONNECT_FAIL"); break;
+        case SSL_CLIENT_WRTIE_ERROR: Serial.println("SSL_CLIENT_WRITE_FAIL"); break;
+        case SSL_BR_WRITE_ERROR: Serial.println("SSL_BR_WRITE_ERROR"); break;
+        case SSL_INTERNAL_ERROR: Serial.println("SSL_INTERNAL_ERROR"); break;
+    }
+}
+
+/* See SSLClientImpl.h */
+void SSLClientImpl::m_print_br_error(const unsigned br_error_code, const DebugLevel level) const {
+  if (level < m_debug) return;
+  m_print_prefix(__func__, level);
+  switch (br_error_code) {
+    case BR_ERR_BAD_PARAM: Serial.println("Caller-provided parameter is incorrect."); break;
+    case BR_ERR_BAD_STATE: Serial.println("Operation requested by the caller cannot be applied with the current context state (e.g. reading data while outgoing data is waiting to be sent)."); break;
+    case BR_ERR_UNSUPPORTED_VERSION: Serial.println("Incoming protocol or record version is unsupported."); break;
+    case BR_ERR_BAD_VERSION: Serial.println("Incoming record version does not match the expected version."); break;
+    case BR_ERR_BAD_LENGTH: Serial.println("Incoming record length is invalid."); break;
+    case BR_ERR_TOO_LARGE: Serial.println("Incoming record is too large to be processed, or buffer is too small for the handshake message to send."); break;
+    case BR_ERR_BAD_MAC: Serial.println("Decryption found an invalid padding, or the record MAC is not correct."); break;
+    case BR_ERR_NO_RANDOM: Serial.println("No initial entropy was provided, and none can be obtained from the OS."); break;
+    case BR_ERR_UNKNOWN_TYPE: Serial.println("Incoming record type is unknown."); break;
+    case BR_ERR_UNEXPECTED: Serial.println("Incoming record or message has wrong type with regards to the current engine state."); break;
+    case BR_ERR_BAD_CCS: Serial.println("ChangeCipherSpec message from the peer has invalid contents."); break;
+    case BR_ERR_BAD_ALERT: Serial.println("Alert message from the peer has invalid contents (odd length)."); break;
+    case BR_ERR_BAD_HANDSHAKE: Serial.println("Incoming handshake message decoding failed."); break;
+    case BR_ERR_OVERSIZED_ID: Serial.println("ServerHello contains a session ID which is larger than 32 bytes."); break;
+    case BR_ERR_BAD_CIPHER_SUITE: Serial.println("Server wants to use a cipher suite that we did not claim to support. This is also reported if we tried to advertise a cipher suite that we do not support."); break;
+    case BR_ERR_BAD_COMPRESSION: Serial.println("Server wants to use a compression that we did not claim to support."); break;
+    case BR_ERR_BAD_FRAGLEN: Serial.println("Server's max fragment length does not match client's."); break;
+    case BR_ERR_BAD_SECRENEG: Serial.println("Secure renegotiation failed."); break;
+    case BR_ERR_EXTRA_EXTENSION: Serial.println("Server sent an extension type that we did not announce, or used the same extension type several times in a single ServerHello."); break;
+    case BR_ERR_BAD_SNI: Serial.println("Invalid Server Name Indication contents (when used by the server, this extension shall be empty)."); break;
+    case BR_ERR_BAD_HELLO_DONE: Serial.println("Invalid ServerHelloDone from the server (length is not 0)."); break;
+    case BR_ERR_LIMIT_EXCEEDED: Serial.println("Internal limit exceeded (e.g. server's public key is too large)."); break;
+    case BR_ERR_BAD_FINISHED: Serial.println("Finished message from peer does not match the expected value."); break;
+    case BR_ERR_RESUME_MISMATCH: Serial.println("Session resumption attempt with distinct version or cipher suite."); break;
+    case BR_ERR_INVALID_ALGORITHM: Serial.println("Unsupported or invalid algorithm (ECDHE curve, signature algorithm, hash function)."); break;
+    case BR_ERR_BAD_SIGNATURE: Serial.println("Invalid signature in ServerKeyExchange or CertificateVerify message."); break;
+    case BR_ERR_WRONG_KEY_USAGE: Serial.println("Peer's public key does not have the proper type or is not allowed for the requested operation."); break;
+    case BR_ERR_NO_CLIENT_AUTH: Serial.println("Client did not send a certificate upon request, or the client certificate could not be validated."); break;
+    case BR_ERR_IO: Serial.println("I/O error or premature close on transport stream."); break;
+    case BR_ERR_X509_INVALID_VALUE: Serial.println("Invalid value in an ASN.1 structure."); break;
+    case BR_ERR_X509_TRUNCATED: Serial.println("Truncated certificate or other ASN.1 object."); break;
+    case BR_ERR_X509_EMPTY_CHAIN: Serial.println("Empty certificate chain (no certificate at all)."); break;
+    case BR_ERR_X509_INNER_TRUNC: Serial.println("Decoding error: inner element extends beyond outer element size."); break;
+    case BR_ERR_X509_BAD_TAG_CLASS: Serial.println("Decoding error: unsupported tag class (application or private)."); break;
+    case BR_ERR_X509_BAD_TAG_VALUE: Serial.println("Decoding error: unsupported tag value."); break;
+    case BR_ERR_X509_INDEFINITE_LENGTH: Serial.println("Decoding error: indefinite length."); break;
+    case BR_ERR_X509_EXTRA_ELEMENT: Serial.println("Decoding error: extraneous element."); break;
+    case BR_ERR_X509_UNEXPECTED: Serial.println("Decoding error: unexpected element."); break;
+    case BR_ERR_X509_NOT_CONSTRUCTED: Serial.println("Decoding error: expected constructed element, but is primitive."); break;
+    case BR_ERR_X509_NOT_PRIMITIVE: Serial.println("Decoding error: expected primitive element, but is constructed."); break;
+    case BR_ERR_X509_PARTIAL_BYTE: Serial.println("Decoding error: BIT STRING length is not multiple of 8."); break;
+    case BR_ERR_X509_BAD_BOOLEAN: Serial.println("Decoding error: BOOLEAN value has invalid length."); break;
+    case BR_ERR_X509_OVERFLOW: Serial.println("Decoding error: value is off-limits."); break;
+    case BR_ERR_X509_BAD_DN: Serial.println("Invalid distinguished name."); break;
+    case BR_ERR_X509_BAD_TIME: Serial.println("Invalid date/time representation."); break;
+    case BR_ERR_X509_UNSUPPORTED: Serial.println("Certificate contains unsupported features that cannot be ignored."); break;
+    case BR_ERR_X509_LIMIT_EXCEEDED: Serial.println("Key or signature size exceeds internal limits."); break;
+    case BR_ERR_X509_WRONG_KEY_TYPE: Serial.println("Key type does not match that which was expected."); break;
+    case BR_ERR_X509_BAD_SIGNATURE: Serial.println("Signature is invalid."); break;
+    case BR_ERR_X509_TIME_UNKNOWN: Serial.println("Validation time is unknown."); break;
+    case BR_ERR_X509_EXPIRED: Serial.println("Certificate is expired or not yet valid."); break;
+    case BR_ERR_X509_DN_MISMATCH: Serial.println("Issuer/Subject DN mismatch in the chain."); break;
+    case BR_ERR_X509_BAD_SERVER_NAME: Serial.println("Expected server name was not found in the chain."); break;
+    case BR_ERR_X509_CRITICAL_EXTENSION: Serial.println("Unknown critical extension in certificate."); break;
+    case BR_ERR_X509_NOT_CA: Serial.println("Not a CA, or path length constraint violation."); break;
+    case BR_ERR_X509_FORBIDDEN_KEY_USAGE: Serial.println("Key Usage extension prohibits intended usage."); break;
+    case BR_ERR_X509_WEAK_PUBLIC_KEY: Serial.println("Public key found in certificate is too small."); break;
+    case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor."); break;
+    default: Serial.println("Unknown error code."); break;
+  }
 }
