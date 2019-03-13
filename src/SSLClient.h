@@ -143,7 +143,7 @@ SSLSession& SSLClient<C, SessionCache>::getSession(const char* host, const IPAdd
     if (temp_index == -1) {
         temp_index = m_index;
         // reset the session so we don't try to send one sites session to another
-        m_sessions[temp_index] = SSLSession();
+        m_sessions[temp_index].clear_parameters();
     }
     // increment m_index so the session cache is a circular buffer
     if (temp_index == m_index && ++m_index >= SessionCache) m_index = 0;
@@ -160,7 +160,7 @@ void SSLClient<C, SessionCache>::removeSession(const char* host, const IPAddress
     if (temp_index != -1) {
         m_info(" Deleted session ", func_name);
         m_info(temp_index, func_name);
-        m_sessions[temp_index] = SSLSession();
+        m_sessions[temp_index].clear_parameters();
     }
 }
 
@@ -173,7 +173,7 @@ int SSLClient<C, SessionCache>::m_getSessionIndex(const char* host, const IPAddr
         if (m_sessions[i].is_valid_session() 
             && (
                 // and the hostname matches, or
-                (host != NULL && strcmp(host, m_sessions[i].get_hostname()) == 0)
+                (host != NULL && m_sessions[i].get_hostname().equals(host))
                 // there is no hostname and the IP address matches    
                 || (host == NULL && addr == m_sessions[i].get_ip())
             )) {

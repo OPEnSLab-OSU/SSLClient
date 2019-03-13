@@ -52,7 +52,7 @@ class SSLSession : public br_ssl_session_parameters {
 public:
     explicit SSLSession()
         : m_valid_session(false)
-        , m_hostname{}
+        , m_hostname()
         , m_ip(INADDR_NONE) {}
 
     /**
@@ -60,22 +60,31 @@ public:
      */
     void set_parameters(const IPAddress& ip, const char* hostname = NULL) {
         // copy the hostname
-        if (hostname != NULL) strncpy(m_hostname, hostname, sizeof m_hostname - 1);
+        if (hostname != NULL) m_hostname = hostname;
         // or if there's no hostname, clear the string
-        else m_hostname[0] = '\0';
+        else m_hostname = "";
         // and the IP address
         m_ip = ip;
         // check if both values are valid, and if so set valid to true
         if (m_ip != INADDR_NONE && session_id_len > 0
-            && (hostname == NULL || strlen(m_hostname) > 0)) m_valid_session = true;
+            && (hostname == NULL || m_hostname)) m_valid_session = true;
     }
+
+    void clear_parameters() {
+        // clear the hostname , ip, and valid session flags
+        m_hostname = "";
+        m_ip = INADDR_NONE;
+        m_valid_session = false;
+    }
+
+    SSLSession& operator=(const SSLSession&) = delete;
 
     br_ssl_session_parameters* to_br_session() { return (br_ssl_session_parameters *)this; }
 
     /**
      * \pre must check isValidSession
      */
-    const char* get_hostname() const { return m_hostname; }
+    const String& get_hostname() const { return m_hostname; }
 
     /**
      * \pre must check isValidSession
@@ -86,7 +95,7 @@ public:
 private:
     bool m_valid_session;
     // aparently a hostname has a max length of 256 chars. Go figure.
-    char m_hostname[256];
+    String m_hostname;
     // store the IP Address we connected to
     IPAddress m_ip;
 };
