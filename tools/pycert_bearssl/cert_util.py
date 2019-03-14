@@ -108,6 +108,7 @@ CROOTCA_TEMPLATE = """\
 #  - cert_label: The certificate's name field (Usually CN, in the subject)
 #  - cert_issue: The certificate's issuer string
 #  - cert_subject: The certificate's subject string
+#  - cert_domain: The domains polled by this tool that returned this certificate
 CCERT_DESC_TEMPLATE = """\
  * Index:    {cert_num}
  * Label:    {cert_label}
@@ -171,18 +172,6 @@ def get_server_root_cert(address, port, certDict):
         return None
     return certDict[cn_hash]
 
-def filter_duplicate_x509(certs):
-    serial_numbers = set()
-    out_certs = list()
-    # filter duplicate certs
-    for cert in certs:
-        # Skip duplicate certs where required.
-        if cert.get_serial_number() in serial_numbers:
-            continue
-        out_certs.append(cert)
-        serial_numbers.add(cert.get_serial_number())
-    return out_certs
-
 def bytes_to_c_data(mah_bytes, length=None):
     """Converts a byte array to a CSV C array data format, with endlines!
         e.g: 0x12, 0xA4, etc.
@@ -199,7 +188,13 @@ def bytes_to_c_data(mah_bytes, length=None):
     # join, wrap, and return
     return textwrap.fill(''.join(ret), width=6*12 + 5, initial_indent='    ', subsequent_indent='    ', break_long_words=False)
 
-def decribe_cert_object(cert, cert_num):
+def decribe_cert_object(cert, cert_num, domain=None):
+    """
+    Formats a string describing a certificate object, including the domain
+    being used and the index in the trust anchor array. Cert should be a
+    x509 object, domain should be a string name, and cert_num should be
+    an integer.
+    """
     # get the label from the subject feild on the certificate
     label = ""
     com = dict(cert.get_subject().get_components())
@@ -211,16 +206,20 @@ def decribe_cert_object(cert, cert_num):
         label = com[b'O'].decode("utf-8")
     # return the formated string
     crypto = cert.to_cryptography()
-    return CCERT_DESC_TEMPLATE.format(
+    out_str = CCERT_DESC_TEMPLATE.format(
         cert_num=cert_num,
         cert_label=label,
         cert_subject=crypto.subject.rfc4514_string(),
     )
-        
+    # if domain, then add domain entry
+    if domain is not None:
+        out_str += "\n * Domain(s): " + domain
+    return out_str
 
-def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes):
+def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes, domains=None):
     """Combine a collection of PEM format certificates into a single C header with the
     combined cert data in BearSSL format.  x509Certs should be a list of pyOpenSSL x590 objects,
+    domains should be a list of respective domain strings (in same order as x509Certs),
     cert_var controls the name of the cert data variable in the output header, cert_length_var 
     controls the name of the cert data length variable/define, output is the output file 
     (which must be open for writing). Keep_dupes is a boolean to indicate if duplicate 
@@ -228,24 +227,41 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
     """
     cert_description = ''
     certs = x509Certs
-    if not keep_dupes:
-        certs = filter_duplicate_x509(x509Certs)
     # Save cert data as a C style header.
     # start by building each component
     cert_data = ""
+    # hold an array of static array strings (TA_RSA_N)
     static_arrays = list()
+    # same with CA entries
     CAs = list()
+    # descriptions
     cert_desc = list()
+    # track the serial numbers so we can find duplicates
+    cert_ser = list()
     for i, cert in enumerate(certs):
+        # calculate the index shifted from duplicates (if any)
+        cert_index = len(CAs)
+        # deduplicate certificates
+        if not keep_dupes and cert.get_serial_number() in cert_ser:
+            # append the domain we used it for into the cert description
+            if domains is not None:
+                cert_desc[cert_ser.index(cert.get_serial_number())] += ", " + domains[i]
+            # we don't need to generate stuff for this certificate
+            continue
+        # record the serial number for later
+        cert_ser.append(cert.get_serial_number())
         # add a description of the certificate to the array
-        cert_desc.append(decribe_cert_object(cert, i))
+        if domains is None:
+            cert_desc.append(decribe_cert_object(cert, cert_index))
+        else:
+            cert_desc.append(decribe_cert_object(cert, cert_index, domain=domains[i]))
         # build static arrays containing all the keys of the certificate
         # start with distinguished name
         # get the distinguished name in bytes
         dn_bytes_str = bytes_to_c_data(cert.get_subject().der())
         static_arrays.append(CRAY_TEMPLATE.format(
             ray_type="unsigned char", 
-            ray_name=DN_PRE + str(i), 
+            ray_name=DN_PRE + str(cert_index), 
             ray_data=dn_bytes_str))
         # next, the RSA public numbers
         pubkey = cert.get_pubkey()
@@ -254,19 +270,19 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
         n_bytes_str = bytes_to_c_data(numbers.n.to_bytes(pubkey.bits() // 8, byteorder="big"))
         static_arrays.append(CRAY_TEMPLATE.format(
             ray_type="unsigned char", 
-            ray_name=RSA_N_PRE + str(i), 
+            ray_name=RSA_N_PRE + str(cert_index), 
             ray_data=n_bytes_str))
         # and then the exponent
         e_bytes_str = bytes_to_c_data(numbers.e.to_bytes(math.ceil(numbers.e.bit_length() / 8), byteorder="big"))
         static_arrays.append(CRAY_TEMPLATE.format(
             ray_type="unsigned char", 
-            ray_name=RSA_E_PRE + str(i), 
+            ray_name=RSA_E_PRE + str(cert_index), 
             ray_data=e_bytes_str))
         # format the root certificate entry
         CAs.append(CROOTCA_TEMPLATE.format(
-            ta_dn_name=DN_PRE + str(i), 
-            rsa_number_name=RSA_N_PRE + str(i), 
-            rsa_exp_name=RSA_E_PRE + str(i)))
+            ta_dn_name=DN_PRE + str(cert_index), 
+            rsa_number_name=RSA_N_PRE + str(cert_index), 
+            rsa_exp_name=RSA_E_PRE + str(cert_index)))
     # concatonate it all into the big header file template
     # cert descriptions
     cert_desc_out = '\n * \n'.join(cert_desc)
@@ -281,6 +297,6 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
         guard_name=os.path.splitext(output_file.name)[0].upper(),
         cert_description=cert_desc_out, 
         cert_length_var=cert_length_var,
-        cert_length=str(len(certs)),
+        cert_length=str(len(CAs)),
         cert_data=cert_data_out,
     ))
