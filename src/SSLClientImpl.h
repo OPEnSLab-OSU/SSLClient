@@ -26,6 +26,13 @@
 #ifndef SSLClientImpl_H_
 #define SSLClientImpl_H_
 
+// system reset definitions
+#define SYSRESETREQ    (1<<2)
+#define VECTKEY        (0x05fa0000UL)
+#define VECTKEY_MASK   (0x0000ffffUL)
+#define AIRCR          (*(uint32_t*)0xe000ed0cUL) // fixed arch-defined address
+#define REQUEST_EXTERNAL_RESET (AIRCR=(AIRCR&VECTKEY_MASK)|VECTKEY|SYSRESETREQ)
+
 /** error enums
  * Static constants defining the possible errors encountered
  * Read from getWriteError();
@@ -36,7 +43,8 @@ enum Error {
     SSL_BR_CONNECT_FAIL,
     SSL_CLIENT_WRTIE_ERROR,
     SSL_BR_WRITE_ERROR,
-    SSL_INTERNAL_ERROR
+    SSL_INTERNAL_ERROR,
+    SSL_OUT_OF_MEMORY
 };
 
 /** Debug level enum

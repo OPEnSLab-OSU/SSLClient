@@ -195,7 +195,8 @@ void SSLClientImpl::stop() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
-    while (br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
+    while (getWriteError() == SSL_OK
+        && br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
         && m_run_until(BR_SSL_RECVAPP) == 0) {
         /*
 		 * Discard any incoming application data.
@@ -308,7 +309,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
     for (;;) {
         unsigned state = m_update_engine();
 		// error check
-        if (state == BR_SSL_CLOSED || getWriteError()) {
+        if (state == BR_SSL_CLOSED || getWriteError() != SSL_OK) {
             m_warn("Tried to run_until when the engine is closed", func_name);
             return -1;
         }
@@ -324,8 +325,6 @@ int SSLClientImpl::m_run_until(const unsigned target) {
             lastState = state;
             m_info("m_run changed state:", func_name);
             printState(state);
-            m_info("Memory: ", func_name);
-            m_info(freeMemory(), func_name);
         }
         if (state & BR_SSL_RECVREC) {
             size_t len;
@@ -473,11 +472,33 @@ unsigned SSLClientImpl::m_update_engine() {
             // do we have the record you're looking for?
             const auto avail = m_client->available();
             if (avail >= len) {
+                int mem = freeMemory();
+                m_info("Memory: ", func_name);
+                m_info(mem, func_name);
+                // free memory check
+                // BearSSL takes up so much memory on the stack it tends
+                // to overflow if there isn't at least 8000 bytes available
+                // when it starts
+                if(mem < 8000) {
+                    m_error("Out of memory! Decrease the number of sessions or the size of m_iobuf", func_name);
+                    setWriteError(SSL_OUT_OF_MEMORY);
+                    stop();
+                    return 0;
+                }
+                // check for a stack overflow
+                // if the stack overflows we basically have to crash, and
+                // hope the user is ok with that
+                // since all memory is garbage we can't trust the cpu to
+                // execute anything properly
+                if (mem > 32 * 1024) {
+                    // software reset
+                    REQUEST_EXTERNAL_RESET;
+                    // can't print anything, so pray for reset
+                    while (1) { }
+                }
                 m_info("Read bytes from client: ", func_name);
                 m_info(avail, func_name);
                 m_info(len, func_name);
-                m_info("Memory: ", func_name);
-                m_info(freeMemory(), func_name);
                 // I suppose so!
                 int rlen = m_client->read(buf, len);
                 if (rlen <= 0) {
@@ -539,6 +560,7 @@ void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel leve
         case SSL_CLIENT_WRTIE_ERROR: Serial.println("SSL_CLIENT_WRITE_FAIL"); break;
         case SSL_BR_WRITE_ERROR: Serial.println("SSL_BR_WRITE_ERROR"); break;
         case SSL_INTERNAL_ERROR: Serial.println("SSL_INTERNAL_ERROR"); break;
+        case SSL_OUT_OF_MEMORY: Serial.println("SSL_OUT_OF_MEMORY"); break;
     }
 }
 
