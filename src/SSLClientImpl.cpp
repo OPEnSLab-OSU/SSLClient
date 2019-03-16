@@ -20,6 +20,35 @@
 
 #include "SSLClient.h"
 
+// system reset definitions
+static constexpr auto SYSRESETREQ = (1<<2);
+static constexpr auto VECTKEY = (0x05fa0000UL);
+static constexpr auto VECTKEY_MASK = (0x0000ffffUL);
+/** Trigger a software reset. Only use if in unrecoverable state */
+[[ noreturn ]] static void RESET() {
+    (*(uint32_t*)0xe000ed0cUL)=((*(uint32_t*)0xe000ed0cUL)&VECTKEY_MASK)|VECTKEY|SYSRESETREQ;
+    while(1) { }
+}
+
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char* sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif  // __arm__
+ 
+/** Get the free memory availible in bytes (stack - heap) */
+static int freeMemory() {
+  char top;
+#ifdef __arm__
+  return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+  return &top - __brkval;
+#else  // __arm__
+  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif  // __arm__
+}
+
 /** see SSLClientImpl.h */
 SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_anchors, 
     const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug)
@@ -473,6 +502,16 @@ unsigned SSLClientImpl::m_update_engine() {
             const auto avail = m_client->available();
             if (avail >= len) {
                 int mem = freeMemory();
+                // check for a stack overflow
+                // if the stack overflows we basically have to crash, and
+                // hope the user is ok with that
+                // since all memory is garbage we can't trust the cpu to
+                // execute anything properly
+                if (mem > 32 * 1024) {
+                    // software reset
+                    RESET();
+                }
+                // debug info 
                 m_info("Memory: ", func_name);
                 m_info(mem, func_name);
                 // free memory check
@@ -484,17 +523,6 @@ unsigned SSLClientImpl::m_update_engine() {
                     setWriteError(SSL_OUT_OF_MEMORY);
                     stop();
                     return 0;
-                }
-                // check for a stack overflow
-                // if the stack overflows we basically have to crash, and
-                // hope the user is ok with that
-                // since all memory is garbage we can't trust the cpu to
-                // execute anything properly
-                if (mem > 32 * 1024) {
-                    // software reset
-                    REQUEST_EXTERNAL_RESET;
-                    // can't print anything, so pray for reset
-                    while (1) { }
                 }
                 m_info("Read bytes from client: ", func_name);
                 m_info(avail, func_name);

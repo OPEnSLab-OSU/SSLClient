@@ -26,68 +26,60 @@
 #ifndef SSLClientImpl_H_
 #define SSLClientImpl_H_
 
-// system reset definitions
-#define SYSRESETREQ    (1<<2)
-#define VECTKEY        (0x05fa0000UL)
-#define VECTKEY_MASK   (0x0000ffffUL)
-#define AIRCR          (*(uint32_t*)0xe000ed0cUL) // fixed arch-defined address
-#define REQUEST_EXTERNAL_RESET (AIRCR=(AIRCR&VECTKEY_MASK)|VECTKEY|SYSRESETREQ)
-
-/** error enums
- * Static constants defining the possible errors encountered
- * Read from getWriteError();
+/**
+ * @brief Static constants defining the possible errors encountered.
+ * 
+ * If SSLClient encounters an error, it will generally output
+ * logs into the serial moniter. If you need a way of programmatically
+ * checking the errors, you can do so with SSLCLient.getWriteError(),
+ * which will return one of these values.
  */
 enum Error {
     SSL_OK = 0,
+    /** The underlying client failed to connect, probably not an issue with SSL */
     SSL_CLIENT_CONNECT_FAIL,
+    /** BearSSL failed to complete the SSL handshake, check logs for bear ssl error output */
     SSL_BR_CONNECT_FAIL,
+    /** The underlying client failed to write a payload, probably not an issue with SSL */
     SSL_CLIENT_WRTIE_ERROR,
+    /** An internal error occurred with BearSSL, check logs for diagnosis. */
     SSL_BR_WRITE_ERROR,
+    /** An internal error occured with SSLClient, and you probably need to submit an issue on Github. */
     SSL_INTERNAL_ERROR,
+    /** SSLClient detected that there was not enough memory (>8000 bytes) to continue. */
     SSL_OUT_OF_MEMORY
 };
 
-/** Debug level enum
- * Static enum defining the debugging levels to print
- * into the Serial monitor
+/**
+ * @brief Level of verbosity used in logging for SSLClient.
+ * 
+ * Use these values when initializing SSLCLient to set how many logs you
+ * would like to see in the Serial moniter.
  */
 enum DebugLevel {
+    /** No logging output */
     SSL_NONE = 0,
+    /** Only output errors that result in connection failure */
     SSL_ERROR = 1,
+    /** Ouput errors and warnings (useful when just starting to develop) */
     SSL_WARN = 2,
+    /** Output errors, warnings, and internal information (very verbose) */
     SSL_INFO = 3,
 };
 
-
-#ifdef __arm__
-// should use uinstd.h to define sbrk but Due causes a conflict
-extern "C" char* sbrk(int incr);
-#else  // __ARM__
-extern char *__brkval;
-#endif  // __arm__
- 
-static int freeMemory() {
-  char top;
-#ifdef __arm__
-  return &top - reinterpret_cast<char*>(sbrk(0));
-#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
-  return &top - __brkval;
-#else  // __arm__
-  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
-#endif  // __arm__
-}
-
-
-/** TODO: Write what this is */
+/** 
+ * On error, any function in this class will terminate the socket.
+ * TODO: Write what this is */
 
 class SSLClientImpl : public Client {
 public:
     /**
      * @brief initializes SSL contexts for bearSSL
      * 
-     * @pre The client class must be able to access the internet, as SSLClient
-     * cannot manage this for you. Additionally it is recommended that the analog_pin
-     * be set to input.
+     * @pre You will need to generate an array of trust_anchors (root certificates)
+     * based off of the domains you want to make SSL connections to. Check out the
+     * Wiki on the pycert-bearssl tool for a simple way to do this.
+     * @pre The analog_pin should be set to input.
      * 
      * @post set_client must be called immediatly after to set the client class
      * pointer.
@@ -104,13 +96,8 @@ public:
      */
     explicit SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, 
         const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
-    /** Dtor is implicit since unique_ptr handles it fine */
 
-    /** functions specific to the EthernetClient which I'll have to override */
-    // uint8_t status();
-    // uint8_t getSocketNumber() const;
-
-    /** functions dealing with read/write that BearSSL will be injected into */
+    /* functions dealing with read/write that BearSSL will be injected into */
     /**
      * @brief Connect over SSL to a host specified by an ip address
      * 
@@ -122,46 +109,162 @@ public:
      * 
      * This function initializes EthernetClient by calling EthernetClient::connect
      * with the parameters supplied, then once the socket is open initializes
-     * the appropriete bearssl contexts using the TLS_only_profile. Due to the 
-     * design of the SSL standard, this function will probably take an extended 
-     * period (1-2sec) to negotiate the handshake and finish the connection. 
+     * the appropriete bearssl contexts. Due to the design of the SSL standard, 
+     * this function will probably take an extended period (1-4sec) to negotiate 
+     * the handshake and finish the connection. This function runs until the SSL 
+     * handshake succeeds or fails, as found in most Arduino libraries, so be 
+     * sure to design around this in your code.
+     * 
+     * @pre The underlying client object (passed in through the ctor) in a non-
+     * error state, and must be able to access the server being connected to.
+     * @pre SSLCLient can only have one connection at a time, so the client
+     * object must not already have a socket open.
+     * @pre There must be sufficient memory availible on the device to verify
+     * the certificate (if the free memory drops below 8000 bytes during certain
+     * points in the connection, SSLCLient will fail).
+     * @pre There must be a trust anchor given to the ctor that corresponds to
+     * the certificate provided by the IP address being connected to. For more
+     * information check out the wiki on the pycert-bearssl tool.
+     * @pre The analog pin passed to the ctor must be set to input, and must
+     * be wired to something sort of random (floating is fine).
      * 
      * @param ip The ip address to connect to
      * @param port the port to connect to
      * @returns 1 if success, 0 if failure (as found in EthernetClient)
-     * 
-     * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
-     * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
      */
     virtual int connect(IPAddress ip, uint16_t port);
+
     /**
-     * @brief Connect over SSL using connect(ip, port), but use a DNS lookup to
+     * @brief Connect over SSL using connect(ip, port), using a DNS lookup to
      * get the IP Address first. 
      * 
      * This function initializes EthernetClient by calling EthernetClient::connect
-     * with the parameters supplied, then once the socket is open initializes
-     * the appropriete bearssl contexts using the TLS_only_profile. 
+     * with the parameters supplied, then once the socket is open uses BearSSL to
+     * to complete a SSL handshake. This function runs until the SSL handshake 
+     * succeeds or fails, as found in most Arduino libraries.
+     * 
+     * SSL requires the client to generate some random bits (to be later combined 
+     * with some random bits from the server), so SSLClient uses the least signinigant 
+     * bits from the analog pin supplied in the ctor. The random bits are generated
+     * from 16 consecutive analogReads, and given to BearSSL before the handshake
+     * starts.
      * 
      * Due to the design of the SSL standard, this function will probably take an 
-     * extended period (1-2sec) to negotiate the handshake and finish the 
+     * extended period (1-4sec) to negotiate the handshake and finish the 
      * connection. Since the hostname is provided, however, BearSSL is able to keep
      * a session cache of the clients we have connected to. This should reduce
-     * connection time greatly. In order to use this feature, you must reuse the
-     * same SSLClient object to connect to the reused host. Doing this will allow 
-     * BearSSL to automatically match the hostname to a cached session.
+     * connection time to about 100-200ms. In order to use this feature, the website
+     * you are connecting to must support it (most do by default), you must 
+     * reuse the same SSLClient object, and you must reconnect to the same server.
+     * SSLClient automatcally stores an IP address and hostname in each session,
+     * ensuring that if you call connect("www.google.com") SSLClient will use a
+     * cached IP address instead of another DNS lookup. Because some websites have
+     * multiple servers on a single IP address (github.com is an example), however,
+     * you may find that even if you are connecting to the same host the connection
+     * does not resume. This is a flaw in the SSL session protocol, and has been 
+     * resolved in future versions. On top of all that, SSL sessions can expire
+     * based on server criteria, which will result in a regular connection time.
+     * Because of all these factors, it is generally prudent to assume the
+     * connection will not be resumed, and go from there.
+     * 
+     * @pre The underlying client object (passed in through the ctor) in a non-
+     * error state, and must be able to access the server being connected to.
+     * @pre SSLCLient can only have one connection at a time, so the client
+     * object must not already have a socket open.
+     * @pre There must be sufficient memory availible on the device to verify
+     * the certificate (if the free memory drops below 8000 bytes during certain
+     * points in the connection, SSLCLient will fail).
+     * @pre There must be a trust anchor given to the ctor that corresponds to
+     * the certificate provided by the IP address being connected to. For more
+     * information check out the wiki on the pycert-bearssl tool.
+     * @pre The analog pin passed to the ctor must be set to input, and must
+     * be wired to something sort of random (floating is fine).
      * 
      * @param host The cstring host ("www.google.com")
-     * @param port the port to connect to
-     * @returns 1 of success, 0 if failure (as found in EthernetClient)
-     * 
-     * @error SSL_CLIENT_CONNECT_FAIL The client object could not connect to the host or port
-     * @error SSL_BR_CONNECT_FAIL BearSSL could not initialize the SSL connection.
+     * @param port the port to connect to (443)
+     * @returns 1 of success, 0 if failure (as found in EthernetClient).
      */
 	virtual int connect(const char *host, uint16_t port);
+
+    /** @see SSLClient::write(uint8_t*, size_t) */
     virtual size_t write(uint8_t b) { return write(&b, 1); }
+    /**
+     * @brief Write some bytes to the SSL connection
+     * 
+     * Assuming all preconditions are met, this function waits for BearSSL
+     * to be ready for data to be sent, then writes data to the BearSSL IO 
+     * buffer, BUT does not initally send the data. Insead, it is
+     * then checked if the BearSSL IO buffer is full, and if so, this function
+     * waits until BearSSL has flushed the buffer (written it to the 
+     * network client) and fills the buffer again. If the function finds 
+     * that the BearSSL buffer is not full, it returns the number of 
+     * bytes written. In other words, this function will only write data 
+     * to the network if the BearSSL IO buffer is full. Instead, you must call 
+     * SSLClient::availible or SSLClient::flush, which will detect that 
+     * the buffer is ready for writing, and will write the data to the network.
+     * 
+     * This was implemented as a buffered function because users of Arduino Client
+     * libraries will often write to the network as such:
+     * @code{.cpp}
+     * Client client;
+     * ...
+     * client.println("GET /asciilogo.txt HTTP/1.1");
+     * client.println("Host: arduino.cc");
+     * client.println("Connection: close");
+     * while (!client.available()) { ... }
+     * ...
+     * @endcode
+     * This is fine with most network clients. With SSL, however, if we are encryting and
+     * writing to the network every write() call this will result in a lot of
+     * small encryption tasks. Encryption takes a lot of time and code, and in general
+     * the larger the batch we can do it in the better. For this reason, write() 
+     * implicitly buffers until SSLClient::availible is called, or until the buffer is full.
+     * If you would like to trigger a network write manually without using the SSLClient::available,
+     * you can also call SSLClient::flush, which will write all data and return when finished.
+     * 
+     * @pre The socket and SSL layer must be connected, meaning SSLClient::connected must be true.
+     * @pre BearSSL must not be waiting for the recipt of user data (if it is, there is
+     * probably an error with how the protocol in implemented in your code).
+     * 
+     * @param buf the pointer to a buffer of bytes to copy
+     * @param size the number of bytes to copy from the buffer
+     * @returns The number of bytes copied to the buffer (size), or zero if the BearSSL engine 
+     * fails to become ready for writing data.
+     */
 	virtual size_t write(const uint8_t *buf, size_t size);
+
+    /**
+     * @brief Returns the number of bytes availible to read from the SSL Socket
+     * 
+     * This function updates the state of the SSL engine (including writing any data, 
+     * see SSLClient::write) and as a result should be called periodically when writing
+     * or expecting data. Additionally, since this function returns zero if there are
+     * no bytes and if SSLClient::connected is false (this same behavior is found
+     * in EthernetClient), it is prudent to ensure in your own code that the 
+     * preconditions are met before checking this function to prevent an ambigious
+     * result.
+     * 
+     * @pre SSLClient::connected must be true.
+     * 
+     * @returns The number of bytes availible (can be zero), or zero if any of the pre
+     * conditions aren't satisfied.
+     */
 	virtual int available();
+
+    /** @see SSLClient::read(uint8_t*, size_t) */
 	virtual int read() { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; }
+    /**
+     * @brief Read size bytes from the SSL socket buffer, copying them into *buf, and return the number of bytes read.
+     * 
+     * This function checks if bytes are ready to be read by calling SSLClient::availible,
+     * and if there are some copies size number of bytes from the IO buffer into buf.
+     * 
+     * It should be noted that a common problem I encountered with SSL connections is
+     * buffer overflow, caused by the server sending too much data at once. This problem
+     * only occurs...
+     * 
+     * TODO: finish
+     */
 	virtual int read(uint8_t *buf, size_t size);
 	virtual int peek();
 	virtual void flush();

@@ -50,13 +50,59 @@
 class SSLSession : public br_ssl_session_parameters {
 
 public:
+    /**
+     * @brief SSLSession constructor
+     * 
+     * Sets all parameters to zero, and invalidates the session
+     */
     explicit SSLSession()
         : m_valid_session(false)
         , m_hostname()
         , m_ip(INADDR_NONE) {}
 
+    /** @brief use clear_parameters or set_parameters instead */
+    SSLSession& operator=(const SSLSession&) = delete;
+
     /**
-     * \pre must call br_ssl_engine_get_session_parameters(engine, toBearSSlSession());
+     * @brief Get the hostname string associated with this session
+     * 
+     * @returns A String object or "" if there is no hostname
+     * @pre must check isValidSession before getting this value,
+     * as if this session in invalid this value is not guarented
+     * to be reset to "".
+     */
+    const String& get_hostname() const { return m_hostname; }
+
+    /**
+     * @brief Get ::IPAddress associated with this session
+     * 
+     * @returns A ::IPAddress object, #INADDR_NONE if there is no IP
+     * @pre must check isValidSession before getting this value,
+     * as if this session in invalid this value is not guarented
+     * to be reset to #INADDR_NONE.
+     */
+    const IPAddress& get_ip() const { return m_ip; }
+
+    bool is_valid_session() const { return m_valid_session; }
+
+     /**
+     * @brief Set the ip address and hostname of the session.
+     * 
+     * This function stores the ip Address object and hostname object into
+     * the session object. If hostname is not null or ip address is
+     * not blank, and the ::br_ssl_session_parameters values are non-zero
+     * it then validates the session.
+     * 
+     * @pre You must call 
+     * ::br_ssl_engine_get_session_parameters
+     * with this session before calling this function. This is because
+     * there is no way to completly validate the ::br_ssl_session_parameters
+     * and the session may end up in a corrupted state if this is not observed.
+     * 
+     * @param ip The IP address of the host associated with the session
+     * @param hostname The string hostname ("www.google.com") associated with the session.
+     * Take care that this value is corrent, SSLSession performs no validation
+     * of the hostname.
      */
     void set_parameters(const IPAddress& ip, const char* hostname = NULL) {
         // copy the hostname
@@ -68,8 +114,16 @@ public:
         // check if both values are valid, and if so set valid to true
         if (m_ip != INADDR_NONE && session_id_len > 0
             && (hostname == NULL || m_hostname)) m_valid_session = true;
+        // else clear
+        else clear_parameters();
     }
 
+    /**
+     * @brief delete the parameters and invalidate the session
+     * Roughly equivalent to this_session = SSLSession(), however 
+     * this function preserves the String object, allowing it
+     * to better handle the dynamic memory needed.
+     */
     void clear_parameters() {
         // clear the hostname , ip, and valid session flags
         m_hostname = "";
@@ -77,21 +131,9 @@ public:
         m_valid_session = false;
     }
 
-    SSLSession& operator=(const SSLSession&) = delete;
-
+    /** @brief returns a pointer to the ::br_ssl_session_parameters component of this class */
     br_ssl_session_parameters* to_br_session() { return (br_ssl_session_parameters *)this; }
 
-    /**
-     * \pre must check isValidSession
-     */
-    const String& get_hostname() const { return m_hostname; }
-
-    /**
-     * \pre must check isValidSession
-     */
-    const IPAddress& get_ip() const { return m_ip; }
-
-    bool is_valid_session() const { return m_valid_session; }
 private:
     bool m_valid_session;
     // aparently a hostname has a max length of 256 chars. Go figure.

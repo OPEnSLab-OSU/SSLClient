@@ -24,11 +24,8 @@
  * This library was created to provide SSL functionality to the {@link https://learn.adafruit.com/adafruit-wiz5500-wiznet-ethernet-featherwing/overview}
  * Adafruit Ethernet shield. Since this shield does not implement SSL functionality on
  * its own, we need to use an external library: in this case BearSSL {@link https://bearssl.org/},
- * which is also use in the Arduino ESP8266 core. SSLClient will serve to implement the
- * BearSSL functionality inbetween EthernetCLient and the User, such that the user will
- * simply need to start with:
- * SSLCLient client(ethCLient);
- * And then call the functions they normally would with EthernetClient using SSLCLient.
+ * which is also used in the Arduino ESP8266 core. SSLClient will serve to implement the
+ * BearSSL functionality inbetween EthernetClient and the User, such that the user.
  * 
  * This file specifically controls the class templating used to allow SSLClient to interface
  * with all of the CLient-based classes. To see details on the implementations of the functions
@@ -38,12 +35,17 @@
 #include <type_traits>
 #include "Client.h"
 #include "SSLClientImpl.h"
+#include "SSLSession.h"
 
 #ifndef SSLClient_H_
 #define SSLClient_H_
 
 /**
- * \brief This class serves as a templating proxy class for the SSLClientImpl to do the real work.
+ * \brief The main SSLClient class
+ *  
+ * TODO: fix this blurb
+ * 
+ * This class serves as a templating proxy class for the SSLClientImpl to do the real work.
  * 
  * A problem arose when writing this class: I wanted the user to be able to construct
  * this class in a single line of code (e.g. SSLClient(EthernetClient())), but I also
@@ -59,16 +61,23 @@
 
 template <class C, size_t SessionCache = 1>
 class SSLClient : public SSLClientImpl {
-/** static type checks
+/** 
+ * static checks
  * I'm a java developer, so I want to ensure that my inheritance is safe.
  * These checks ensure that all the functions we use on class C are
- * actually present on class C. It does this by first checking that the
- * class inherits from Client, and then that it contains a status() function.
+ * actually present on class C. It does this by checking that the
+ * class inherits from Client.
+ * 
+ * Additionally, I ran into a lot of memory issues with large sessions caches.
+ * Since each session contains at max 352 bytes of memory, they eat of the
+ * stack quite quickly and can cause overflows. As a result, I have added a
+ * warning here to discourage the use of more than 3 sessions at a time. Any
+ * amount past that will require special modification of this library, and 
+ * assumes you know what you are doing.
  */
 static_assert(std::is_base_of<Client, C>::value, "C must be a Client Class!");
 static_assert(SessionCache > 0 && SessionCache < 255, "There can be no less than one and no more than 255 sessions in the cache!");
 static_assert(SessionCache <= 3, "You need to decrease the size of m_iobuf in order to have more than 3 sessions at once, otherwise memory issues will occur.");
-// static_assert(std::is_function<decltype(C::status)>::value, "C must have a status() function!");
 
 public:
     /**
@@ -77,9 +86,10 @@ public:
      * We copy the client because we aren't sure the Client object
      * is going to exists past the inital creation of the SSLClient.
      * 
-     * @pre The client class must be able to access the internet, as SSLClient
-     * cannot manage this for you. Additionally it is recommended that the analog_pin
-     * be set to input.
+     * @pre You will need to generate an array of trust_anchors (root certificates)
+     * based off of the domains you want to make SSL connections to. Check out the
+     * Wiki on the pycert-bearssl tool for a simple way to do this.
+     * @pre The analog_pin should be set to input.
      * 
      * @param trust_anchors Trust anchors used in the verification 
      * of the SSL server certificate, generated using the `brssl` command
@@ -88,13 +98,12 @@ public:
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_ERROR)
+    explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_WARN)
     : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, debug) 
     , m_client(client)
     , m_sessions{SSLSession()}
     , m_index(0)
     {
-        // for (uint8_t i = 0; i < SessionCache; i++) m_sessions[i] = SSLSession();
         // since we are copying the client in the ctor, we have to set
         // the client pointer after the class is constructed
         set_client(&m_client);
@@ -107,22 +116,68 @@ public:
      * The special functions most clients have are below
      * Most of them smply pass through
      */
+    /** 
+     * @brief Equivalent to SSLClient::connected() > 0
+     * @returns true if connected, false if not
+     */
 	virtual operator bool() { return connected() > 0; }
+    /** {@link SSLClient::bool()} */
 	virtual bool operator==(const bool value) { return bool() == value; }
+    /** {@link SSLClient::bool()} */
 	virtual bool operator!=(const bool value) { return bool() != value; }
+    /** @brief Returns whether or not two SSLClient objects have the same underlying client object */
 	virtual bool operator==(const C& rhs) { return m_client == rhs; }
+    /** @brief Returns whether or not two SSLClient objects do not have the same underlying client object */
 	virtual bool operator!=(const C& rhs) { return m_client != rhs; }
-	virtual uint16_t localPort() { return std::is_member_function_pointer<decltype(&C::localPort)>::value ? m_client.localPort() : 0; }
-	virtual IPAddress remoteIP() { return std::is_member_function_pointer<decltype(&C::remoteIP)>::value ? m_client.remoteIP() : INADDR_NONE; }
-	virtual uint16_t remotePort() { return std::is_member_function_pointer<decltype(&C::remotePort)>::value ? m_client.remotePort() : 0; }
+    /** @brief Returns the local port, if the Client class has a localPort() function. Else return 0. */
+	virtual uint16_t localPort() {
+        if (std::is_member_function_pointer<decltype(&C::localPort)>::value) return m_client.localPort();
+        else {
+            m_warn("Client class has no localPort function, so localPort() will always return 0", __func__);
+            return 0;
+        } 
+    }
+    /** @brief Returns the remote IP, if the Client class has a remoteIP() function. Else return INADDR_NONE. */
+	virtual IPAddress remoteIP() { 
+        if (std::is_member_function_pointer<decltype(&C::remoteIP)>::value) return m_client.remoteIP();
+        else {
+            m_warn("Client class has no remoteIP function, so remoteIP() will always return INADDR_NONE. This means that sessions caching will always be disabled.", __func__);
+            return INADDR_NONE;
+        } 
+    }
+    /** @brief Returns the remote port, if the Client class has a remotePort() function. Else return 0. */
+	virtual uint16_t remotePort() {
+        if (std::is_member_function_pointer<decltype(&C::remotePort)>::value) return m_client.remotePort();
+        else {
+            m_warn("Client class has no remotePort function, so remotePort() will always return 0", __func__);
+            return 0;
+        } 
+    }
 
-    //! get the client object
+    /** @brief returns a refernence to the client object stored in this class. Take care not to break it. */
     C& getClient() { return m_client; }
 
+    /**
+     * @brief Get a sesssion reference corressponding to a host and IP, or a reference to a emptey session if none exist
+     * 
+     * If no session corresponding to the host and ip exist, then this function will cycle through
+     * sessions in a rotating order. This allows the ssession cache to continuially store sessions,
+     * however it will also result in old sessions being cleared and returned. In general, it is a
+     * good idea to use a SessionCache size equal to the number of domains you plan on connecting to.
+     * 
+     * @param host A hostname c string, or NULL if one is not availible
+     * @param ip An IP address
+     * @returns A reference to an SSLSession object
+     */
     virtual SSLSession& getSession(const char* host, const IPAddress& addr);
 
+    /**
+     * @brief Clear the session corresponding to a host and IP
+     * 
+     * @param host A hostname c string, or NULL if one is not availible
+     * @param ip An IP address
+     */
     virtual void removeSession(const char* host, const IPAddress& addr);
-
 private:
     // utility function to find a session index based off of a host and IP
     int m_getSessionIndex(const char* host, const IPAddress& addr) const;
