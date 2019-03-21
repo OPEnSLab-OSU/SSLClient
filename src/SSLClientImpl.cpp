@@ -353,7 +353,17 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         if (state != lastState) {
             lastState = state;
             m_info("m_run changed state:", func_name);
-            printState(state);
+            if(m_debug == DebugLevel::SSL_INFO) {
+                m_info("State: ", __func__);
+                if(state == 0) Serial.println("    Invalid");
+                else if (state & BR_SSL_CLOSED) Serial.println("   Connection closed");
+                else {
+                    if (state & BR_SSL_SENDREC) Serial.println("   SENDREC");
+                    if (state & BR_SSL_RECVREC) Serial.println("   RECVREC");
+                    if (state & BR_SSL_SENDAPP) Serial.println("   SENDAPP");
+                    if (state & BR_SSL_RECVAPP) Serial.println("   RECVAPP");
+                }
+            }
         }
         if (state & BR_SSL_RECVREC) {
             size_t len;
