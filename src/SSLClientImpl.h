@@ -163,8 +163,8 @@ protected:
     /** @brief debugging print function, only prints if m_debug is true */
     template<typename T>
     void m_print(const T str, const char* func_name, const DebugLevel level) const { 
-        // check the current debug level
-        if (level > m_debug) return;
+        // check the current debug level and serial status
+        if (level > m_debug || !Serial) return;
         // print prefix
         m_print_prefix(func_name, level);
         // print the message
