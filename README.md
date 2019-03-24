@@ -59,6 +59,9 @@ Some ideas that didn't quite fit in the API documentation.
 
 SSLClient uses BearSSL's [minimal x509 verification engine](link-me) to verify the certificate of an SSL connection. This engine requires the developer create a trust anchor array using values stored in trusted root certificates. Check out [this document](./TrustAnchors.md) for more details on this component of SSLClient.
 
+### Session Caching
+
+
 ### Cipher Support
 
 SSLClient supports only TLS1.2 and the ciphers listed in [this file under `suites[]`](./src/TLS12_only_profile) by default, and the list is relatively small to keep the connection secure and the flash footprint down. These ciphers should work for most applications, however if for some reason you would like to use an older version of TLS or a different cipher, you can change the BearSSL profile being used by SSLClient to an [alternate one with support for older protocols](./src/bearssl/src/ssl). To do this, edit `SSLClientImpl::SSLClientImpl` to change these lines:

@@ -75,7 +75,7 @@ class SSLClient : public SSLClientImpl {
  * amount past that will require special modification of this library, and 
  * assumes you know what you are doing.
  */
-static_assert(std::is_base_of<Client, C>::value, "C must be a Client Class!");
+static_assert(std::is_base_of<Client, C>::value, "SSLClient can only accept a type with base class Client!");
 static_assert(SessionCache > 0 && SessionCache < 255, "There can be no less than one and no more than 255 sessions in the cache!");
 static_assert(SessionCache <= 3, "You need to decrease the size of m_iobuf in order to have more than 3 sessions at once, otherwise memory issues will occur.");
 
@@ -132,7 +132,7 @@ public:
      * the handshake and finish the connection. This function runs until the SSL 
      * handshake succeeds or fails, as found in most Arduino libraries.
      * 
-     * The implementation for this function can be found in SSLClientImpl::connect(IPAddress, uint16_t)
+     * The implementation for this function can be found in SSLClientImpl::connect_impl(IPAddress, uint16_t)
      * 
      * @pre The underlying client object (passed in through the ctor) in a non-
      * error state, and must be able to access the server being connected to.
@@ -151,7 +151,7 @@ public:
      * @param port the port to connect to
      * @returns 1 if success, 0 if failure (as found in EthernetClient)
      */
-   //  virtual int connect(IPAddress ip, uint16_t port) = 0;
+    virtual int connect(IPAddress ip, uint16_t port) { return connect_impl(ip, port); }
 
     /**
      * @brief Connect over SSL using connect(ip, port), using a DNS lookup to
@@ -186,7 +186,7 @@ public:
      * Because of all these factors, it is generally prudent to assume the
      * connection will not be resumed, and go from there.
      * 
-     * The implementation for this function can be found in SSLClientImpl::connect(const char*, uint16_t)
+     * The implementation for this function can be found in SSLClientImpl::connect_impl(const char*, uint16_t)
      * 
      * @pre The underlying client object (passed in through the ctor) in a non-
      * error state, and must be able to access the server being connected to.
@@ -205,10 +205,10 @@ public:
      * @param port the port to connect to (443)
      * @returns 1 of success, 0 if failure (as found in EthernetClient).
      */
-	// virtual int connect(const char *host, uint16_t port) = 0;
+	virtual int connect(const char *host, uint16_t port) { return connect_impl(host, port); }
 
     /** @see SSLClient::write(uint8_t*, size_t) */
-    // virtual size_t write(uint8_t b) = 0;
+    virtual size_t write(uint8_t b) { return write_impl(&b, 1); }
     /**
      * @brief Write some bytes to the SSL connection
      * 
@@ -243,7 +243,7 @@ public:
      * If you would like to trigger a network write manually without using the SSLClient::available,
      * you can also call SSLClient::flush, which will write all data and return when finished.
      * 
-     * The implementation for this function can be found in SSLClientImpl::write(const uint8_t*, size_t)
+     * The implementation for this function can be found in SSLClientImpl::write_impl(const uint8_t*, size_t)
      * 
      * @pre The socket and SSL layer must be connected, meaning SSLClient::connected must be true.
      * @pre BearSSL must not be waiting for the recipt of user data (if it is, there is
@@ -254,7 +254,7 @@ public:
      * @returns The number of bytes copied to the buffer (size), or zero if the BearSSL engine 
      * fails to become ready for writing data.
      */
-	// virtual size_t write(const uint8_t *buf, size_t size) = 0;
+	virtual size_t write(const uint8_t *buf, size_t size) { return write_impl(buf, size); }
 
     /**
      * @brief Returns the number of bytes availible to read from the SSL Socket
@@ -274,10 +274,13 @@ public:
      * @returns The number of bytes availible (can be zero), or zero if any of the pre
      * conditions aren't satisfied.
      */
-	//virtual int available() = 0;
+	virtual int available() { return available_impl(); }
 
-    /** @see SSLClient::read(uint8_t*, size_t) */
-	//virtual int read() = 0;
+    /** 
+     * @brief Read a single byte, or -1 if none is available.
+     * @see SSLClient::read(uint8_t*, size_t) 
+     */
+	virtual int read() { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; };
     /**
      * @brief Read size bytes from the SSL socket buffer, copying them into *buf, and return the number of bytes read.
      * 
@@ -314,7 +317,7 @@ public:
      * Often times there are other ways to get data that we need that do the same thing,
      * and these other ways may offer smaller and more managable response payloads.
      * 
-     * The implementation for this function can be found in SSLClientImpl::read(uint8_t*, size_t)
+     * The implementation for this function can be found in SSLClientImpl::read_impl(uint8_t*, size_t)
      * 
      * @pre SSLClient::available must be >0
      * 
@@ -323,7 +326,7 @@ public:
      * 
      * @returns The number of bytes copied (<= size), or -1 if the preconditions are not satisfied.
      */
-	//virtual int read(uint8_t *buf, size_t size) = 0;
+	virtual int read(uint8_t *buf, size_t size) { return read_impl(buf, size); }
 
     /** 
      * @brief view the first byte of the buffer, without removing it from the SSLClient Buffer
@@ -332,7 +335,7 @@ public:
      * @returns The first byte recieved, or -1 if the preconditions are not satisfied (warning: 
      * do not use if your data may be -1, as the return value is ambigious)
      */
-	//virtual int peek() = 0;
+    virtual int peek() { return peek_impl(); }
 
     /**
      * @brief Force writing the buffered bytes from SSLClient::write to the network.
@@ -340,7 +343,7 @@ public:
      * an explanation of how writing with SSLClient works, please see SSLCLient::write.
      * The implementation for this function can be found in SSLClientImpl::flush.
      */
-	//virtual void flush() = 0;
+	virtual void flush() { return flush_impl(); }
 
     /**
      * @brief Close the connection
@@ -349,7 +352,7 @@ public:
      * error was encountered previously, this function will simply call m_client::stop.
      * The implementation for this function can be found in SSLClientImpl::peek.
      */
-	//virtual void stop() = 0;
+	virtual void stop() { return stop_impl(); }
 
     /**
      * @brief Check if the device is connected.
@@ -358,11 +361,11 @@ public:
      * polling--both functions send and recieve data to the Client device, however SSLClient::availible
      * has some delays built in to protect the Client device from being polled too frequently. 
      * 
-     * The implementation for this function can be found in SSLClientImpl::connected.
+     * The implementation for this function can be found in SSLClientImpl::connected_impl.
      * 
      * @returns 1 if connected, 0 if not
      */
-	//virtual uint8_t connected() = 0;
+	virtual uint8_t connected() { return connected_impl(); }
 
     //========================================
     //= Functions Not in the Client Interface
@@ -456,7 +459,7 @@ SSLSession& SSLClient<C, SessionCache>::getSession(const char* host, const IPAdd
     if (temp_index == m_index && ++m_index >= SessionCache) m_index = 0;
     // return the pointed to value
     m_info("Using session index: ", func_name);
-    Serial.println(temp_index);
+    m_info(temp_index, func_name);
     return m_sessions[temp_index];
 }
 

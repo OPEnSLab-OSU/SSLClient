@@ -71,7 +71,7 @@ SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_a
 }
 
 /* see SSLClientImpl.h*/
-int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
+int SSLClientImpl::connect_impl(IPAddress ip, uint16_t port) {
     const char* func_name = __func__;
     // connection check
     if (m_client->connected()) {
@@ -94,7 +94,7 @@ int SSLClientImpl::connect(IPAddress ip, uint16_t port) {
 }
 
 /* see SSLClientImpl.h*/
-int SSLClientImpl::connect(const char *host, uint16_t port) {
+int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
     const char* func_name = __func__;
     // connection check
     if (m_client->connected()) {
@@ -127,7 +127,7 @@ int SSLClientImpl::connect(const char *host, uint16_t port) {
 }
 
 /** see SSLClientImpl.h*/
-size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
+size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
     const char* func_name = __func__;
     // check if the socket is still open and such
     if (!m_soft_connected(func_name)) return 0;
@@ -164,7 +164,7 @@ size_t SSLClientImpl::write(const uint8_t *buf, size_t size) {
 }
 
 /** see SSLClientImpl.h*/
-int SSLClientImpl::available() {
+int SSLClientImpl::available_impl() {
     const char* func_name = __func__;
     // connection check
     if (!m_soft_connected(func_name)) return 0;
@@ -185,7 +185,7 @@ int SSLClientImpl::available() {
 }
 
 /** see SSLClientImpl.h */
-int SSLClientImpl::read(uint8_t *buf, size_t size) {
+int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
     if (available() <= 0) return -1;
     // read the buffer, send the ack, and return the bytes read
@@ -200,7 +200,7 @@ int SSLClientImpl::read(uint8_t *buf, size_t size) {
 }
 
 /** see SSLClientImpl.h */
-int SSLClientImpl::peek() {
+int SSLClientImpl::peek_impl() {
     // check that the engine is ready to read
     if (available() <= 0) return -1; 
     // read the buffer, send the ack, and return the bytes read
@@ -212,7 +212,7 @@ int SSLClientImpl::peek() {
 }
 
 /** see SSLClientImpl.h*/
-void SSLClientImpl::flush() {
+void SSLClientImpl::flush_impl() {
     // trigger a flush, incase there's any leftover data
     br_ssl_engine_flush(&m_sslctx.eng, 0);
     // run until application data is ready for pickup
@@ -220,7 +220,7 @@ void SSLClientImpl::flush() {
 }
 
 /** see SSLClientImpl.h*/
-void SSLClientImpl::stop() {
+void SSLClientImpl::stop_impl() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
@@ -240,7 +240,7 @@ void SSLClientImpl::stop() {
     m_client->stop();
 }
 
-uint8_t SSLClientImpl::connected() {
+uint8_t SSLClientImpl::connected_impl() {
     const char* func_name = __func__;
     // check all of the error cases 
     const auto c_con = m_client->connected();

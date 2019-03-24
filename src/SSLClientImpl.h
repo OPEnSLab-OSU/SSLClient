@@ -31,7 +31,7 @@
  * 
  * If SSLClient encounters an error, it will generally output
  * logs into the serial moniter. If you need a way of programmatically
- * checking the errors, you can do so with SSLCLient.getWriteError(),
+ * checking the errors, you can do so with SSLClient::getWriteError(),
  * which will return one of these values.
  */
 enum Error {
@@ -71,7 +71,7 @@ enum DebugLevel {
  * On error, any function in this class will terminate the socket.
  * TODO: Write what this is */
 
-class SSLClientImpl : public Client {
+class SSLClientImpl: public Client {
 public:
     /**
      * @brief initializes SSL contexts for bearSSL
@@ -102,27 +102,23 @@ public:
     //============================================
 
     /** @see SSLClient::connect(IPAddress, uint16_t) */
-    virtual int connect(IPAddress ip, uint16_t port);
+    int connect_impl(IPAddress ip, uint16_t port);
     /** @see SSLClient::connect(const char*, uint16_t) */
-	virtual int connect(const char *host, uint16_t port);
+	int connect_impl(const char *host, uint16_t port);
     /** @see SSLClient::write(const uint8_t*, size_t) */
-    virtual size_t write(uint8_t b) { return write(&b, 1); }
-    /** @see SSLClient::write(const uint8_t*, size_t) */
-	virtual size_t write(const uint8_t *buf, size_t size);
+	size_t write_impl(const uint8_t *buf, size_t size);
     /** @see SSLClient::available */
-	virtual int available();
+	int available_impl();
     /** @see SSLClient::read(uint8_t*, size_t) */
-	virtual int read() { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; }
-    /** @see SSLClient::read(uint8_t*, size_t) */
-	virtual int read(uint8_t *buf, size_t size);
+	int read_impl(uint8_t *buf, size_t size);
     /** @see SSLClient::peek */
-	virtual int peek();
+	int peek_impl();
     /** @see SSLClient::flush */
-	virtual void flush();
+	void flush_impl();
     /** @see SSLClient::stop */
-	virtual void stop();
+	void stop_impl();
     /** @see SSLClient::connected */
-	virtual uint8_t connected();
+	uint8_t connected_impl();
 
     //============================================
     //= Functions implemented in SSLClient.h
