@@ -130,8 +130,7 @@ public:
      * the appropriete bearssl contexts. Due to the design of the SSL standard, 
      * this function will probably take an extended period (1-4sec) to negotiate 
      * the handshake and finish the connection. This function runs until the SSL 
-     * handshake succeeds or fails, as found in most Arduino libraries, so be 
-     * sure to design around this in your code.
+     * handshake succeeds or fails, as found in most Arduino libraries.
      * 
      * The implementation for this function can be found in SSLClientImpl::connect(IPAddress, uint16_t)
      * 
