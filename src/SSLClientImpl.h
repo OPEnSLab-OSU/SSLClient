@@ -94,9 +94,8 @@ public:
      * @param session_ray A pointer to the array of SSLSessions created by SSLClient
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
-    explicit SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, 
-        const size_t trust_anchors_num, const int analog_pin, SSLSession* session_ray,
-        const DebugLevel debug);
+    explicit SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
+        const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
 
     //============================================
     //= Functions implemented in SSLClientImpl.cpp
@@ -138,18 +137,16 @@ public:
     virtual size_t getSessionCount() const = 0;
     
 protected:
+    /** See SSLClient::get_arduino_client */
+    virtual Client& get_arduino_client() = 0;
+    virtual const Client& get_arduino_client() const = 0;
+    /** See SSLClient::get_session_array */
+    virtual SSLSession* get_session_array() = 0;
+    virtual const SSLSession* get_session_array() const = 0;
+
     //============================================
     //= Functions implemented in SSLClientImpl.cpp
     //============================================
-
-    /** 
-     * @brief set the pointer to the Client class that we wil use
-     * 
-     * Call this function immediatly after the ctor. This functionality
-     * is placed in it's own function for flexibility reasons, but it
-     * is critical that this function is called before anything else
-     */
-    void set_client(Client* c, SSLSession* sessions) { m_client = c; m_session_ptr = sessions; }
 
     /** @brief Prints a debugging prefix to all logs, so we can attatch them to useful information */
     void m_print_prefix(const char* func_name, const DebugLevel level) const;
@@ -197,17 +194,12 @@ private:
     //= Data Members
     //============================================
     
-    // hold a reference to the client
-    Client* m_client;
     // store pointers to the trust anchors
     // should not be computed at runtime
     const br_x509_trust_anchor *m_trust_anchors;
     const size_t m_trust_anchors_num;
     // store the pin to fetch an RNG see from
     const int m_analog_pin;
-    // store a pointer to the SSL Session array, since it's size
-    // is deduced at compile time
-    SSLSession* m_session_ptr;
     // store an index of where a new session can be placed if we don't have any corresponding sessions
     size_t m_session_index;
     // store whether to enable debug logging

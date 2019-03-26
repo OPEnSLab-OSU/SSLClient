@@ -99,13 +99,10 @@ public:
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
     explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_WARN)
-    : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, NULL, debug) 
+    : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) 
     , m_client(client)
     , m_sessions{SSLSession()}
     {
-        // since we are copying the client in the ctor, we have to set
-        // the client pointer after the class is constructed
-        set_client(&m_client, m_sessions);
         // set the timeout to a reasonable number (it can always be changes later)
         // SSL Connections take a really long time so we don't want to time out a legitimate thing
         setTimeout(10 * 1000);
@@ -444,8 +441,12 @@ public:
     C& getClient() { return m_client; }
 
 protected:
-    //virtual Client& get_arduino_client() { return m_client; }
-    //virtual SSLSession* get_session_array() { return m_sessions; }
+    /** @brief return an instance of m_client that is polymorphic and can be used by SSLClientImpl */
+    virtual Client& get_arduino_client() { return m_client; }
+    virtual const Client& get_arduino_client() const { return m_client; }
+    /** @brief return an instance of the session array that is on the stack */
+    virtual SSLSession* get_session_array() { return m_sessions; }
+    virtual const SSLSession* get_session_array() const { return m_sessions; }
 
 private:
     // create a copy of the client
