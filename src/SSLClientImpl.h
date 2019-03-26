@@ -71,7 +71,7 @@ enum DebugLevel {
  * On error, any function in this class will terminate the socket.
  * TODO: Write what this is */
 
-class SSLClientImpl: public Client {
+class SSLClientImpl : public Client {
 public:
     /**
      * @brief initializes SSL contexts for bearSSL
@@ -80,22 +80,23 @@ public:
      * based off of the domains you want to make SSL connections to. Check out the
      * Wiki on the pycert-bearssl tool for a simple way to do this.
      * @pre The analog_pin should be set to input.
+     * @pre The session_ray must be an array of the size returned by SSLClient::getSessionCount()
+     * filled with SSLSession objects.
      * 
      * @post set_client must be called immediatly after to set the client class
-     * pointer.
+     * pointer and Session pointer.
      * 
      * @param trust_anchors Trust anchors used in the verification 
      * of the SSL server certificate, generated using the `brssl` command
      * line utility. For more information see the samples or bearssl.org
      * @param trust_anchors_num The number of trust anchors stored
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG
-     * @param get_remote_ip Function pointer to get the remote ip from the client. We
-     * need this value since the Client abstract class has no remoteIP() function,
-     * however most of the arduino internet client implementations do.
+     * @param session_ray A pointer to the array of SSLSessions created by SSLClient
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
     explicit SSLClientImpl(Client* client, const br_x509_trust_anchor *trust_anchors, 
-        const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
+        const size_t trust_anchors_num, const int analog_pin, SSLSession* session_ray,
+        const DebugLevel debug);
 
     //============================================
     //= Functions implemented in SSLClientImpl.cpp
@@ -119,6 +120,10 @@ public:
 	void stop_impl();
     /** @see SSLClient::connected */
 	uint8_t connected_impl();
+    /** See SSLClient::getSession */
+    SSLSession& get_session_impl(const char* host, const IPAddress& addr);
+    /** See SSLClient::removeSession */
+    void remove_session_impl(const char* host, const IPAddress& addr);
 
     //============================================
     //= Functions implemented in SSLClient.h
@@ -129,11 +134,10 @@ public:
 	virtual IPAddress remoteIP() = 0;
     /** See SSLClient::localPort */
 	virtual uint16_t remotePort() = 0;
-    /** See SSLClient::getSession */
-    virtual SSLSession& getSession(const char* host, const IPAddress& addr) = 0;
+    /** See SSLClient::getSessionCount */
+    virtual size_t getSessionCount() const = 0;
     
 protected:
-
     //============================================
     //= Functions implemented in SSLClientImpl.cpp
     //============================================
@@ -145,7 +149,7 @@ protected:
      * is placed in it's own function for flexibility reasons, but it
      * is critical that this function is called before anything else
      */
-    void set_client(Client* c) { m_client = c; }
+    void set_client(Client* c, SSLSession* sessions) { m_client = c; m_session_ptr = sessions; }
 
     /** @brief Prints a debugging prefix to all logs, so we can attatch them to useful information */
     void m_print_prefix(const char* func_name, const DebugLevel level) const;
@@ -185,7 +189,9 @@ private:
     /** run the bearssl engine until a certain state */
     int m_run_until(const unsigned target);
     /** proxy for availble that returns the state */
-    unsigned m_update_engine(); 
+    unsigned m_update_engine();
+    /** utility function to find a session index based off of a host and IP */
+    int m_get_session_index(const char* host, const IPAddress& addr) const; 
     
     //============================================
     //= Data Members
@@ -199,6 +205,11 @@ private:
     const size_t m_trust_anchors_num;
     // store the pin to fetch an RNG see from
     const int m_analog_pin;
+    // store a pointer to the SSL Session array, since it's size
+    // is deduced at compile time
+    SSLSession* m_session_ptr;
+    // store an index of where a new session can be placed if we don't have any corresponding sessions
+    size_t m_session_index;
     // store whether to enable debug logging
     const DebugLevel m_debug;
     // store the context values required for SSL

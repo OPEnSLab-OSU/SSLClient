@@ -99,14 +99,13 @@ public:
      * @param debug whether to enable or disable debug logging, must be constexpr
      */
     explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_WARN)
-    : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, debug) 
+    : SSLClientImpl(NULL, trust_anchors, trust_anchors_num, analog_pin, NULL, debug) 
     , m_client(client)
     , m_sessions{SSLSession()}
-    , m_index(0)
     {
         // since we are copying the client in the ctor, we have to set
         // the client pointer after the class is constructed
-        set_client(&m_client);
+        set_client(&m_client, m_sessions);
         // set the timeout to a reasonable number (it can always be changes later)
         // SSL Connections take a really long time so we don't want to time out a legitimate thing
         setTimeout(10 * 1000);
@@ -371,6 +370,38 @@ public:
     //= Functions Not in the Client Interface
     //========================================
 
+    /**
+     * @brief Get a sesssion reference corressponding to a host and IP, or a reference to a emptey session if none exist
+     * 
+     * If no session corresponding to the host and ip exist, then this function will cycle through
+     * sessions in a rotating order. This allows the ssession cache to continuially store sessions,
+     * however it will also result in old sessions being cleared and returned. In general, it is a
+     * good idea to use a SessionCache size equal to the number of domains you plan on connecting to.
+     * 
+     * The implementation for this function can be found at SSLClientImpl::get_session_impl.
+     * 
+     * @param host A hostname c string, or NULL if one is not availible
+     * @param ip An IP address
+     * @returns A reference to an SSLSession object
+     */
+    virtual SSLSession& getSession(const char* host, const IPAddress& addr) { return get_session_impl(host, addr); }
+
+    /**
+     * @brief Clear the session corresponding to a host and IP
+     * 
+     * The implementation for this function can be found at SSLClientImpl::remove_session_impl.
+     * 
+     * @param host A hostname c string, or NULL if one is not availible
+     * @param ip An IP address
+     */
+    virtual void removeSession(const char* host, const IPAddress& addr) { return remove_session_impl(host, addr); }
+
+    /**
+     * @brief Get the meximum number of SSL sessions that can be stored at once
+     * @returns The SessionCache template parameter.
+     */
+    virtual size_t getSessionCount() const { return SessionCache; }
+
     /** 
      * @brief Equivalent to SSLClient::connected() > 0
      * @returns true if connected, false if not
@@ -412,88 +443,15 @@ public:
     /** @brief returns a refernence to the client object stored in this class. Take care not to break it. */
     C& getClient() { return m_client; }
 
-    /**
-     * @brief Get a sesssion reference corressponding to a host and IP, or a reference to a emptey session if none exist
-     * 
-     * If no session corresponding to the host and ip exist, then this function will cycle through
-     * sessions in a rotating order. This allows the ssession cache to continuially store sessions,
-     * however it will also result in old sessions being cleared and returned. In general, it is a
-     * good idea to use a SessionCache size equal to the number of domains you plan on connecting to.
-     * 
-     * @param host A hostname c string, or NULL if one is not availible
-     * @param ip An IP address
-     * @returns A reference to an SSLSession object
-     */
-    virtual SSLSession& getSession(const char* host, const IPAddress& addr);
+protected:
+    //virtual Client& get_arduino_client() { return m_client; }
+    //virtual SSLSession* get_session_array() { return m_sessions; }
 
-    /**
-     * @brief Clear the session corresponding to a host and IP
-     * 
-     * @param host A hostname c string, or NULL if one is not availible
-     * @param ip An IP address
-     */
-    virtual void removeSession(const char* host, const IPAddress& addr);
 private:
-    // utility function to find a session index based off of a host and IP
-    int m_getSessionIndex(const char* host, const IPAddress& addr) const;
     // create a copy of the client
     C m_client;
     // also store an array of SSLSessions, so we can resume communication with multiple websites
     SSLSession m_sessions[SessionCache];
-    // store an index of where a new session can be placed if we don't have any corresponding sessions
-    size_t m_index;
 };
-
-template <class C, size_t SessionCache>
-SSLSession& SSLClient<C, SessionCache>::getSession(const char* host, const IPAddress& addr) {
-    const char* func_name = __func__;
-    // search for a matching session with the IP
-    int temp_index = m_getSessionIndex(host, addr);
-    // if none are availible, use m_index
-    if (temp_index == -1) {
-        temp_index = m_index;
-        // reset the session so we don't try to send one sites session to another
-        m_sessions[temp_index].clear_parameters();
-    }
-    // increment m_index so the session cache is a circular buffer
-    if (temp_index == m_index && ++m_index >= SessionCache) m_index = 0;
-    // return the pointed to value
-    m_info("Using session index: ", func_name);
-    m_info(temp_index, func_name);
-    return m_sessions[temp_index];
-}
-
-template <class C, size_t SessionCache>
-void SSLClient<C, SessionCache>::removeSession(const char* host, const IPAddress& addr) {
-    const char* func_name = __func__;
-    int temp_index = m_getSessionIndex(host, addr);
-    if (temp_index != -1) {
-        m_info(" Deleted session ", func_name);
-        m_info(temp_index, func_name);
-        m_sessions[temp_index].clear_parameters();
-    }
-}
-
-template <class C, size_t SessionCache>
-int SSLClient<C, SessionCache>::m_getSessionIndex(const char* host, const IPAddress& addr) const {
-    const char* func_name = __func__;
-    // search for a matching session with the IP
-    for (uint8_t i = 0; i < SessionCache; i++) {
-        // if we're looking at a real session
-        if (m_sessions[i].is_valid_session() 
-            && (
-                // and the hostname matches, or
-                (host != NULL && m_sessions[i].get_hostname().equals(host))
-                // there is no hostname and the IP address matches    
-                || (host == NULL && addr == m_sessions[i].get_ip())
-            )) {
-            m_info("Found session match: ", func_name);
-            m_info(m_sessions[i].get_hostname(), func_name);
-            return i;
-        }
-    }
-    // none found
-    return -1;
-}
 
 #endif /** SSLClient_H_ */

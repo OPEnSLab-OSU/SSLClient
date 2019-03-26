@@ -51,11 +51,14 @@ static int freeMemory() {
 
 /** see SSLClientImpl.h */
 SSLClientImpl::SSLClientImpl(Client *client, const br_x509_trust_anchor *trust_anchors, 
-    const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug)
+    const size_t trust_anchors_num, const int analog_pin, SSLSession* session_ray,
+    const DebugLevel debug)
     : m_client(client)
     , m_trust_anchors(trust_anchors)
     , m_trust_anchors_num(trust_anchors_num)
     , m_analog_pin(analog_pin)
+    , m_session_ptr(session_ray)
+    , m_session_index(0)
     , m_debug(debug)
     , m_write_idx(0) {
     
@@ -90,7 +93,7 @@ int SSLClientImpl::connect_impl(IPAddress ip, uint16_t port) {
         return 0;
     }
     m_info("Base client connected!", func_name);
-    return m_start_ssl(NULL, getSession(NULL, ip));
+    return m_start_ssl(NULL, get_session_impl(NULL, ip));
 }
 
 /* see SSLClientImpl.h*/
@@ -106,7 +109,7 @@ int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
     // first, if we have a session, check if we're trying to resolve the same host
     // as before
     bool connect_ok;
-    SSLSession& ses = getSession(host, INADDR_NONE);
+    SSLSession& ses = get_session_impl(host, INADDR_NONE);
     if (ses.is_valid_session()) {
         // if so, then connect using the stored session
         m_info("Connecting using a cached IP", func_name);
@@ -187,7 +190,7 @@ int SSLClientImpl::available_impl() {
 /** see SSLClientImpl.h */
 int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
-    if (available() <= 0) return -1;
+    if (available_impl() <= 0) return -1;
     // read the buffer, send the ack, and return the bytes read
     size_t alen;
     unsigned char* br_buf = br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
@@ -202,7 +205,7 @@ int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
 /** see SSLClientImpl.h */
 int SSLClientImpl::peek_impl() {
     // check that the engine is ready to read
-    if (available() <= 0) return -1; 
+    if (available_impl() <= 0) return -1; 
     // read the buffer, send the ack, and return the bytes read
     size_t alen;
     uint8_t read_num;
@@ -211,7 +214,7 @@ int SSLClientImpl::peek_impl() {
     return (int)read_num;
 }
 
-/** see SSLClientImpl.h*/
+/** see SSLClientImpl.h */
 void SSLClientImpl::flush_impl() {
     // trigger a flush, incase there's any leftover data
     br_ssl_engine_flush(&m_sslctx.eng, 0);
@@ -219,7 +222,7 @@ void SSLClientImpl::flush_impl() {
     if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
 }
 
-/** see SSLClientImpl.h*/
+/** see SSLClientImpl.h */
 void SSLClientImpl::stop_impl() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
@@ -240,6 +243,7 @@ void SSLClientImpl::stop_impl() {
     m_client->stop();
 }
 
+/** see SSLClientImpl.h */
 uint8_t SSLClientImpl::connected_impl() {
     const char* func_name = __func__;
     // check all of the error cases 
@@ -257,12 +261,42 @@ uint8_t SSLClientImpl::connected_impl() {
         else m_warn("Socket was dropped unexpectedly (this can be an alternative to closing the connection)", func_name);
         // set the write error so the engine doesn't try to close the connection
         setWriteError(SSL_CLIENT_WRTIE_ERROR);
-        stop();
+        stop_impl();
     }
     else if (!wr_ok) {
         m_error("Not connected because write error is set", func_name);
     }
     return c_con && br_con && wr_ok;
+}
+
+/** see SSLClientImpl.h */
+SSLSession& SSLClientImpl::get_session_impl(const char* host, const IPAddress& addr) {
+    const char* func_name = __func__;
+    // search for a matching session with the IP
+    int temp_index = m_get_session_index(host, addr);
+    // if none are availible, use m_session_index
+    if (temp_index == -1) {
+        temp_index = m_session_index;
+        // reset the session so we don't try to send one sites session to another
+        m_session_ptr[temp_index].clear_parameters();
+    }
+    // increment m_session_index so the session cache is a circular buffer
+    if (temp_index == m_session_index && ++m_session_index >= getSessionCount()) m_session_index = 0;
+    // return the pointed to value
+    m_info("Using session index: ", func_name);
+    m_info(temp_index, func_name);
+    return m_session_ptr[temp_index];
+}
+
+/** see SSLClientImpl.h */
+void SSLClientImpl::remove_session_impl(const char* host, const IPAddress& addr) {
+    const char* func_name = __func__;
+    int temp_index = m_get_session_index(host, addr);
+    if (temp_index != -1) {
+        m_info(" Deleted session ", func_name);
+        m_info(temp_index, func_name);
+        m_session_ptr[temp_index].clear_parameters();
+    }
 }
 
 bool SSLClientImpl::m_soft_connected(const char* func_name) {
@@ -346,7 +380,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         if (millis() - start > getTimeout()) {
             m_error("SSL internals timed out! This could be an internal error or bad data sent from the server", func_name);
             setWriteError(SSL_BR_WRITE_ERROR);
-            stop();
+            stop_impl();
             return -1;
         }
         // debug
@@ -399,7 +433,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
             else {
                 m_error("SSL engine state is RECVAPP, however the buffer was null! (This is a problem with BearSSL internals)", func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
-                stop();
+                stop_impl();
                 return -1;
             }
         }
@@ -446,7 +480,7 @@ unsigned SSLClientImpl::m_update_engine() {
                     * wait for it.
                     */
                 if (!&m_sslctx.eng.shutdown_recv) return 0;
-                stop();
+                stop_impl();
                 return 0;
             }
             if (wlen > 0) {
@@ -465,7 +499,7 @@ unsigned SSLClientImpl::m_update_engine() {
             if (!(state & BR_SSL_SENDAPP)) {
                 m_error("Error m_write_idx > 0 but the ssl engine is not ready for data", func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
-                stop();
+                stop_impl();
                 return 0;
             }
             // else time to send the application data
@@ -476,14 +510,14 @@ unsigned SSLClientImpl::m_update_engine() {
                 if (alen == 0 || buf == NULL) {
                     m_error("Engine set write flag but returned null buffer", func_name);
                     setWriteError(SSL_BR_WRITE_ERROR);
-                    stop();
+                    stop_impl();
                     return 0;
                 }
                 // sanity check
                 if (alen < m_write_idx) {
                     m_error("Alen is less than m_write_idx", func_name);
                     setWriteError(SSL_INTERNAL_ERROR);
-                    stop();
+                    stop_impl();
                     return 0;
                 }
                 // all good? lets send the data
@@ -510,7 +544,7 @@ unsigned SSLClientImpl::m_update_engine() {
 			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
             const auto avail = m_client->available();
-            if (avail >= len) {
+            if (avail > 0 && avail >= len) {
                 int mem = freeMemory();
                 // check for a stack overflow
                 // if the stack overflows we basically have to crash, and
@@ -531,7 +565,7 @@ unsigned SSLClientImpl::m_update_engine() {
                 if(mem < 8000) {
                     m_error("Out of memory! Decrease the number of sessions or the size of m_iobuf", func_name);
                     setWriteError(SSL_OUT_OF_MEMORY);
-                    stop();
+                    stop_impl();
                     return 0;
                 }
                 m_info("Read bytes from client: ", func_name);
@@ -543,7 +577,7 @@ unsigned SSLClientImpl::m_update_engine() {
                     m_error("Error reading bytes from m_client. Write Error: ", func_name);
                     m_error(m_client->getWriteError(), func_name);
                     setWriteError(SSL_CLIENT_WRTIE_ERROR);
-                    stop();
+                    stop_impl();
                     return 0;
                 }
                 if (rlen > 0) {
@@ -568,6 +602,27 @@ unsigned SSLClientImpl::m_update_engine() {
     }
 }
 
+/** see SSLClientImpl.h */
+int SSLClientImpl::m_get_session_index(const char* host, const IPAddress& addr) const {
+    const char* func_name = __func__;
+    // search for a matching session with the IP
+    for (uint8_t i = 0; i < getSessionCount(); i++) {
+        // if we're looking at a real session
+        if (m_session_ptr[i].is_valid_session() 
+            && (
+                // and the hostname matches, or
+                (host != NULL && m_session_ptr[i].get_hostname().equals(host))
+                // there is no hostname and the IP address matches    
+                || (host == NULL && addr == m_session_ptr[i].get_ip())
+            )) {
+            m_info("Found session match: ", func_name);
+            m_info(m_session_ptr[i].get_hostname(), func_name);
+            return i;
+        }
+    }
+    // none found
+    return -1;
+}
 
 /** See SSLClientImpl.h */
 void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level) const
