@@ -66,7 +66,7 @@ public:
      * of the SSL server certificate. Check out TrustAnchors.md for more info.
      * @param trust_anchors_num The number of objects in the trust_anchors array.
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG.
-     * @param debug whether to enable or disable debug logging.
+     * @param debug The level of debug logging (use the ::DebugLevel enum).
      */
     explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_WARN)
     : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) 
@@ -290,7 +290,7 @@ public:
      * The implementation for this function can be found at SSLClientImpl::get_session_impl.
      * 
      * @param host A hostname c string, or NULL if one is not available
-     * @param ip An IP address
+     * @param addr An IP address
      * @returns A reference to an SSLSession object
      */
     virtual SSLSession& getSession(const char* host, const IPAddress& addr) { return get_session_impl(host, addr); }
@@ -301,7 +301,7 @@ public:
      * The implementation for this function can be found at SSLClientImpl::remove_session_impl.
      * 
      * @param host A hostname c string, or NULL if one is not available
-     * @param ip An IP address
+     * @param addr An IP address
      */
     virtual void removeSession(const char* host, const IPAddress& addr) { return remove_session_impl(host, addr); }
 
@@ -316,15 +316,15 @@ public:
      * @returns true if connected, false if not
      */
 	virtual operator bool() { return connected() > 0; }
-    /** {@link SSLClient::bool()} */
+    /** @see SSLClient::operator bool */
 	virtual bool operator==(const bool value) { return bool() == value; }
-    /** {@link SSLClient::bool()} */
+    /** @see SSLClient::operator bool */
 	virtual bool operator!=(const bool value) { return bool() != value; }
     /** @brief Returns whether or not two SSLClient objects have the same underlying client object */
 	virtual bool operator==(const C& rhs) { return m_client == rhs; }
     /** @brief Returns whether or not two SSLClient objects do not have the same underlying client object */
 	virtual bool operator!=(const C& rhs) { return m_client != rhs; }
-    /** @brief Returns the local port, if the Client class has a localPort() function. Else return 0. */
+    /** @brief Returns the local port, C::localPort exists. Else return 0. */
 	virtual uint16_t localPort() {
         if (std::is_member_function_pointer<decltype(&C::localPort)>::value) return m_client.localPort();
         else {
@@ -332,7 +332,7 @@ public:
             return 0;
         } 
     }
-    /** @brief Returns the remote IP, if the Client class has a remoteIP() function. Else return INADDR_NONE. */
+    /** @brief Returns the remote IP, if C::remoteIP exists. Else return INADDR_NONE. */
 	virtual IPAddress remoteIP() { 
         if (std::is_member_function_pointer<decltype(&C::remoteIP)>::value) return m_client.remoteIP();
         else {
@@ -340,7 +340,7 @@ public:
             return INADDR_NONE;
         } 
     }
-    /** @brief Returns the remote port, if the Client class has a remotePort() function. Else return 0. */
+    /** @brief Returns the remote port, if C::remotePort exists. Else return 0. */
 	virtual uint16_t remotePort() {
         if (std::is_member_function_pointer<decltype(&C::remotePort)>::value) return m_client.remotePort();
         else {

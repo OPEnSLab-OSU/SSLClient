@@ -49,7 +49,7 @@ static int freeMemory() {
 #endif  // __arm__
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
     const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug)
     : m_trust_anchors(trust_anchors)
@@ -126,7 +126,7 @@ int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
     return m_start_ssl(host, ses);
 }
 
-/** see SSLClientImpl.h*/
+/* see SSLClientImpl.h*/
 size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
     const char* func_name = __func__;
     // check if the socket is still open and such
@@ -169,7 +169,7 @@ size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
     return size;
 }
 
-/** see SSLClientImpl.h*/
+/* see SSLClientImpl.h*/
 int SSLClientImpl::available_impl() {
     const char* func_name = __func__;
     // connection check
@@ -190,7 +190,7 @@ int SSLClientImpl::available_impl() {
     return 0;
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
     if (available_impl() <= 0) return -1;
@@ -205,7 +205,7 @@ int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
     return read_amount;
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 int SSLClientImpl::peek_impl() {
     // check that the engine is ready to read
     if (available_impl() <= 0) return -1; 
@@ -217,7 +217,7 @@ int SSLClientImpl::peek_impl() {
     return (int)read_num;
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 void SSLClientImpl::flush_impl() {
     // trigger a flush, incase there's any leftover data
     br_ssl_engine_flush(&m_sslctx.eng, 0);
@@ -225,7 +225,7 @@ void SSLClientImpl::flush_impl() {
     if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 void SSLClientImpl::stop_impl() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
@@ -246,7 +246,7 @@ void SSLClientImpl::stop_impl() {
     get_arduino_client().stop();
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 uint8_t SSLClientImpl::connected_impl() {
     const char* func_name = __func__;
     // check all of the error cases 
@@ -272,7 +272,7 @@ uint8_t SSLClientImpl::connected_impl() {
     return c_con && br_con && wr_ok;
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 SSLSession& SSLClientImpl::get_session_impl(const char* host, const IPAddress& addr) {
     const char* func_name = __func__;
     // search for a matching session with the IP
@@ -291,7 +291,7 @@ SSLSession& SSLClientImpl::get_session_impl(const char* host, const IPAddress& a
     return get_session_array()[temp_index];
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 void SSLClientImpl::remove_session_impl(const char* host, const IPAddress& addr) {
     const char* func_name = __func__;
     int temp_index = m_get_session_index(host, addr);
@@ -319,7 +319,7 @@ bool SSLClientImpl::m_soft_connected(const char* func_name) {
     return true;
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     const char* func_name = __func__;
     // clear the write error
@@ -366,7 +366,7 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     return 1;
 }
 
-/** see SSLClientImpl.h*/
+/* see SSLClientImpl.h*/
 int SSLClientImpl::m_run_until(const unsigned target) {
     const char* func_name = __func__;
     unsigned lastState = 0;
@@ -452,7 +452,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
     }
 }
 
-/** see SSLClientImpl.h*/
+/* see SSLClientImpl.h*/
 unsigned SSLClientImpl::m_update_engine() {
     const char* func_name = __func__;
     for(;;) {
@@ -605,7 +605,7 @@ unsigned SSLClientImpl::m_update_engine() {
     }
 }
 
-/** see SSLClientImpl.h */
+/* see SSLClientImpl.h */
 int SSLClientImpl::m_get_session_index(const char* host, const IPAddress& addr) const {
     const char* func_name = __func__;
     // search for a matching session with the IP
@@ -627,7 +627,7 @@ int SSLClientImpl::m_get_session_index(const char* host, const IPAddress& addr) 
     return -1;
 }
 
-/** See SSLClientImpl.h */
+/* See SSLClientImpl.h */
 void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level) const
 {
     // print the sslclient prefix
@@ -645,7 +645,7 @@ void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level
     Serial.print("): ");
 }
 
-/** See SSLClientImpl.h */
+/* See SSLClientImpl.h */
 void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel level) const {
     if (level > m_debug) return;
     m_print_prefix(__func__, level);
