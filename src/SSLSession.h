@@ -70,7 +70,7 @@ public:
      * 
      * @returns A String object or "" if there is no hostname
      * @pre must check isValidSession before getting this value,
-     * as if this session in invalid this value is not guarented
+     * as if this session in invalid this value is not guarenteed
      * to be reset to "".
      */
     const String& get_hostname() const { return m_hostname; }
@@ -80,7 +80,7 @@ public:
      * 
      * @returns A ::IPAddress object, #INADDR_NONE if there is no IP
      * @pre must check isValidSession before getting this value,
-     * as if this session in invalid this value is not guarented
+     * as if this session in invalid this value is not guarenteed
      * to be reset to #INADDR_NONE.
      */
     const IPAddress& get_ip() const { return m_ip; }
@@ -98,7 +98,7 @@ public:
      * @pre You must call 
      * ::br_ssl_engine_get_session_parameters
      * with this session before calling this function. This is because
-     * there is no way to completly validate the ::br_ssl_session_parameters
+     * there is no way to completely validate the ::br_ssl_session_parameters
      * and the session may end up in a corrupted state if this is not observed.
      * 
      * @param ip The IP address of the host associated with the session
@@ -109,14 +109,15 @@ public:
     void set_parameters(const IPAddress& ip, const char* hostname = NULL);
 
     /**
-     * @brief delete the parameters and invalidate the session
+     * @brief Delete the parameters and invalidate the session.
+     *
      * Roughly equivalent to this_session = SSLSession(), however 
      * this function preserves the String object, allowing it
      * to better handle the dynamic memory needed.
      */
     void clear_parameters();
 
-    /** @brief returns a pointer to the ::br_ssl_session_parameters component of this class */
+    /** @brief Returns a pointer to the ::br_ssl_session_parameters component of this class. */
     br_ssl_session_parameters* to_br_session() { return (br_ssl_session_parameters *)this; }
 
 private:

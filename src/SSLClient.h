@@ -88,11 +88,11 @@ public:
      * SSLClient::connect(host, port) should be preferred over this function, 
      * as verifying the domain name is a step in ensuring the certificate is 
      * legitimate, which is important to the security of the device. Additionally,
-     * SSL sessions cannot be resumed, which can drastically increase initial
+     * SSL sessions cannot be resumed when using this function, which can drastically increase initial
      * connect time.
      * 
      * This function initializes the socket by calling m_client::connect(IPAddress, uint16_t)
-     * with the parameters supplied, then once the socket uses BearSSL to
+     * with the parameters supplied, then once the socket is open, uses BearSSL to
      * to complete a SSL handshake. Due to the design of the SSL standard, 
      * this function will probably take an extended period (1-4sec) to negotiate 
      * the handshake and finish the connection. This function runs until the SSL 
@@ -127,8 +127,8 @@ public:
      * @brief Connect over SSL to a host specified by a hostname.
      * 
      * This function initializes the socket by calling m_client::connect(const char*, uint16_t)
-     * with the parameters supplied, then once the socket is open uses BearSSL to
-     * to complete a SSL handshake. This function runs until the SSL handshake 
+     * with the parameters supplied, then once the socket is open, uses BearSSL to
+     * complete a SSL handshake. This function runs until the SSL handshake 
      * succeeds or fails.
      * 
      * SSL requires the client to generate some random bits (to be later combined 
@@ -189,7 +189,7 @@ public:
 	virtual size_t write(const uint8_t *buf, size_t size) { return write_impl(buf, size); }
 
     /**
-     * @brief Returns the number of bytes availible to read from the SSL Socket
+     * @brief Returns the number of bytes available to read from the data that has been received and decrypted.
      * 
      * This function updates the state of the SSL engine (including writing any data, 
      * see SSLClient::write) and as a result should be called periodically when expecting data. 
@@ -214,7 +214,7 @@ public:
      */
 	virtual int read() { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; };
     /**
-     * @brief Read size bytes from the SSL socket buffer, copying them into *buf, and return the number of bytes read.
+     * @brief Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes read.
      * 
      * This function checks if bytes are ready to be read by calling SSLClient::available,
      * and if so copies size number of bytes from the IO buffer into the buf pointer.
@@ -237,7 +237,8 @@ public:
 	virtual int read(uint8_t *buf, size_t size) { return read_impl(buf, size); }
 
     /** 
-     * @brief view the first byte of the buffer, without removing it from the SSLClient Buffer
+     * @brief View the first byte of the buffer, without removing it from the SSLClient Buffer
+     * 
      * The implementation for this function can be found in SSLClientImpl::peek 
      * @pre SSLClient::available must be >0
      * @returns The first byte received, or -1 if the preconditions are not satisfied (warning: 
@@ -247,6 +248,7 @@ public:
 
     /**
      * @brief Force writing the buffered bytes from SSLClient::write to the network.
+     * 
      * This function is blocking until all bytes from the buffer are written. For
      * an explanation of how writing with SSLClient works, please see SSLClient::write.
      * The implementation for this function can be found in SSLClientImpl::flush.
@@ -255,6 +257,7 @@ public:
 
     /**
      * @brief Close the connection
+     *
      * If the SSL session is still active, all incoming data is discarded and BearSSL will attempt to
      * close the session gracefully (will write to the network), and then call m_client::stop. If the session is not active or an
      * error was encountered previously, this function will simply call m_client::stop.
@@ -264,6 +267,7 @@ public:
 
     /**
      * @brief Check if the device is connected.
+     *
      * Use this function to determine if SSLClient is still connected and a SSL connection is active.
      * It should be noted that SSLClient::available should be preferred over this function for rapid
      * polling--both functions send and receive data with the SSLClient::m_client device, however SSLClient::available
@@ -280,7 +284,7 @@ public:
     //========================================
 
     /**
-     * @brief Get a session reference corresponding to a host and IP, or a reference to a empty session if none exist
+     * @brief Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist
      * 
      * If no session corresponding to the host and IP exist, then this function will cycle through
      * sessions in a rotating order. This allows the session cache to continually store sessions,
@@ -307,12 +311,14 @@ public:
 
     /**
      * @brief Get the maximum number of SSL sessions that can be stored at once
-     * @returns The SessionCache template parameter.
+     *
+     *  @returns The SessionCache template parameter.
      */
     virtual size_t getSessionCount() const { return SessionCache; }
 
     /** 
      * @brief Equivalent to SSLClient::connected() > 0
+     * 
      * @returns true if connected, false if not
      */
 	virtual operator bool() { return connected() > 0; }
@@ -349,14 +355,14 @@ public:
         } 
     }
 
-    /** @brief returns a reference to the client object stored in this class. Take care not to break it. */
+    /** @brief Returns a reference to the client object stored in this class. Take care not to break it. */
     C& getClient() { return m_client; }
 
 protected:
-    /** @brief return an instance of m_client that is polymorphic and can be used by SSLClientImpl */
+    /** @brief Returns an instance of m_client that is polymorphic and can be used by SSLClientImpl */
     virtual Client& get_arduino_client() { return m_client; }
     virtual const Client& get_arduino_client() const { return m_client; }
-    /** @brief return an instance of the session array that is on the stack */
+    /** @brief Returns an instance of the session array that is on the stack */
     virtual SSLSession* get_session_array() { return m_sessions; }
     virtual const SSLSession* get_session_array() const { return m_sessions; }
 
