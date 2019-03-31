@@ -2,6 +2,8 @@
 
 **SSLClient requires at least 110kb flash and 8kb RAM, and will not compile otherwise. This means that most Arduino boards are not supported. Check your board's specifications before attempting to use this library.**
 
+You can also view this README in [doxygen](https://openslab-osu.github.io/SSLClient/html/index.html).
+
 SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, SSLClient implements encrypted communication through SSL on devices that do not otherwise support it.
 
 ## Overview
@@ -45,7 +47,7 @@ client.flush();
 ```
 **Note**: `client.connect("www.arduino.cc", 443)` can take 5-15 seconds to finish. This an unavoidable consequence of the SSL protocol, and is detailed in [Implementation Notes](#Implementation-Notes).
 
-For more information on SSLClient, check out the [examples](./examples), [API documentation](./docs/index.html), or the rest of this README.
+For more information on SSLClient, check out the [examples](./examples), [API documentation](https://openslab-osu.github.io/SSLClient/html/index.html), or the rest of this README.
 
 ## How It Works
 
