@@ -40,7 +40,7 @@ A full example of a trust anchor header can be found in [this file](./readme/cer
 
 ### HTTPS
 
-For HTTPS, there a couple of tools you can use. Ordered from easy to hard:
+For HTTPS, there a couple of tools you can use. Ordered from easiest to hardest:
 * [This website, written to simplify the creation of trust anchor headers](https://openslab-osu.github.io/bearssl-certificate-utility/). Simply plug and play.
 * [pycert_bearssl](./tools/pycert_bearssl/pycert_bearssl.py), a command line utility based on a [pycert](https://learn.adafruit.com/introducing-the-adafruit-wiced-feather-wifi/pycert-dot-py). You will need to install Python 3, and follow the instructions in the [pycert_bearssl.py file](./tools/pycert_bearssl/pycert_bearssl.py). You'll want to use the `pycert_bearssl.py download` command once the utility is set up.
 * The brssl command line utility, included in the [BearSSL source](https://bearssl.org/gitweb/?p=BearSSL;a=blob_plain;f=tools/brssl.h;hb=HEAD). You will need to compile this file yourself.
