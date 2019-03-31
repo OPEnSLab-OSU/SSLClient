@@ -30,7 +30,7 @@
  * @brief Static constants defining the possible errors encountered.
  * 
  * If SSLClient encounters an error, it will generally output
- * logs into the serial moniter. If you need a way of programmatically
+ * logs into the serial monitor. If you need a way of programmatically
  * checking the errors, you can do so with SSLClient::getWriteError(),
  * which will return one of these values.
  */
@@ -44,7 +44,7 @@ enum Error {
     SSL_CLIENT_WRTIE_ERROR,
     /** An internal error occurred with BearSSL, check logs for diagnosis. */
     SSL_BR_WRITE_ERROR,
-    /** An internal error occured with SSLClient, and you probably need to submit an issue on Github. */
+    /** An internal error occurred with SSLClient, and you probably need to submit an issue on Github. */
     SSL_INTERNAL_ERROR,
     /** SSLClient detected that there was not enough memory (>8000 bytes) to continue. */
     SSL_OUT_OF_MEMORY
@@ -53,47 +53,24 @@ enum Error {
 /**
  * @brief Level of verbosity used in logging for SSLClient.
  * 
- * Use these values when initializing SSLCLient to set how many logs you
- * would like to see in the Serial moniter.
+ * Use these values when initializing SSLClient to set how many logs you
+ * would like to see in the Serial monitor.
  */
 enum DebugLevel {
     /** No logging output */
     SSL_NONE = 0,
     /** Only output errors that result in connection failure */
     SSL_ERROR = 1,
-    /** Ouput errors and warnings (useful when just starting to develop) */
+    /** Output errors and warnings (useful when just starting to develop) */
     SSL_WARN = 2,
     /** Output errors, warnings, and internal information (very verbose) */
     SSL_INFO = 3,
 };
 
-/** 
- * On error, any function in this class will terminate the socket.
- * TODO: Write what this is */
-
+/** @brief Implementation code to be inherited by SSLClient */
 class SSLClientImpl : public Client {
 public:
-    /**
-     * @brief initializes SSL contexts for bearSSL
-     * 
-     * @pre You will need to generate an array of trust_anchors (root certificates)
-     * based off of the domains you want to make SSL connections to. Check out the
-     * Wiki on the pycert-bearssl tool for a simple way to do this.
-     * @pre The analog_pin should be set to input.
-     * @pre The session_ray must be an array of the size returned by SSLClient::getSessionCount()
-     * filled with SSLSession objects.
-     * 
-     * @post set_client must be called immediatly after to set the client class
-     * pointer and Session pointer.
-     * 
-     * @param trust_anchors Trust anchors used in the verification 
-     * of the SSL server certificate, generated using the `brssl` command
-     * line utility. For more information see the samples or bearssl.org
-     * @param trust_anchors_num The number of trust anchors stored
-     * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG
-     * @param session_ray A pointer to the array of SSLSessions created by SSLClient
-     * @param debug whether to enable or disable debug logging, must be constexpr
-     */
+    /** See SSLClient::SSLClient */
     explicit SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
         const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
 
@@ -185,7 +162,7 @@ private:
     int m_start_ssl(const char* host, SSLSession& ssl_ses);
     /** run the bearssl engine until a certain state */
     int m_run_until(const unsigned target);
-    /** proxy for availble that returns the state */
+    /** proxy for available that returns the state */
     unsigned m_update_engine();
     /** utility function to find a session index based off of a host and IP */
     int m_get_session_index(const char* host, const IPAddress& addr) const; 

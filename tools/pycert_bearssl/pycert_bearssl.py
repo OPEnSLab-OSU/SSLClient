@@ -14,7 +14,7 @@
 #               OpenSSL can't be found then try installing egenix's prebuilt
 #               PyOpenSSL library and OpenSSL lib:
 #                 http://www.egenix.com/products/python/pyOpenSSL/
-#
+#   certifi - Install with 'sudo pip install certifi' (omit sudo on windows)
 import cert_util
 import click
 import certifi
@@ -68,6 +68,9 @@ def download(port, cert_var, cert_length_var, output, use_store, keep_dupes, dom
       pycert download --output data.h google.com adafruit.com
     Note that the certificates will be validated before they are downloaded!
     """
+    # if array is emptey, exit
+    if len(domain) is 0:
+      return
     # prepare the root certificate store
     cert_obj_store = cert_util.parse_root_certificate_store(use_store)
     cert_dict = dict([(cert.get_subject().hash(), cert) for cert in cert_obj_store])
@@ -111,6 +114,9 @@ def convert(cert_var, cert_length_var, output, use_store, keep_dupes, cert):
     Example of converting foo.pem and bar.pem certificates into data.h:
       pycert convert foo.pem bar.pem
     """
+    # if array is emptey, exit
+    if len(cert) is 0:
+      return
     # prepare root certificate store
     cert_obj_store = cert_util.parse_root_certificate_store(use_store)
     cert_dict = dict([(cert.get_subject().hash(), cert) for cert in cert_obj_store])

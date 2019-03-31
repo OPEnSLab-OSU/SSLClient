@@ -135,6 +135,7 @@ size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
     size_t alen;
     unsigned char *br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
     size_t cur_idx = 0;
+    bool did_overflow = false;
     // while there are still elements to write
     while (cur_idx < size) {
         // run until the ssl socket is ready to write, unless we've already written
@@ -152,8 +153,13 @@ size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
         // so we only send the smallest of the buffer size or our data size - how much we've already sent
         const size_t cpamount = m_write_idx + (size - cur_idx) > alen ? alen : size - cur_idx;
         memcpy(br_buf + m_write_idx, buf + cur_idx, cpamount);
-        // if we filled the buffer, reset m_write_idx
-        if (cpamount == alen) m_write_idx = 0;
+        // if we filled the buffer, reset m_write_idx, and mark the data for sending
+        // or if we've overflowed since we're writing to the network already we may as well finish
+        if (cpamount == alen || did_overflow) {
+            m_write_idx = 0;
+            br_ssl_engine_sendapp_ack(&m_sslctx.eng, alen);
+            did_overflow = true;
+        }
         // else increment
         else m_write_idx += cpamount;
         // increment the buffer pointer

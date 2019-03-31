@@ -26,6 +26,8 @@
  */
 
 #include "bearssl.h"
+#include "Arduino.h"
+#include "IPAddress.h"
 
 #ifndef SSLSession_H_
 #define SSLSession_H_
@@ -104,19 +106,7 @@ public:
      * Take care that this value is corrent, SSLSession performs no validation
      * of the hostname.
      */
-    void set_parameters(const IPAddress& ip, const char* hostname = NULL) {
-        // copy the hostname
-        if (hostname != NULL) m_hostname = hostname;
-        // or if there's no hostname, clear the string
-        else m_hostname = "";
-        // and the IP address
-        m_ip = ip;
-        // check if both values are valid, and if so set valid to true
-        if (m_ip != INADDR_NONE && session_id_len > 0
-            && (hostname == NULL || m_hostname)) m_valid_session = true;
-        // else clear
-        else clear_parameters();
-    }
+    void set_parameters(const IPAddress& ip, const char* hostname = NULL);
 
     /**
      * @brief delete the parameters and invalidate the session
@@ -124,12 +114,7 @@ public:
      * this function preserves the String object, allowing it
      * to better handle the dynamic memory needed.
      */
-    void clear_parameters() {
-        // clear the hostname , ip, and valid session flags
-        m_hostname = "";
-        m_ip = INADDR_NONE;
-        m_valid_session = false;
-    }
+    void clear_parameters();
 
     /** @brief returns a pointer to the ::br_ssl_session_parameters component of this class */
     br_ssl_session_parameters* to_br_session() { return (br_ssl_session_parameters *)this; }
@@ -141,5 +126,7 @@ private:
     // store the IP Address we connected to
     IPAddress m_ip;
 };
+
+
 
 #endif /* SSLSession_H_ */
