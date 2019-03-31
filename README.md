@@ -2,15 +2,15 @@
 
 **SSLClient requires at least 110kb flash and 8kb RAM, and will not compile otherwise. This means that most Arduino boards are not supported. Check your board's specifications before attempting to use this library.**
 
-SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, SSLClient implements encrypted communication through SSL on devices that do not otherwise support it.
+SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, SSLClient implements encrypted communication through SSL on devices that do not otherwise support it.
 
 ## Overview
 
-Using SSLClient should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient). There are a few things extra things, however, that you will need to get started:
+Using SSLClient should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient). There are a few extra things, however, that you will need to get started:
 
 1. A board with a lot of resources (>110kb flash and >8kb RAM), and a network peripheral with a large internal buffer (>8kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Notes](#Implementation-Notes)).
-2. A header containing array of trust anchors, which will look like [this file](./readme/cert.h). These are used to verify the SSL connection later on, and without them you will be unable to use this library. Check out [this document](./TrustAnchors.md) on how to generate this file for your project.
-3. A Client class associated with a network interface. We tested this library using [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient), however in theory it will work for and class implementing Client.
+2. A header containing array of trust anchors, which will look like [this file](./readme/cert.h). These are used to verify the SSL connection later on, and without them you will be unable to use this library. Check out [this document](./TrustAnchors.md) on how to generate this file for your project, and for more information about what a trust anchor is.
+3. A Client class associated with a network interface. We tested this library using [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient), however in theory it will work for any class implementing Client.
 4. An analog pin, used for generating random data at the start of the connection (see the [Implementation Notes](#Implementation-Notes)).
 
 Once all those are ready, you can create a simple SSLClient object like this:
@@ -49,7 +49,7 @@ For more information on SSLClient, check out the [examples](./examples), [API do
 
 ## How It Works
 
-SSLClient was created to integrate SSL seamlessly with the Arduino infrastructure, and so it does just that: implementing the brilliant [BearSSL](https://bearssl.org/) as a proxy in front of any Arduino socket library. BearSSL is designed with low flash footprint in mind, and as a result does little verification of improper programming, relying on the developer to ensure the code is correct. Since SSLClient is built specifically for the Arduino ecosystem, most of the code adds those programming checks back in, helping debugging be a fast and simple process. The rest manages the state of BearSSL, and ensures a manageable memory footprint.
+SSLClient was created to integrate SSL seamlessly with the Arduino infrastructure, and so it does just that: implementing the brilliant [BearSSL](https://bearssl.org/) as a proxy in front of any Arduino socket library. BearSSL is designed with low flash footprint in mind, and as a result does little verification of improper programming, relying on the developer to ensure the code is correct. Since SSLClient is built specifically for the Arduino ecosystem, most of the code adds those programming checks back in, making debugging a fast and simple process. The rest manages the state of BearSSL, and ensures a manageable memory footprint.
 
 Additionally, the bulk of SSLClient is split into two components: a template class [SSLClient](./src/SSLClient.h), and an implementation class [SSLClientImpl](./src/SSLClientImpl.h). The template class serves to abstract some functions not implemented in the Arduino Client interface (such as `EthernetClient::remoteIP`), and the implementation class is the rest of the SSLClient library.
 
@@ -72,13 +72,33 @@ This was implemented as a buffered function because examples in Arduino librarie
 ```C++
 EthernetClient client;
 // ...
-client.println("GET /asciilogo.txt HTTP/1.1");
-client.println("Host: arduino.cc");
-client.println("Connection: close");
+// connect to ardiuino.cc over ssl (port 443 for websites)
+client.connect("www.arduino.cc", 443);
+// ...
+// write an http request to the network
+client.write("GET /asciilogo.txt HTTP/1.1\r\n");
+client.write("Host: arduino.cc\r\n");
+client.write("Connection: close\r\n");
+// wait for response
 while (!client.available()) { /* ... */ }
 // ...
 ```
-This is fine with most network clients. With SSL, however, if we are encrypting and writing to the network every write() call this will result in a lot of small encryption tasks. Encryption takes a lot of time and code, and so to reduce the overhead of an SSL connection SSLClient::write implicitly buffers until the developer states that they are waiting for data to be received with SSLClient::available.
+Notice that every single write() call immediately writes to the network, which is fine with most network clients. With SSL, however, if we are encrypting and writing to the network every write() call, this will result in a lot of small encryption tasks. Encryption takes a lot of time and code, so to reduce the overhead of an SSL connection, SSLClient::write implicitly buffers until the developer states that they are waiting for data to be received with SSLClient::available. A simple example can be found below:
+
+```C++
+SSLClient<EthernetClient> client(EthernetClient(), TAs, 2, A7);
+// ...
+// connect to ardiuino.cc over ssl (port 443 for websites)
+client.connect("www.arduino.cc", 443);
+// ...
+// add http request to the buffer
+client.write("GET /asciilogo.txt HTTP/1.1\r\n");
+client.write("Host: arduino.cc\r\n");
+client.write("Connection: close\r\n");
+// write the bytes to the network, then wait for response
+while (!client.available()) { /* ... */ }
+// ...
+```
 
 If you would like to trigger a network write manually without using the SSLClient::available, you can also call SSLClient::flush, which will write all data and return when finished.
 
@@ -87,10 +107,10 @@ As detailed in the [resources section](#resources), SSL handshakes take an exten
 
 In order to use SSL session resumption:
  * The website you are connecting to must support it. Support is widespread, but you can verify easily using the [SSLLabs tool](https://www.ssllabs.com/ssltest/).
- *  you must reuse the same SSLClient object (SSL Sessions are stored in the object itself).
- *  you must reconnect to the exact same server.
+ *  You must reuse the same SSLClient object (SSL Sessions are stored in the object itself).
+ *  You must reconnect to the exact same server.
 
-SSLClient automatically stores an IP address and hostname in each session, ensuring that if you call `connect("www.google.com")` SSLClient will use a IP address that recognizes the SSL session instead of another IP address associated with `"www.google.com"`. Because some websites have multiple servers on a single IP address (github.com is an example), however, you may find that even if you are connecting to the same host the connection does not resume. This is a flaw in the SSL session protocol, and has been resolved in future versions. SSL sessions can also expire based on server criteria, which will result in a standard 4-10 second connection.
+SSLClient automatically stores an IP address and hostname in each session, ensuring that if you call `connect("www.google.com")` SSLClient will use a IP address that recognizes the SSL session instead of another IP address associated with `"www.google.com"`. However, because some websites have multiple servers on a single IP address (github.com being an example), you may find that even if you are connecting to the same host the connection does not resume. This is a flaw in the SSL session protocol — though it has been resolved in TLS 1.3, the lack of widespread adoption of the new protocol prevents it from being used here. SSL sessions can also expire based on server criteria, which will result in a standard 4-10 second connection.
 
 You can test whether or not a website can resume SSL Sessions using the [Session Example](./examples/Session_Example/Session_Example.ino) included with this library. Because of all the confounding factors of SSL Sessions, it is generally prudent while programming to assume the session will always fail to resume. 
 
@@ -117,11 +137,11 @@ SSL is a buffered protocol, and since most microcontrollers have limited resourc
 In order to remedy this problem, the device must be able to read the data faster than it is being received, or alternatively have a cache large enough to store the entire payload. Since SSL's encryption forces the device to read slowly, this means we must increase the cache size. Depending on your platform, there are a number of ways this can be done:
 * Sometimes your communication shield will have an internal buffer, which can be expanded through the driver code. This is the case with the Arduino Ethernet library (in the form of the MAX_SOCK_NUM and ETHERNET_LARGE_BUFFERS macros), however the library must be modified for the change to take effect.
 * SSLClient has an internal buffer SSLClientImpl::m_iobuf, which can be expanded. BearSSL limits the amount of data that can be processed based on the stage in the SSL handshake, and so this will change will have limited usefulness. 
-* In some cases, a website will send so much data that even with the above solutions SSLClient will be unable to keep up (a website with a lot of HTML is an example). In these cases you will have to find another method of retrieving the data you need.
+* In some cases, a website will send so much data that even with the above solutions, SSLClient will be unable to keep up (a website with a lot of HTML is an example). In these cases you will have to find another method of retrieving the data you need.
 * If none of the above are viable, it is possible to implement your own Client class which has an internal buffer much larger than both the driver and BearSSL. This would require in-depth knowledge of programming and the communication shield you are working with, as well as a microcontroller with a significant amount of RAM.
 
 ### Cipher Support
-SSLClient supports only TLS1.2 and the ciphers listed in [this file](./src/TLS12_only_profile) under `suites[]` by default, and the list is relatively small to keep the connection secure and the flash footprint down. These ciphers should work for most applications, however if for some reason you would like to use an older version of TLS or a different cipher, you can change the BearSSL profile being used by SSLClient to an [alternate one with support for older protocols](./src/bearssl/src/ssl). To do this, edit `SSLClientImpl::SSLClientImpl` to change these lines:
+By default, SSLClient supports only TLS1.2 and the ciphers listed in [this file](./src/TLS12_only_profile) under `suites[]`, and the list is relatively small to keep the connection secure and the flash footprint down. These ciphers should work for most applications, however if for some reason you would like to use an older version of TLS or a different cipher, you can change the BearSSL profile being used by SSLClient to an [alternate one with support for older protocols](./src/bearssl/src/ssl). To do this, edit `SSLClientImpl::SSLClientImpl` to change these lines:
 ```C++
 br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
 // comment the above line and uncomment the line below if you're having trouble connecting over SSL
