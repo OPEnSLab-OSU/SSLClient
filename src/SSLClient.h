@@ -27,7 +27,7 @@
 #define SSLClient_H_
 
 /**
- * @brief The main SSLClient class
+ * @brief The main SSLClient class.
  * Check out README.md for more info.
  */
 

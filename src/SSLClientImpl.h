@@ -70,7 +70,7 @@ enum DebugLevel {
 /** @brief Implementation code to be inherited by SSLClient */
 class SSLClientImpl : public Client {
 public:
-    /** See SSLClient::SSLClient */
+    /** @see SSLClient::SSLClient */
     explicit SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
         const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
 
@@ -96,28 +96,28 @@ public:
 	void stop_impl();
     /** @see SSLClient::connected */
 	uint8_t connected_impl();
-    /** See SSLClient::getSession */
+    /** @see SSLClient::getSession */
     SSLSession& get_session_impl(const char* host, const IPAddress& addr);
-    /** See SSLClient::removeSession */
+    /** @see SSLClient::removeSession */
     void remove_session_impl(const char* host, const IPAddress& addr);
 
     //============================================
     //= Functions implemented in SSLClient.h
     //============================================
-    /** See SSLClient::localPort */
+    /** @see SSLClient::localPort */
     virtual uint16_t localPort() = 0;
-    /** See SSLClient::remoteIP */
+    /** @see SSLClient::remoteIP */
 	virtual IPAddress remoteIP() = 0;
-    /** See SSLClient::localPort */
+    /** @see SSLClient::localPort */
 	virtual uint16_t remotePort() = 0;
-    /** See SSLClient::getSessionCount */
+    /** @see SSLClient::getSessionCount */
     virtual size_t getSessionCount() const = 0;
     
 protected:
-    /** See SSLClient::get_arduino_client */
+    /** @see SSLClient::get_arduino_client */
     virtual Client& get_arduino_client() = 0;
     virtual const Client& get_arduino_client() const = 0;
-    /** See SSLClient::get_session_array */
+    /** @see SSLClient::get_session_array */
     virtual SSLSession* get_session_array() = 0;
     virtual const SSLSession* get_session_array() const = 0;
 

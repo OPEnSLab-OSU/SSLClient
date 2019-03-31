@@ -95,7 +95,7 @@ $(document).ready(function(){initNavTree('class_s_s_l_session.html','');});
 </div><!--header-->
 <div class="contents">
 
-<p>This class stores values which allow <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class Check out README.md for more info.">SSLClient</a> to save and resume SSL sessions.  
+<p>This class stores values which allow <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> to save and resume SSL sessions.  
  <a href="class_s_s_l_session.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="_s_s_l_session_8h_source.html">SSLSession.h</a>&gt;</code></p>
@@ -126,17 +126,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a2fa15ce0b7caae25dfb567954175257e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the ip address and hostname of the session.  <a href="#a2fa15ce0b7caae25dfb567954175257e">More...</a><br /></td></tr>
 <tr class="separator:a2fa15ce0b7caae25dfb567954175257e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3305941fa615f7134526b718917716ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_session.html#a3305941fa615f7134526b718917716ee">clear_parameters</a> ()</td></tr>
-<tr class="memdesc:a3305941fa615f7134526b718917716ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">delete the parameters and invalidate the session Roughly equivalent to this_session = <a class="el" href="class_s_s_l_session.html#ae05648200cea66577f024d5d09a6fcbb" title="SSLSession constructor.">SSLSession()</a>, however this function preserves the String object, allowing it to better handle the dynamic memory needed.  <a href="#a3305941fa615f7134526b718917716ee">More...</a><br /></td></tr>
+<tr class="memdesc:a3305941fa615f7134526b718917716ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the parameters and invalidate the session.  <a href="#a3305941fa615f7134526b718917716ee">More...</a><br /></td></tr>
 <tr class="separator:a3305941fa615f7134526b718917716ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbe6549b55d50541d09a16f770e65afc"><td class="memItemLeft" align="right" valign="top">br_ssl_session_parameters *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_session.html#acbe6549b55d50541d09a16f770e65afc">to_br_session</a> ()</td></tr>
-<tr class="memdesc:acbe6549b55d50541d09a16f770e65afc"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a pointer to the ::br_ssl_session_parameters component of this class  <a href="#acbe6549b55d50541d09a16f770e65afc">More...</a><br /></td></tr>
+<tr class="memdesc:acbe6549b55d50541d09a16f770e65afc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the ::br_ssl_session_parameters component of this class.  <a href="#acbe6549b55d50541d09a16f770e65afc">More...</a><br /></td></tr>
 <tr class="separator:acbe6549b55d50541d09a16f770e65afc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>This class stores values which allow <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class Check out README.md for more info.">SSLClient</a> to save and resume SSL sessions. </p>
+<div class="textblock"><p>This class stores values which allow <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> to save and resume SSL sessions. </p>
 <p><a class="el" href="_s_s_l_session_8h.html">SSLSession.h</a></p>
 <p>This file contains a simple utility class to store parameters about an SSL Session for reuse later.This class was created to extend the values stored in br_ssl_session_parameters, which allow BearSSL to resume an SSL session. When testing BearSSL's session resumption feature, it was observed that BearSSL can only resume a session that was was started with the same server. This becomes an issue when using repeated requests to a domain name which can resolve to multiple IP addresses ("api.github.com"), as the device will switch between two or three servers. Since BearSSL only stores one session at a time, this results in session resumption being few and far between.</p>
-<p>To remedy this problem, an <a class="el" href="class_s_s_l_session.html" title="This class stores values which allow SSLClient to save and resume SSL sessions.">SSLSession</a> stores the IPAddress and hostname, along with the parameters in br_ssl_session_parameters struct. Using this data, <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class Check out README.md for more info.">SSLClient</a> is able to remember which IPAddress is associated with which session, allowing it to reconnect to the last IPAddress, as opposed to any associated with the domain. </p>
+<p>To remedy this problem, an <a class="el" href="class_s_s_l_session.html" title="This class stores values which allow SSLClient to save and resume SSL sessions.">SSLSession</a> stores the IPAddress and hostname, along with the parameters in br_ssl_session_parameters struct. Using this data, <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> is able to remember which IPAddress is associated with which session, allowing it to reconnect to the last IPAddress, as opposed to any associated with the domain. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae05648200cea66577f024d5d09a6fcbb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae05648200cea66577f024d5d09a6fcbb">&#9670;&nbsp;</a></span>SSLSession()</h2>
@@ -182,7 +182,8 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>delete the parameters and invalidate the session Roughly equivalent to this_session = <a class="el" href="class_s_s_l_session.html#ae05648200cea66577f024d5d09a6fcbb" title="SSLSession constructor.">SSLSession()</a>, however this function preserves the String object, allowing it to better handle the dynamic memory needed. </p>
+<p>Delete the parameters and invalidate the session. </p>
+<p>Roughly equivalent to this_session = <a class="el" href="class_s_s_l_session.html#ae05648200cea66577f024d5d09a6fcbb" title="SSLSession constructor.">SSLSession()</a>, however this function preserves the String object, allowing it to better handle the dynamic memory needed. </p>
 
 </div>
 </div>
@@ -211,7 +212,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Get the hostname string associated with this session. </p>
 <dl class="section return"><dt>Returns</dt><dd>A String object or "" if there is no hostname </dd></dl>
-<dl class="section pre"><dt>Precondition</dt><dd>must check isValidSession before getting this value, as if this session in invalid this value is not guarented to be reset to "". </dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd>must check isValidSession before getting this value, as if this session in invalid this value is not guarenteed to be reset to "". </dd></dl>
 
 </div>
 </div>
@@ -240,7 +241,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Get ::IPAddress associated with this session. </p>
 <dl class="section return"><dt>Returns</dt><dd>A ::IPAddress object, #INADDR_NONE if there is no IP </dd></dl>
-<dl class="section pre"><dt>Precondition</dt><dd>must check isValidSession before getting this value, as if this session in invalid this value is not guarented to be reset to #INADDR_NONE. </dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd>must check isValidSession before getting this value, as if this session in invalid this value is not guarenteed to be reset to #INADDR_NONE. </dd></dl>
 
 </div>
 </div>
@@ -325,7 +326,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Set the ip address and hostname of the session. </p>
 <p>This function stores the ip Address object and hostname object into the session object. If hostname is not null or ip address is not blank, and the ::br_ssl_session_parameters values are non-zero it then validates the session.</p>
-<dl class="section pre"><dt>Precondition</dt><dd>You must call ::br_ssl_engine_get_session_parameters with this session before calling this function. This is because there is no way to completly validate the ::br_ssl_session_parameters and the session may end up in a corrupted state if this is not observed.</dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd>You must call ::br_ssl_engine_get_session_parameters with this session before calling this function. This is because there is no way to completely validate the ::br_ssl_session_parameters and the session may end up in a corrupted state if this is not observed.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ip</td><td>The IP address of the host associated with the session </td></tr>
@@ -359,7 +360,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>returns a pointer to the ::br_ssl_session_parameters component of this class </p>
+<p>Returns a pointer to the ::br_ssl_session_parameters component of this class. </p>
 
 </div>
 </div>

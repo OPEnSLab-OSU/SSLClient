@@ -51,7 +51,7 @@ For more information on SSLClient, check out the [examples](./examples), [API do
 
 SSLClient was created to integrate SSL seamlessly with the Arduino infrastructure, and so it does just that: implementing the brilliant [BearSSL](https://bearssl.org/) as a proxy in front of any Arduino socket library. BearSSL is designed with low flash footprint in mind, and as a result does little verification of improper programming, relying on the developer to ensure the code is correct. Since SSLClient is built specifically for the Arduino ecosystem, most of the code adds those programming checks back in, making debugging a fast and simple process. The rest manages the state of BearSSL, and ensures a manageable memory footprint.
 
-Additionally, the bulk of SSLClient is split into two components: a template class [SSLClient](./src/SSLClient.h), and an implementation class [SSLClientImpl](./src/SSLClientImpl.h). The template class serves to abstract some functions not implemented in the Arduino Client interface (such as `EthernetClient::remoteIP`), and the implementation class is the rest of the SSLClient library.
+Additionally, the bulk of SSLClient is split into two components: a template class [SSLClient](./src/SSLClient.h), and an implementation class [SSLClientImpl](./src/SSLClientImpl.h). The template class serves to abstract some functions not implemented in the Arduino Client interface (such as EthernetClient::remoteIP), and the implementation class is the rest of the SSLClient library.
 
 ## Other Features
 
@@ -60,13 +60,13 @@ SSLClient also allows for changing the debugging level by adding an additional p
 ```C++
 SSLClient<EthernetClient> client(EthernetClient(), TAs, (size_t)2, A7, SSL_INFO);
 ```
-Logging is always outputted through the [Arduino Serial interface](https://www.arduino.cc/reference/en/language/functions/communication/serial/), so you'll need to setup Serial before you can view the SSL logs. Log levels are enumerated in [Error](./src/SSLClientImpl.h). The log level is set to `SSL_WARN` by default.
+Logging is always outputted through the [Arduino Serial interface](https://www.arduino.cc/reference/en/language/functions/communication/serial/), so you'll need to setup Serial before you can view the SSL logs. Log levels are enumerated in ::DebugLevel. The log level is set to `SSL_WARN` by default.
 
 ### Errors
-When SSLClient encounters an error, it will attempt to terminate the SSL session gracefully if possible, and then close the socket. Simple error information can be found from `SSLClient::getWriteError()`, which will return a value from [this enumeration](link-me). For more detailed diagnostics, you can look at the serial logs, which will be displayed if the log level is at `SSL_ERROR` or lower.
+When SSLClient encounters an error, it will attempt to terminate the SSL session gracefully if possible, and then close the socket. Simple error information can be found from SSLClient::getWriteError(), which will return a value from the ::Error enum. For more detailed diagnostics, you can look at the serial logs, which will be displayed if the log level is at `SSL_ERROR` or lower.
 
 ### Write Buffering
-As you may have noticed in the documentation for [SSLClient::write](link-me), calling this function does not actually write to the network. Instead, you must call [SSLClient::available](link-me) or [SSLClient::flush](link-me), which will detect that the buffer is ready and write to the network (see [SSLClient::write](link-me) for details).
+As you may have noticed in the documentation for SSLClient::write, calling this function does not actually write to the network. Instead, you must call SSLClient::available or SSLClient::flush, which will detect that the buffer is ready and write to the network (see SSLClient::write for details).
 
 This was implemented as a buffered function because examples in Arduino libraries will often write to the network like so:
 ```C++
@@ -112,14 +112,25 @@ In order to use SSL session resumption:
 
 SSLClient automatically stores an IP address and hostname in each session, ensuring that if you call `connect("www.google.com")` SSLClient will use a IP address that recognizes the SSL session instead of another IP address associated with `"www.google.com"`. However, because some websites have multiple servers on a single IP address (github.com being an example), you may find that even if you are connecting to the same host the connection does not resume. This is a flaw in the SSL session protocol — though it has been resolved in TLS 1.3, the lack of widespread adoption of the new protocol prevents it from being used here. SSL sessions can also expire based on server criteria, which will result in a standard 4-10 second connection.
 
-You can test whether or not a website can resume SSL Sessions using the [Session Example](./examples/Session_Example/Session_Example.ino) included with this library. Because of all the confounding factors of SSL Sessions, it is generally prudent while programming to assume the session will always fail to resume. 
+You can test whether or not a website can resume SSL Sessions using the [Session Example](./examples/Session_Example/Session_Example.ino) included with this library. Because of all the confounding factors of SSL Sessions, it is generally prudent while programming to assume the session will always fail to resume.
+
+SSL sessions take a lot of memory to store, so by default SSLClient will only store one at a time. You can change this behavior by adding the following to your SSLClient declaration:
+```C++
+SSLClient<EthernetClient, SomeNumber> client(EthernetClient(), TAs, 2, A7);
+```
+Where `SomeNumber` is the number of sessions you would like to store. For example this declaration can store 3 sessions:
+```C++
+SSLClient<EthernetClient, 3> client(EthernetClient(), TAs, 2, A7);
+```
+Sessions are managed internally using the SSLSession::getSession function. This function will cycle through sessions in a rotating order, allowing the session cache to continually overwrite old sessions. In general, it is a good idea to use a SessionCache size equal to the number of domains you plan on connecting to.
+
+If you need to clear a session, you can do so using the SSLSession::removeSession function.
 
 ## Implementation Gotchas
 
 Some ideas that didn't quite fit in the API documentation.
 
 ### Certificate Verification
-
 SSLClient uses BearSSL's [minimal x509 verification engine](https://bearssl.org/x509.html#the-minimal-engine) to verify the certificate of an SSL connection. This engine requires the developer create a trust anchor array using values stored in trusted root certificates. Check out [this document](./TrustAnchors.md) for more details on this component of SSLClient.
 
 BearSSL also features a [known certificate validation engine](https://bearssl.org/x509.html#the-known-key-engine), which only allows for a single domain in exchange for a significantly reduced resource usage (flash and CPU time). This functionality is planned to be implemented in the future.
@@ -141,7 +152,7 @@ In order to remedy this problem, the device must be able to read the data faster
 * If none of the above are viable, it is possible to implement your own Client class which has an internal buffer much larger than both the driver and BearSSL. This would require in-depth knowledge of programming and the communication shield you are working with, as well as a microcontroller with a significant amount of RAM.
 
 ### Cipher Support
-By default, SSLClient supports only TLS1.2 and the ciphers listed in [this file](./src/TLS12_only_profile) under `suites[]`, and the list is relatively small to keep the connection secure and the flash footprint down. These ciphers should work for most applications, however if for some reason you would like to use an older version of TLS or a different cipher, you can change the BearSSL profile being used by SSLClient to an [alternate one with support for older protocols](./src/bearssl/src/ssl). To do this, edit `SSLClientImpl::SSLClientImpl` to change these lines:
+By default, SSLClient supports only TLS1.2 and the ciphers listed in [this file](./src/TLS12_only_profile.c) under `suites[]`, and the list is relatively small to keep the connection secure and the flash footprint down. These ciphers should work for most applications, however if for some reason you would like to use an older version of TLS or a different cipher, you can change the BearSSL profile being used by SSLClient to an [alternate one with support for older protocols](./src/bearssl/src/ssl). To do this, edit `SSLClientImpl::SSLClientImpl` to change these lines:
 ```C++
 br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
 // comment the above line and uncomment the line below if you're having trouble connecting over SSL
