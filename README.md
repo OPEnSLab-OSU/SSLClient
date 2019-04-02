@@ -10,10 +10,10 @@ SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.
 
 Using SSLClient should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient). There are a few extra things, however, that you will need to get started:
 
-1. A board with a lot of resources (>110kb flash and >8kb RAM), and a network peripheral with a large internal buffer (>8kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Notes](#Implementation-Notes)).
+1. A board with a lot of resources (>110kb flash and >8kb RAM), and a network peripheral with a large internal buffer (>8kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Gotchas](#sslclient-with-ethernet)).
 2. A header containing array of trust anchors, which will look like [this file](./readme/cert.h). These are used to verify the SSL connection later on, and without them you will be unable to use this library. Check out [this document](./TrustAnchors.md) on how to generate this file for your project, and for more information about what a trust anchor is.
 3. A Client class associated with a network interface. We tested this library using [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient), however in theory it will work for any class implementing Client.
-4. An analog pin, used for generating random data at the start of the connection (see the [Implementation Notes](#Implementation-Notes)).
+4. An analog pin, used for generating random data at the start of the connection (see the [Implementation Gotchas](#implementation-gotchas)).
 
 Once all those are ready, you can create a simple SSLClient object like this:
 ```C++
@@ -45,7 +45,7 @@ client.flush();
 // read and print the data
 ...
 ```
-**Note**: `client.connect("www.arduino.cc", 443)` can take 5-15 seconds to finish. This an unavoidable consequence of the SSL protocol, and is detailed in [Implementation Notes](#Implementation-Notes).
+**Note**: `client.connect("www.arduino.cc", 443)` can take 5-15 seconds to finish. This an unavoidable consequence of the SSL protocol, and is detailed in [Implementation Notes](#resources).
 
 For more information on SSLClient, check out the [examples](./examples), [API documentation](https://openslab-osu.github.io/SSLClient/html/index.html), or the rest of this README.
 
@@ -131,6 +131,52 @@ If you need to clear a session, you can do so using the SSLSession::removeSessio
 ## Implementation Gotchas
 
 Some ideas that didn't quite fit in the API documentation.
+
+### SSLClient with Ethernet
+If you are using the [Arduino Ethernet library](https://github.com/arduino-libraries/Ethernet), you will need to modify the library to support the large buffer sizes required by SSL (detailed in [resources](#resources)). To do this, first find the location of the library in the directory where Arduino is installed (`C:\Program Files (x86)\Arduino` on Windows). Inside of this directory, navigate to `libraries\Ethernet\src` (`C:\Program Files (x86)\Arduino\libraries\Ethernet\src` on Windows). Modify `Ethernet.h` to replace these lines:
+```C++
+...
+// Configure the maximum number of sockets to support.  W5100 chips can have
+// up to 4 sockets.  W5200 & W5500 can have up to 8 sockets.  Several bytes
+// of RAM are used for each socket.  Reducing the maximum can save RAM, but
+// you are limited to fewer simultaneous connections.
+#if defined(RAMEND) && defined(RAMSTART) && ((RAMEND - RAMSTART) <= 2048)
+#define MAX_SOCK_NUM 4
+#else
+#define MAX_SOCK_NUM 8
+#endif
+
+// By default, each socket uses 2K buffers inside the Wiznet chip.  If
+// MAX_SOCK_NUM is set to fewer than the chip's maximum, uncommenting
+// this will use larger buffers within the Wiznet chip.  Large buffers
+// can really help with UDP protocols like Artnet.  In theory larger
+// buffers should allow faster TCP over high-latency links, but this
+// does not always seem to work in practice (maybe Wiznet bugs?)
+//#define ETHERNET_LARGE_BUFFERS
+...
+```
+With this:
+```C++
+...
+// Configure the maximum number of sockets to support.  W5100 chips can have
+// up to 4 sockets.  W5200 & W5500 can have up to 8 sockets.  Several bytes
+// of RAM are used for each socket.  Reducing the maximum can save RAM, but
+// you are limited to fewer simultaneous connections.
+#define MAX_SOCK_NUM 2
+
+// By default, each socket uses 2K buffers inside the Wiznet chip.  If
+// MAX_SOCK_NUM is set to fewer than the chip's maximum, uncommenting
+// this will use larger buffers within the Wiznet chip.  Large buffers
+// can really help with UDP protocols like Artnet.  In theory larger
+// buffers should allow faster TCP over high-latency links, but this
+// does not always seem to work in practice (maybe Wiznet bugs?)
+#define ETHERNET_LARGE_BUFFERS
+...
+```
+You may need to use `sudo` or administrator permissions to make this modification. We change `MAX_SOCK_NUM` and `ETHERNET_LARGE_BUFFERS` so the Ethernet hardware can allocate a larger space for SSLClient, however a downside of this modification is we are now only able to have two sockets concurrently. As most microprocessors barely have enough memory for one SSL connection, this limitation will rarely be encountered in practice.
+
+### Random Data
+The SSL protocol requires that SSLClient generate some random bits before connecting with a server. BearSSL provides a random number generator but requires a [some entropy for a seed](https://bearssl.org/apidoc/bearssl__ssl_8h.html#a7d8e8de2afd49d6794eae02f56f81152). Normally this seed is generated by taking the microsecond time using the internal clock, however since most microcontrollers are not build with this feature another source must be found. As a simple solution, SSLClient uses a floating analog pin as an external source of random data, passed through to the constructor in the `analog_pin` argument. Before every connection, SSLClient will take the bottom byte from 16 analog reads on `analog_pin`, and combine these bytes into a 16 byte random number, which is used as a seed for BearSSL. To ensure the most random data, it is recommended that this analog pin be either floating or connected to a location not modifiable by the microcontroller (i.e. a battery voltage readout). 
 
 ### Certificate Verification
 SSLClient uses BearSSL's [minimal x509 verification engine](https://bearssl.org/x509.html#the-minimal-engine) to verify the certificate of an SSL connection. This engine requires the developer create a trust anchor array using values stored in trusted root certificates. Check out [this document](./TrustAnchors.md) for more details on this component of SSLClient.

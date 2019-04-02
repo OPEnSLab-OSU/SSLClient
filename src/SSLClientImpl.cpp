@@ -381,7 +381,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         }
         // timeout check
         if (millis() - start > getTimeout()) {
-            m_error("SSL internals timed out! This could be an internal error or bad data sent from the server", func_name);
+            m_error("SSL internals timed out! This could be an internal error, bad data sent from the server, or data being discarded due to a buffer overflow. If you are using Ethernet, did you modify the library properly (see README)?", func_name);
             setWriteError(SSL_BR_WRITE_ERROR);
             stop_impl();
             return -1;
