@@ -343,7 +343,7 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
         setWriteError(SSL_BR_CONNECT_FAIL);
         return 0;
     }
-    // initlalize the SSL socket over the network
+    // initialize the SSL socket over the network
     // normally this would happen in write, but I think it makes
     // a little more structural sense to put it here
     if (m_run_until(BR_SSL_SENDAPP) < 0) {
