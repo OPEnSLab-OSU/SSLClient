@@ -115,69 +115,69 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae9a7509bc8a18f67e286547c19deb3c0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae9a7509bc8a18f67e286547c19deb3c0">SSLClient</a> (const C &amp;client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a> debug=<a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395a86c8fdfc38831619d5ed73dff5b0911d">SSL_WARN</a>)</td></tr>
 <tr class="memdesc:ae9a7509bc8a18f67e286547c19deb3c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> with all of the prerequisites needed.  <a href="#ae9a7509bc8a18f67e286547c19deb3c0">More...</a><br /></td></tr>
 <tr class="separator:ae9a7509bc8a18f67e286547c19deb3c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6540b9a02f1392bf2ac48421189f70e"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae6540b9a02f1392bf2ac48421189f70e">connect</a> (IPAddress ip, uint16_t port)</td></tr>
-<tr class="memdesc:ae6540b9a02f1392bf2ac48421189f70e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect over SSL to a host specified by an IP address.  <a href="#ae6540b9a02f1392bf2ac48421189f70e">More...</a><br /></td></tr>
-<tr class="separator:ae6540b9a02f1392bf2ac48421189f70e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5814c11e96848c2bcea78210f099aad5"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a5814c11e96848c2bcea78210f099aad5">connect</a> (const char *host, uint16_t port)</td></tr>
-<tr class="memdesc:a5814c11e96848c2bcea78210f099aad5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect over SSL to a host specified by a hostname.  <a href="#a5814c11e96848c2bcea78210f099aad5">More...</a><br /></td></tr>
-<tr class="separator:a5814c11e96848c2bcea78210f099aad5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0699ff4b966162cba2ef59ff4a287270"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a0699ff4b966162cba2ef59ff4a287270">write</a> (uint8_t b)</td></tr>
-<tr class="separator:a0699ff4b966162cba2ef59ff4a287270"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a48b190985cdea2eba79ef0bdc80461"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a3a48b190985cdea2eba79ef0bdc80461">write</a> (const uint8_t *buf, size_t size)</td></tr>
-<tr class="memdesc:a3a48b190985cdea2eba79ef0bdc80461"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write some bytes to the SSL connection.  <a href="#a3a48b190985cdea2eba79ef0bdc80461">More...</a><br /></td></tr>
-<tr class="separator:a3a48b190985cdea2eba79ef0bdc80461"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40ec85568d0aec376219125b604dbc29"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29">available</a> ()</td></tr>
-<tr class="memdesc:a40ec85568d0aec376219125b604dbc29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes available to read from the data that has been received and decrypted.  <a href="#a40ec85568d0aec376219125b604dbc29">More...</a><br /></td></tr>
-<tr class="separator:a40ec85568d0aec376219125b604dbc29"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac70b900ff798f9fd33f6367fcc9fad77"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ac70b900ff798f9fd33f6367fcc9fad77">read</a> ()</td></tr>
-<tr class="memdesc:ac70b900ff798f9fd33f6367fcc9fad77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a single byte, or -1 if none is available.  <a href="#ac70b900ff798f9fd33f6367fcc9fad77">More...</a><br /></td></tr>
-<tr class="separator:ac70b900ff798f9fd33f6367fcc9fad77"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae31dd88a1af8ec3794fb48f26a3dd4bf"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae31dd88a1af8ec3794fb48f26a3dd4bf">read</a> (uint8_t *buf, size_t size)</td></tr>
-<tr class="memdesc:ae31dd88a1af8ec3794fb48f26a3dd4bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes read.  <a href="#ae31dd88a1af8ec3794fb48f26a3dd4bf">More...</a><br /></td></tr>
-<tr class="separator:ae31dd88a1af8ec3794fb48f26a3dd4bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a227b1cbbe91bcb21153c09f97d0dd484"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a227b1cbbe91bcb21153c09f97d0dd484">peek</a> ()</td></tr>
-<tr class="memdesc:a227b1cbbe91bcb21153c09f97d0dd484"><td class="mdescLeft">&#160;</td><td class="mdescRight">View the first byte of the buffer, without removing it from the <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> Buffer.  <a href="#a227b1cbbe91bcb21153c09f97d0dd484">More...</a><br /></td></tr>
-<tr class="separator:a227b1cbbe91bcb21153c09f97d0dd484"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51eb668f6a328a6a66298c6bc1361d41"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a51eb668f6a328a6a66298c6bc1361d41">flush</a> ()</td></tr>
-<tr class="memdesc:a51eb668f6a328a6a66298c6bc1361d41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Force writing the buffered bytes from <a class="el" href="class_s_s_l_client.html#a0699ff4b966162cba2ef59ff4a287270">SSLClient::write</a> to the network.  <a href="#a51eb668f6a328a6a66298c6bc1361d41">More...</a><br /></td></tr>
-<tr class="separator:a51eb668f6a328a6a66298c6bc1361d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a158d87df3fe118b7565a19b72f310322"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a158d87df3fe118b7565a19b72f310322">stop</a> ()</td></tr>
-<tr class="memdesc:a158d87df3fe118b7565a19b72f310322"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close the connection.  <a href="#a158d87df3fe118b7565a19b72f310322">More...</a><br /></td></tr>
-<tr class="separator:a158d87df3fe118b7565a19b72f310322"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7318aadc0ec9775bffaaac0b1f00aaf8"><td class="memItemLeft" align="right" valign="top">virtual uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a7318aadc0ec9775bffaaac0b1f00aaf8">connected</a> ()</td></tr>
-<tr class="memdesc:a7318aadc0ec9775bffaaac0b1f00aaf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the device is connected.  <a href="#a7318aadc0ec9775bffaaac0b1f00aaf8">More...</a><br /></td></tr>
-<tr class="separator:a7318aadc0ec9775bffaaac0b1f00aaf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae3f27a36ff9c0cd1e2bea5e1708b6e4f"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="class_s_s_l_session.html">SSLSession</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae3f27a36ff9c0cd1e2bea5e1708b6e4f">getSession</a> (const char *host, const IPAddress &amp;addr)</td></tr>
-<tr class="memdesc:ae3f27a36ff9c0cd1e2bea5e1708b6e4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist.  <a href="#ae3f27a36ff9c0cd1e2bea5e1708b6e4f">More...</a><br /></td></tr>
-<tr class="separator:ae3f27a36ff9c0cd1e2bea5e1708b6e4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0000d7f1e8656cf4a506a98133391fe0"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a0000d7f1e8656cf4a506a98133391fe0">removeSession</a> (const char *host, const IPAddress &amp;addr)</td></tr>
-<tr class="memdesc:a0000d7f1e8656cf4a506a98133391fe0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the session corresponding to a host and IP.  <a href="#a0000d7f1e8656cf4a506a98133391fe0">More...</a><br /></td></tr>
-<tr class="separator:a0000d7f1e8656cf4a506a98133391fe0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36bb344866e4cbcba3bbfcf4d33e5187"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a36bb344866e4cbcba3bbfcf4d33e5187">getSessionCount</a> () const</td></tr>
-<tr class="memdesc:a36bb344866e4cbcba3bbfcf4d33e5187"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the maximum number of SSL sessions that can be stored at once.  <a href="#a36bb344866e4cbcba3bbfcf4d33e5187">More...</a><br /></td></tr>
-<tr class="separator:a36bb344866e4cbcba3bbfcf4d33e5187"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a319a722dae252efdd85fdbaf5c7fbf17"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a319a722dae252efdd85fdbaf5c7fbf17">operator bool</a> ()</td></tr>
-<tr class="memdesc:a319a722dae252efdd85fdbaf5c7fbf17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equivalent to <a class="el" href="class_s_s_l_client.html#a7318aadc0ec9775bffaaac0b1f00aaf8" title="Check if the device is connected.">SSLClient::connected()</a> &gt; 0.  <a href="#a319a722dae252efdd85fdbaf5c7fbf17">More...</a><br /></td></tr>
-<tr class="separator:a319a722dae252efdd85fdbaf5c7fbf17"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fb2e8a1cc54dd82a72217e5c4533e02"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a6fb2e8a1cc54dd82a72217e5c4533e02">operator==</a> (const bool value)</td></tr>
-<tr class="separator:a6fb2e8a1cc54dd82a72217e5c4533e02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a060e49d0685c6c6795558e41cd3323"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a9a060e49d0685c6c6795558e41cd3323">operator!=</a> (const bool value)</td></tr>
-<tr class="separator:a9a060e49d0685c6c6795558e41cd3323"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26f9418e33d4ca459f78de98d3af43bb"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a26f9418e33d4ca459f78de98d3af43bb">operator==</a> (const C &amp;rhs)</td></tr>
-<tr class="memdesc:a26f9418e33d4ca459f78de98d3af43bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether or not two <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> objects have the same underlying client object.  <a href="#a26f9418e33d4ca459f78de98d3af43bb">More...</a><br /></td></tr>
-<tr class="separator:a26f9418e33d4ca459f78de98d3af43bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a518f4ed733814f2f4a8c7f838555eb35"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a518f4ed733814f2f4a8c7f838555eb35">operator!=</a> (const C &amp;rhs)</td></tr>
-<tr class="memdesc:a518f4ed733814f2f4a8c7f838555eb35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether or not two <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> objects do not have the same underlying client object.  <a href="#a518f4ed733814f2f4a8c7f838555eb35">More...</a><br /></td></tr>
-<tr class="separator:a518f4ed733814f2f4a8c7f838555eb35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac725067566ee411680c88575c148300b"><td class="memItemLeft" align="right" valign="top">virtual uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ac725067566ee411680c88575c148300b">localPort</a> ()</td></tr>
-<tr class="memdesc:ac725067566ee411680c88575c148300b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the local port, C::localPort exists. Else return 0.  <a href="#ac725067566ee411680c88575c148300b">More...</a><br /></td></tr>
-<tr class="separator:ac725067566ee411680c88575c148300b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2d1d17ee568ec2a37756bf6894dcd05"><td class="memItemLeft" align="right" valign="top">virtual IPAddress&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae2d1d17ee568ec2a37756bf6894dcd05">remoteIP</a> ()</td></tr>
-<tr class="memdesc:ae2d1d17ee568ec2a37756bf6894dcd05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the remote IP, if C::remoteIP exists. Else return INADDR_NONE.  <a href="#ae2d1d17ee568ec2a37756bf6894dcd05">More...</a><br /></td></tr>
-<tr class="separator:ae2d1d17ee568ec2a37756bf6894dcd05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8bd9420fec3b11f855729c4ecfe1c2c"><td class="memItemLeft" align="right" valign="top">virtual uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae8bd9420fec3b11f855729c4ecfe1c2c">remotePort</a> ()</td></tr>
-<tr class="memdesc:ae8bd9420fec3b11f855729c4ecfe1c2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the remote port, if C::remotePort exists. Else return 0.  <a href="#ae8bd9420fec3b11f855729c4ecfe1c2c">More...</a><br /></td></tr>
-<tr class="separator:ae8bd9420fec3b11f855729c4ecfe1c2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a2172aedfcc483ba2a256ad12148630"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a4a2172aedfcc483ba2a256ad12148630">connect</a> (IPAddress ip, uint16_t port) override</td></tr>
+<tr class="memdesc:a4a2172aedfcc483ba2a256ad12148630"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect over SSL to a host specified by an IP address.  <a href="#a4a2172aedfcc483ba2a256ad12148630">More...</a><br /></td></tr>
+<tr class="separator:a4a2172aedfcc483ba2a256ad12148630"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91c63e35f31652c20faa5b9be95984bf"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a91c63e35f31652c20faa5b9be95984bf">connect</a> (const char *host, uint16_t port) override</td></tr>
+<tr class="memdesc:a91c63e35f31652c20faa5b9be95984bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect over SSL to a host specified by a hostname.  <a href="#a91c63e35f31652c20faa5b9be95984bf">More...</a><br /></td></tr>
+<tr class="separator:a91c63e35f31652c20faa5b9be95984bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b8ff53c10fe34aab1dc2561410f70bb"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a6b8ff53c10fe34aab1dc2561410f70bb">write</a> (uint8_t b) override</td></tr>
+<tr class="separator:a6b8ff53c10fe34aab1dc2561410f70bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bcb7579ebc051c097acb794b95771a9"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a6bcb7579ebc051c097acb794b95771a9">write</a> (const uint8_t *buf, size_t size) override</td></tr>
+<tr class="memdesc:a6bcb7579ebc051c097acb794b95771a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write some bytes to the SSL connection.  <a href="#a6bcb7579ebc051c097acb794b95771a9">More...</a><br /></td></tr>
+<tr class="separator:a6bcb7579ebc051c097acb794b95771a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d13fd2f32ee2ea65a1f3820f758e77e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e">available</a> () override</td></tr>
+<tr class="memdesc:a5d13fd2f32ee2ea65a1f3820f758e77e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes available to read from the data that has been received and decrypted.  <a href="#a5d13fd2f32ee2ea65a1f3820f758e77e">More...</a><br /></td></tr>
+<tr class="separator:a5d13fd2f32ee2ea65a1f3820f758e77e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aedf2746cc35da596faf8322776c2118e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#aedf2746cc35da596faf8322776c2118e">read</a> () override</td></tr>
+<tr class="memdesc:aedf2746cc35da596faf8322776c2118e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a single byte, or -1 if none is available.  <a href="#aedf2746cc35da596faf8322776c2118e">More...</a><br /></td></tr>
+<tr class="separator:aedf2746cc35da596faf8322776c2118e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd6d7ae798c05cf566b2eb5651dba795"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#afd6d7ae798c05cf566b2eb5651dba795">read</a> (uint8_t *buf, size_t size) override</td></tr>
+<tr class="memdesc:afd6d7ae798c05cf566b2eb5651dba795"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes read.  <a href="#afd6d7ae798c05cf566b2eb5651dba795">More...</a><br /></td></tr>
+<tr class="separator:afd6d7ae798c05cf566b2eb5651dba795"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31742867b00bd8d130637af0935bacbd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a31742867b00bd8d130637af0935bacbd">peek</a> () override</td></tr>
+<tr class="memdesc:a31742867b00bd8d130637af0935bacbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">View the first byte of the buffer, without removing it from the <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> Buffer.  <a href="#a31742867b00bd8d130637af0935bacbd">More...</a><br /></td></tr>
+<tr class="separator:a31742867b00bd8d130637af0935bacbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ee6a3134d07ca09cf61ee04d32c3d44"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2ee6a3134d07ca09cf61ee04d32c3d44">flush</a> () override</td></tr>
+<tr class="memdesc:a2ee6a3134d07ca09cf61ee04d32c3d44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Force writing the buffered bytes from <a class="el" href="class_s_s_l_client.html#a6b8ff53c10fe34aab1dc2561410f70bb">SSLClient::write</a> to the network.  <a href="#a2ee6a3134d07ca09cf61ee04d32c3d44">More...</a><br /></td></tr>
+<tr class="separator:a2ee6a3134d07ca09cf61ee04d32c3d44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad30db47248d78df7c12dedfb27f06529"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ad30db47248d78df7c12dedfb27f06529">stop</a> () override</td></tr>
+<tr class="memdesc:ad30db47248d78df7c12dedfb27f06529"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close the connection.  <a href="#ad30db47248d78df7c12dedfb27f06529">More...</a><br /></td></tr>
+<tr class="separator:ad30db47248d78df7c12dedfb27f06529"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25e4414ab0c9424d09592f9567a678dc"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc">connected</a> () override</td></tr>
+<tr class="memdesc:a25e4414ab0c9424d09592f9567a678dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the device is connected.  <a href="#a25e4414ab0c9424d09592f9567a678dc">More...</a><br /></td></tr>
+<tr class="separator:a25e4414ab0c9424d09592f9567a678dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d8bf9b891151bc5b0b865d70cf9c086"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_s_l_session.html">SSLSession</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2d8bf9b891151bc5b0b865d70cf9c086">getSession</a> (const char *host, const IPAddress &amp;addr)</td></tr>
+<tr class="memdesc:a2d8bf9b891151bc5b0b865d70cf9c086"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist.  <a href="#a2d8bf9b891151bc5b0b865d70cf9c086">More...</a><br /></td></tr>
+<tr class="separator:a2d8bf9b891151bc5b0b865d70cf9c086"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b626703a24089dbb0480a9b6ddf348c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a5b626703a24089dbb0480a9b6ddf348c">removeSession</a> (const char *host, const IPAddress &amp;addr)</td></tr>
+<tr class="memdesc:a5b626703a24089dbb0480a9b6ddf348c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the session corresponding to a host and IP.  <a href="#a5b626703a24089dbb0480a9b6ddf348c">More...</a><br /></td></tr>
+<tr class="separator:a5b626703a24089dbb0480a9b6ddf348c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d71f00d6634092f50c5262ad25cdacd"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2d71f00d6634092f50c5262ad25cdacd">getSessionCount</a> () const override</td></tr>
+<tr class="memdesc:a2d71f00d6634092f50c5262ad25cdacd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the maximum number of SSL sessions that can be stored at once.  <a href="#a2d71f00d6634092f50c5262ad25cdacd">More...</a><br /></td></tr>
+<tr class="separator:a2d71f00d6634092f50c5262ad25cdacd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d378fbb7b8f15a1691746572f9d95b1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2d378fbb7b8f15a1691746572f9d95b1">operator bool</a> ()</td></tr>
+<tr class="memdesc:a2d378fbb7b8f15a1691746572f9d95b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equivalent to <a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc" title="Check if the device is connected.">SSLClient::connected()</a> &gt; 0.  <a href="#a2d378fbb7b8f15a1691746572f9d95b1">More...</a><br /></td></tr>
+<tr class="separator:a2d378fbb7b8f15a1691746572f9d95b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a505bfb6831a45aebf58d84e3b89d4cfc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a505bfb6831a45aebf58d84e3b89d4cfc">operator==</a> (const bool value)</td></tr>
+<tr class="separator:a505bfb6831a45aebf58d84e3b89d4cfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a824b599264f893e1b206a9100bc52ee1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a824b599264f893e1b206a9100bc52ee1">operator!=</a> (const bool value)</td></tr>
+<tr class="separator:a824b599264f893e1b206a9100bc52ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f40f8f4d26d21e14276c3e8162b62b9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a5f40f8f4d26d21e14276c3e8162b62b9">operator==</a> (const C &amp;rhs)</td></tr>
+<tr class="memdesc:a5f40f8f4d26d21e14276c3e8162b62b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether or not two <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> objects have the same underlying client object.  <a href="#a5f40f8f4d26d21e14276c3e8162b62b9">More...</a><br /></td></tr>
+<tr class="separator:a5f40f8f4d26d21e14276c3e8162b62b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adab82ba09345fa070712d3124af30e1b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#adab82ba09345fa070712d3124af30e1b">operator!=</a> (const C &amp;rhs)</td></tr>
+<tr class="memdesc:adab82ba09345fa070712d3124af30e1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether or not two <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> objects do not have the same underlying client object.  <a href="#adab82ba09345fa070712d3124af30e1b">More...</a><br /></td></tr>
+<tr class="separator:adab82ba09345fa070712d3124af30e1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a563c5f9829757075bf16742cffa4cf73"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73">localPort</a> () override</td></tr>
+<tr class="memdesc:a563c5f9829757075bf16742cffa4cf73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the local port, C::localPort exists. Else return 0.  <a href="#a563c5f9829757075bf16742cffa4cf73">More...</a><br /></td></tr>
+<tr class="separator:a563c5f9829757075bf16742cffa4cf73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af76a0df76834e0d0999dbf44c7c0a174"><td class="memItemLeft" align="right" valign="top">IPAddress&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#af76a0df76834e0d0999dbf44c7c0a174">remoteIP</a> () override</td></tr>
+<tr class="memdesc:af76a0df76834e0d0999dbf44c7c0a174"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the remote IP, if C::remoteIP exists. Else return INADDR_NONE.  <a href="#af76a0df76834e0d0999dbf44c7c0a174">More...</a><br /></td></tr>
+<tr class="separator:af76a0df76834e0d0999dbf44c7c0a174"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5974a5f8722a752f121af4fac498bb22"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a5974a5f8722a752f121af4fac498bb22">remotePort</a> () override</td></tr>
+<tr class="memdesc:a5974a5f8722a752f121af4fac498bb22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the remote port, if C::remotePort exists. Else return 0.  <a href="#a5974a5f8722a752f121af4fac498bb22">More...</a><br /></td></tr>
+<tr class="separator:a5974a5f8722a752f121af4fac498bb22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd0d4d2c98433d60897d8828d8047d41"><td class="memItemLeft" align="right" valign="top">C &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#afd0d4d2c98433d60897d8828d8047d41">getClient</a> ()</td></tr>
 <tr class="memdesc:afd0d4d2c98433d60897d8828d8047d41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the client object stored in this class. Take care not to break it.  <a href="#afd0d4d2c98433d60897d8828d8047d41">More...</a><br /></td></tr>
 <tr class="separator:afd0d4d2c98433d60897d8828d8047d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -209,16 +209,16 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:ab3ebfbca41a56bfa11e34aac2c2e0106"><td class="memItemLeft" align="right" valign="top">virtual Client &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ab3ebfbca41a56bfa11e34aac2c2e0106">get_arduino_client</a> ()</td></tr>
-<tr class="memdesc:ab3ebfbca41a56bfa11e34aac2c2e0106"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an instance of m_client that is polymorphic and can be used by <a class="el" href="class_s_s_l_client_impl.html" title="Implementation code to be inherited by SSLClient.">SSLClientImpl</a>.  <a href="#ab3ebfbca41a56bfa11e34aac2c2e0106">More...</a><br /></td></tr>
-<tr class="separator:ab3ebfbca41a56bfa11e34aac2c2e0106"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20742b36588c45435139a4f47fe0f1f6"><td class="memItemLeft" align="right" valign="top">virtual const Client &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a20742b36588c45435139a4f47fe0f1f6">get_arduino_client</a> () const</td></tr>
-<tr class="separator:a20742b36588c45435139a4f47fe0f1f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa52b481eb1d36a0ae1d208daa2fec51"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="class_s_s_l_session.html">SSLSession</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#aaa52b481eb1d36a0ae1d208daa2fec51">get_session_array</a> ()</td></tr>
-<tr class="memdesc:aaa52b481eb1d36a0ae1d208daa2fec51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an instance of the session array that is on the stack.  <a href="#aaa52b481eb1d36a0ae1d208daa2fec51">More...</a><br /></td></tr>
-<tr class="separator:aaa52b481eb1d36a0ae1d208daa2fec51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab076a76b142b553c0dfd29174d4e17e7"><td class="memItemLeft" align="right" valign="top">virtual const <a class="el" href="class_s_s_l_session.html">SSLSession</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ab076a76b142b553c0dfd29174d4e17e7">get_session_array</a> () const</td></tr>
-<tr class="separator:ab076a76b142b553c0dfd29174d4e17e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c5001bdfa75ccc0d93cc60dd872b38a"><td class="memItemLeft" align="right" valign="top">Client &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a9c5001bdfa75ccc0d93cc60dd872b38a">get_arduino_client</a> () override</td></tr>
+<tr class="memdesc:a9c5001bdfa75ccc0d93cc60dd872b38a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an instance of m_client that is polymorphic and can be used by <a class="el" href="class_s_s_l_client_impl.html" title="Implementation code to be inherited by SSLClient.">SSLClientImpl</a>.  <a href="#a9c5001bdfa75ccc0d93cc60dd872b38a">More...</a><br /></td></tr>
+<tr class="separator:a9c5001bdfa75ccc0d93cc60dd872b38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a353c875d17a85dbb7bfe10de155f3b52"><td class="memItemLeft" align="right" valign="top">const Client &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a353c875d17a85dbb7bfe10de155f3b52">get_arduino_client</a> () const override</td></tr>
+<tr class="separator:a353c875d17a85dbb7bfe10de155f3b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e7769fed78825cf4723778f4b5aa3e9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_s_l_session.html">SSLSession</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a9e7769fed78825cf4723778f4b5aa3e9">get_session_array</a> () override</td></tr>
+<tr class="memdesc:a9e7769fed78825cf4723778f4b5aa3e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an instance of the session array that is on the stack.  <a href="#a9e7769fed78825cf4723778f4b5aa3e9">More...</a><br /></td></tr>
+<tr class="separator:a9e7769fed78825cf4723778f4b5aa3e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18adfc074d6b8e996819d4beb4689cbd"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="class_s_s_l_session.html">SSLSession</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a18adfc074d6b8e996819d4beb4689cbd">get_session_array</a> () const override</td></tr>
+<tr class="separator:a18adfc074d6b8e996819d4beb4689cbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_s_s_l_client_impl"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_s_l_client_impl')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_s_l_client_impl.html">SSLClientImpl</a></td></tr>
 <tr class="memitem:a9ee82ad492f2297bd7cd0835c0d4556f inherit pro_methods_class_s_s_l_client_impl"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a9ee82ad492f2297bd7cd0835c0d4556f">m_print_prefix</a> (const char *func_name, const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a> level) const</td></tr>
 <tr class="memdesc:a9ee82ad492f2297bd7cd0835c0d4556f inherit pro_methods_class_s_s_l_client_impl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prints a debugging prefix to all logs, so we can attatch them to useful information.  <a href="class_s_s_l_client_impl.html#a9ee82ad492f2297bd7cd0835c0d4556f">More...</a><br /></td></tr>
@@ -322,8 +322,8 @@ The analog_pin should be set to input.</dd></dl>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a40ec85568d0aec376219125b604dbc29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a40ec85568d0aec376219125b604dbc29">&#9670;&nbsp;</a></span>available()</h2>
+<a id="a5d13fd2f32ee2ea65a1f3820f758e77e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d13fd2f32ee2ea65a1f3820f758e77e">&#9670;&nbsp;</a></span>available()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -334,7 +334,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::available </td>
+          <td class="memname">int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::available </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -342,21 +342,21 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Returns the number of bytes available to read from the data that has been received and decrypted. </p>
-<p>This function updates the state of the SSL engine (including writing any data, see <a class="el" href="class_s_s_l_client.html#a0699ff4b966162cba2ef59ff4a287270">SSLClient::write</a>) and as a result should be called periodically when expecting data. Additionally, since if there are no bytes and if <a class="el" href="class_s_s_l_client.html#a7318aadc0ec9775bffaaac0b1f00aaf8" title="Check if the device is connected.">SSLClient::connected</a> is false this function returns zero (this same behavior is found in EthernetClient), it is prudent to ensure in your own code that the preconditions are met before checking this function to prevent an ambiguous result.</p>
+<p>This function updates the state of the SSL engine (including writing any data, see <a class="el" href="class_s_s_l_client.html#a6b8ff53c10fe34aab1dc2561410f70bb">SSLClient::write</a>) and as a result should be called periodically when expecting data. Additionally, since if there are no bytes and if <a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc" title="Check if the device is connected.">SSLClient::connected</a> is false this function returns zero (this same behavior is found in EthernetClient), it is prudent to ensure in your own code that the preconditions are met before checking this function to prevent an ambiguous result.</p>
 <p>The implementation for this function can be found in SSLClientImpl::available</p>
-<dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html#a7318aadc0ec9775bffaaac0b1f00aaf8" title="Check if the device is connected.">SSLClient::connected</a> must be true.</dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc" title="Check if the device is connected.">SSLClient::connected</a> must be true.</dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of bytes available (can be zero), or zero if any of the pre conditions aren't satisfied. </dd></dl>
 
 </div>
 </div>
-<a id="ae6540b9a02f1392bf2ac48421189f70e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae6540b9a02f1392bf2ac48421189f70e">&#9670;&nbsp;</a></span>connect() <span class="overload">[1/2]</span></h2>
+<a id="a4a2172aedfcc483ba2a256ad12148630"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a2172aedfcc483ba2a256ad12148630">&#9670;&nbsp;</a></span>connect() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -367,7 +367,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::connect </td>
+          <td class="memname">int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::connect </td>
           <td>(</td>
           <td class="paramtype">IPAddress&#160;</td>
           <td class="paramname"><em>ip</em>, </td>
@@ -386,7 +386,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -414,8 +414,8 @@ There must be a trust anchor given to the constructor that corresponds to the ce
 
 </div>
 </div>
-<a id="a5814c11e96848c2bcea78210f099aad5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5814c11e96848c2bcea78210f099aad5">&#9670;&nbsp;</a></span>connect() <span class="overload">[2/2]</span></h2>
+<a id="a91c63e35f31652c20faa5b9be95984bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91c63e35f31652c20faa5b9be95984bf">&#9670;&nbsp;</a></span>connect() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -426,7 +426,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::connect </td>
+          <td class="memname">int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::connect </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>host</em>, </td>
@@ -445,7 +445,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -473,8 +473,8 @@ There must be a trust anchor given to the constructor that corresponds to the ce
 
 </div>
 </div>
-<a id="a7318aadc0ec9775bffaaac0b1f00aaf8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7318aadc0ec9775bffaaac0b1f00aaf8">&#9670;&nbsp;</a></span>connected()</h2>
+<a id="a25e4414ab0c9424d09592f9567a678dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25e4414ab0c9424d09592f9567a678dc">&#9670;&nbsp;</a></span>connected()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -485,7 +485,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual uint8_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::connected </td>
+          <td class="memname">uint8_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::connected </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -493,20 +493,20 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Check if the device is connected. </p>
-<p>Use this function to determine if <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> is still connected and a SSL connection is active. It should be noted that <a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> should be preferred over this function for rapid polling&ndash;both functions send and receive data with the SSLClient::m_client device, however <a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> has some delays built in to protect SSLClient::m_client from being polled too frequently.</p>
+<p>Use this function to determine if <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> is still connected and a SSL connection is active. It should be noted that <a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> should be preferred over this function for rapid polling&ndash;both functions send and receive data with the SSLClient::m_client device, however <a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> has some delays built in to protect SSLClient::m_client from being polled too frequently.</p>
 <p>The implementation for this function can be found in <a class="el" href="class_s_s_l_client_impl.html#a957984fa392550a7df86f758e9b14bfb">SSLClientImpl::connected_impl</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>1 if connected, 0 if not </dd></dl>
 
 </div>
 </div>
-<a id="a51eb668f6a328a6a66298c6bc1361d41"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51eb668f6a328a6a66298c6bc1361d41">&#9670;&nbsp;</a></span>flush()</h2>
+<a id="a2ee6a3134d07ca09cf61ee04d32c3d44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ee6a3134d07ca09cf61ee04d32c3d44">&#9670;&nbsp;</a></span>flush()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -517,7 +517,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::flush </td>
+          <td class="memname">void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::flush </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -525,18 +525,18 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Force writing the buffered bytes from <a class="el" href="class_s_s_l_client.html#a0699ff4b966162cba2ef59ff4a287270">SSLClient::write</a> to the network. </p>
-<p>This function is blocking until all bytes from the buffer are written. For an explanation of how writing with <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> works, please see <a class="el" href="class_s_s_l_client.html#a0699ff4b966162cba2ef59ff4a287270">SSLClient::write</a>. The implementation for this function can be found in SSLClientImpl::flush. </p>
+<p>Force writing the buffered bytes from <a class="el" href="class_s_s_l_client.html#a6b8ff53c10fe34aab1dc2561410f70bb">SSLClient::write</a> to the network. </p>
+<p>This function is blocking until all bytes from the buffer are written. For an explanation of how writing with <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> works, please see <a class="el" href="class_s_s_l_client.html#a6b8ff53c10fe34aab1dc2561410f70bb">SSLClient::write</a>. The implementation for this function can be found in SSLClientImpl::flush. </p>
 
 </div>
 </div>
-<a id="ab3ebfbca41a56bfa11e34aac2c2e0106"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab3ebfbca41a56bfa11e34aac2c2e0106">&#9670;&nbsp;</a></span>get_arduino_client() <span class="overload">[1/2]</span></h2>
+<a id="a9c5001bdfa75ccc0d93cc60dd872b38a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c5001bdfa75ccc0d93cc60dd872b38a">&#9670;&nbsp;</a></span>get_arduino_client() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -547,7 +547,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual Client&amp; <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_arduino_client </td>
+          <td class="memname">Client&amp; <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_arduino_client </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -555,7 +555,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -566,8 +566,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a20742b36588c45435139a4f47fe0f1f6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a20742b36588c45435139a4f47fe0f1f6">&#9670;&nbsp;</a></span>get_arduino_client() <span class="overload">[2/2]</span></h2>
+<a id="a353c875d17a85dbb7bfe10de155f3b52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a353c875d17a85dbb7bfe10de155f3b52">&#9670;&nbsp;</a></span>get_arduino_client() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -578,7 +578,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual const Client&amp; <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_arduino_client </td>
+          <td class="memname">const Client&amp; <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_arduino_client </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -586,7 +586,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -595,8 +595,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="aaa52b481eb1d36a0ae1d208daa2fec51"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa52b481eb1d36a0ae1d208daa2fec51">&#9670;&nbsp;</a></span>get_session_array() <span class="overload">[1/2]</span></h2>
+<a id="a9e7769fed78825cf4723778f4b5aa3e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e7769fed78825cf4723778f4b5aa3e9">&#9670;&nbsp;</a></span>get_session_array() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -607,7 +607,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="class_s_s_l_session.html">SSLSession</a>* <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_session_array </td>
+          <td class="memname"><a class="el" href="class_s_s_l_session.html">SSLSession</a>* <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_session_array </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -615,7 +615,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -626,8 +626,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="ab076a76b142b553c0dfd29174d4e17e7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab076a76b142b553c0dfd29174d4e17e7">&#9670;&nbsp;</a></span>get_session_array() <span class="overload">[2/2]</span></h2>
+<a id="a18adfc074d6b8e996819d4beb4689cbd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18adfc074d6b8e996819d4beb4689cbd">&#9670;&nbsp;</a></span>get_session_array() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -638,7 +638,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual const <a class="el" href="class_s_s_l_session.html">SSLSession</a>* <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_session_array </td>
+          <td class="memname">const <a class="el" href="class_s_s_l_session.html">SSLSession</a>* <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::get_session_array </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -646,7 +646,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -684,8 +684,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="ae3f27a36ff9c0cd1e2bea5e1708b6e4f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3f27a36ff9c0cd1e2bea5e1708b6e4f">&#9670;&nbsp;</a></span>getSession()</h2>
+<a id="a2d8bf9b891151bc5b0b865d70cf9c086"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d8bf9b891151bc5b0b865d70cf9c086">&#9670;&nbsp;</a></span>getSession()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -696,7 +696,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="class_s_s_l_session.html">SSLSession</a>&amp; <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::getSession </td>
+          <td class="memname"><a class="el" href="class_s_s_l_session.html">SSLSession</a>&amp; <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::getSession </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>host</em>, </td>
@@ -715,7 +715,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -734,8 +734,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a36bb344866e4cbcba3bbfcf4d33e5187"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a36bb344866e4cbcba3bbfcf4d33e5187">&#9670;&nbsp;</a></span>getSessionCount()</h2>
+<a id="a2d71f00d6634092f50c5262ad25cdacd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d71f00d6634092f50c5262ad25cdacd">&#9670;&nbsp;</a></span>getSessionCount()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -746,7 +746,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual size_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::getSessionCount </td>
+          <td class="memname">size_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::getSessionCount </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -754,7 +754,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -766,8 +766,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="ac725067566ee411680c88575c148300b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac725067566ee411680c88575c148300b">&#9670;&nbsp;</a></span>localPort()</h2>
+<a id="a563c5f9829757075bf16742cffa4cf73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a563c5f9829757075bf16742cffa4cf73">&#9670;&nbsp;</a></span>localPort()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -778,7 +778,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual uint16_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::localPort </td>
+          <td class="memname">uint16_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::localPort </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -786,7 +786,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -797,8 +797,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a319a722dae252efdd85fdbaf5c7fbf17"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a319a722dae252efdd85fdbaf5c7fbf17">&#9670;&nbsp;</a></span>operator bool()</h2>
+<a id="a2d378fbb7b8f15a1691746572f9d95b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d378fbb7b8f15a1691746572f9d95b1">&#9670;&nbsp;</a></span>operator bool()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -809,7 +809,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator bool </td>
+          <td class="memname"><a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator bool </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -817,18 +817,18 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Equivalent to <a class="el" href="class_s_s_l_client.html#a7318aadc0ec9775bffaaac0b1f00aaf8" title="Check if the device is connected.">SSLClient::connected()</a> &gt; 0. </p>
+<p>Equivalent to <a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc" title="Check if the device is connected.">SSLClient::connected()</a> &gt; 0. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if connected, false if not </dd></dl>
 
 </div>
 </div>
-<a id="a9a060e49d0685c6c6795558e41cd3323"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a060e49d0685c6c6795558e41cd3323">&#9670;&nbsp;</a></span>operator!=() <span class="overload">[1/2]</span></h2>
+<a id="a824b599264f893e1b206a9100bc52ee1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a824b599264f893e1b206a9100bc52ee1">&#9670;&nbsp;</a></span>operator!=() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -839,7 +839,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator!= </td>
+          <td class="memname">bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator!= </td>
           <td>(</td>
           <td class="paramtype">const bool&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
@@ -848,7 +848,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -856,8 +856,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a518f4ed733814f2f4a8c7f838555eb35"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a518f4ed733814f2f4a8c7f838555eb35">&#9670;&nbsp;</a></span>operator!=() <span class="overload">[2/2]</span></h2>
+<a id="adab82ba09345fa070712d3124af30e1b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adab82ba09345fa070712d3124af30e1b">&#9670;&nbsp;</a></span>operator!=() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -868,7 +868,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator!= </td>
+          <td class="memname">bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator!= </td>
           <td>(</td>
           <td class="paramtype">const C &amp;&#160;</td>
           <td class="paramname"><em>rhs</em></td><td>)</td>
@@ -877,7 +877,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -886,8 +886,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a6fb2e8a1cc54dd82a72217e5c4533e02"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6fb2e8a1cc54dd82a72217e5c4533e02">&#9670;&nbsp;</a></span>operator==() <span class="overload">[1/2]</span></h2>
+<a id="a505bfb6831a45aebf58d84e3b89d4cfc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a505bfb6831a45aebf58d84e3b89d4cfc">&#9670;&nbsp;</a></span>operator==() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -898,7 +898,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator== </td>
+          <td class="memname">bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator== </td>
           <td>(</td>
           <td class="paramtype">const bool&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
@@ -907,7 +907,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -915,8 +915,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a26f9418e33d4ca459f78de98d3af43bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a26f9418e33d4ca459f78de98d3af43bb">&#9670;&nbsp;</a></span>operator==() <span class="overload">[2/2]</span></h2>
+<a id="a5f40f8f4d26d21e14276c3e8162b62b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f40f8f4d26d21e14276c3e8162b62b9">&#9670;&nbsp;</a></span>operator==() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -927,7 +927,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator== </td>
+          <td class="memname">bool <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::operator== </td>
           <td>(</td>
           <td class="paramtype">const C &amp;&#160;</td>
           <td class="paramname"><em>rhs</em></td><td>)</td>
@@ -936,7 +936,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -945,8 +945,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a227b1cbbe91bcb21153c09f97d0dd484"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a227b1cbbe91bcb21153c09f97d0dd484">&#9670;&nbsp;</a></span>peek()</h2>
+<a id="a31742867b00bd8d130637af0935bacbd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31742867b00bd8d130637af0935bacbd">&#9670;&nbsp;</a></span>peek()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -957,7 +957,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::peek </td>
+          <td class="memname">int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::peek </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -965,19 +965,19 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>View the first byte of the buffer, without removing it from the <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> Buffer. </p>
-<p>The implementation for this function can be found in SSLClientImpl::peek </p><dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> must be &gt;0 </dd></dl>
+<p>The implementation for this function can be found in SSLClientImpl::peek </p><dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> must be &gt;0 </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The first byte received, or -1 if the preconditions are not satisfied (warning: do not use if your data may be -1, as the return value is ambiguous) </dd></dl>
 
 </div>
 </div>
-<a id="ac70b900ff798f9fd33f6367fcc9fad77"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac70b900ff798f9fd33f6367fcc9fad77">&#9670;&nbsp;</a></span>read() <span class="overload">[1/2]</span></h2>
+<a id="aedf2746cc35da596faf8322776c2118e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aedf2746cc35da596faf8322776c2118e">&#9670;&nbsp;</a></span>read() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -988,7 +988,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::read </td>
+          <td class="memname">int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::read </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -996,18 +996,18 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Read a single byte, or -1 if none is available. </p>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#ae31dd88a1af8ec3794fb48f26a3dd4bf" title="Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes re...">SSLClient::read(uint8_t*, size_t)</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#afd6d7ae798c05cf566b2eb5651dba795" title="Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes re...">SSLClient::read(uint8_t*, size_t)</a> </dd></dl>
 
 </div>
 </div>
-<a id="ae31dd88a1af8ec3794fb48f26a3dd4bf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae31dd88a1af8ec3794fb48f26a3dd4bf">&#9670;&nbsp;</a></span>read() <span class="overload">[2/2]</span></h2>
+<a id="afd6d7ae798c05cf566b2eb5651dba795"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd6d7ae798c05cf566b2eb5651dba795">&#9670;&nbsp;</a></span>read() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1018,7 +1018,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::read </td>
+          <td class="memname">int <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::read </td>
           <td>(</td>
           <td class="paramtype">uint8_t *&#160;</td>
           <td class="paramname"><em>buf</em>, </td>
@@ -1037,16 +1037,16 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes read. </p>
-<p>This function checks if bytes are ready to be read by calling <a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a>, and if so copies size number of bytes from the IO buffer into the buf pointer. Data read using this function will not include any SSL or socket commands, as the Client and BearSSL will capture those and process them separately.</p>
+<p>This function checks if bytes are ready to be read by calling <a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a>, and if so copies size number of bytes from the IO buffer into the buf pointer. Data read using this function will not include any SSL or socket commands, as the Client and BearSSL will capture those and process them separately.</p>
 <p>If you find that you are having a lot of timeout errors, <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> may be experiencing a buffer overflow. Checkout <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> for more information.</p>
 <p>The implementation for this function can be found in <a class="el" href="class_s_s_l_client_impl.html#a231b7b1bb2182cda1ed6e9d5ebf66afe">SSLClientImpl::read_impl(uint8_t*, size_t)</a></p>
-<dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> must be &gt;0</dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> must be &gt;0</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">buf</td><td>The pointer to the buffer to put SSL application data into </td></tr>
@@ -1058,8 +1058,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="ae2d1d17ee568ec2a37756bf6894dcd05"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae2d1d17ee568ec2a37756bf6894dcd05">&#9670;&nbsp;</a></span>remoteIP()</h2>
+<a id="af76a0df76834e0d0999dbf44c7c0a174"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af76a0df76834e0d0999dbf44c7c0a174">&#9670;&nbsp;</a></span>remoteIP()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1070,7 +1070,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual IPAddress <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::remoteIP </td>
+          <td class="memname">IPAddress <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::remoteIP </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -1078,7 +1078,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1089,8 +1089,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="ae8bd9420fec3b11f855729c4ecfe1c2c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8bd9420fec3b11f855729c4ecfe1c2c">&#9670;&nbsp;</a></span>remotePort()</h2>
+<a id="a5974a5f8722a752f121af4fac498bb22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5974a5f8722a752f121af4fac498bb22">&#9670;&nbsp;</a></span>remotePort()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1101,7 +1101,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual uint16_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::remotePort </td>
+          <td class="memname">uint16_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::remotePort </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -1109,7 +1109,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1120,8 +1120,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a0000d7f1e8656cf4a506a98133391fe0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0000d7f1e8656cf4a506a98133391fe0">&#9670;&nbsp;</a></span>removeSession()</h2>
+<a id="a5b626703a24089dbb0480a9b6ddf348c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b626703a24089dbb0480a9b6ddf348c">&#9670;&nbsp;</a></span>removeSession()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1132,7 +1132,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::removeSession </td>
+          <td class="memname">void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::removeSession </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>host</em>, </td>
@@ -1151,7 +1151,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1168,8 +1168,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a158d87df3fe118b7565a19b72f310322"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a158d87df3fe118b7565a19b72f310322">&#9670;&nbsp;</a></span>stop()</h2>
+<a id="ad30db47248d78df7c12dedfb27f06529"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad30db47248d78df7c12dedfb27f06529">&#9670;&nbsp;</a></span>stop()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1180,7 +1180,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::stop </td>
+          <td class="memname">void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::stop </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -1188,7 +1188,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1198,8 +1198,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a0699ff4b966162cba2ef59ff4a287270"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0699ff4b966162cba2ef59ff4a287270">&#9670;&nbsp;</a></span>write() <span class="overload">[1/2]</span></h2>
+<a id="a6b8ff53c10fe34aab1dc2561410f70bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b8ff53c10fe34aab1dc2561410f70bb">&#9670;&nbsp;</a></span>write() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1210,7 +1210,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual size_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::write </td>
+          <td class="memname">size_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::write </td>
           <td>(</td>
           <td class="paramtype">uint8_t&#160;</td>
           <td class="paramname"><em>b</em></td><td>)</td>
@@ -1219,7 +1219,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1227,8 +1227,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 
 </div>
 </div>
-<a id="a3a48b190985cdea2eba79ef0bdc80461"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3a48b190985cdea2eba79ef0bdc80461">&#9670;&nbsp;</a></span>write() <span class="overload">[2/2]</span></h2>
+<a id="a6bcb7579ebc051c097acb794b95771a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6bcb7579ebc051c097acb794b95771a9">&#9670;&nbsp;</a></span>write() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1239,7 +1239,7 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual size_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::write </td>
+          <td class="memname">size_t <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::write </td>
           <td>(</td>
           <td class="paramtype">const uint8_t *&#160;</td>
           <td class="paramname"><em>buf</em>, </td>
@@ -1258,15 +1258,15 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Write some bytes to the SSL connection. </p>
-<p>Assuming all preconditions are met, this function writes data to the BearSSL IO buffer, BUT does not initially send the data. Instead, you must call <a class="el" href="class_s_s_l_client.html#a40ec85568d0aec376219125b604dbc29" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> or <a class="el" href="class_s_s_l_client.html#a51eb668f6a328a6a66298c6bc1361d41" title="Force writing the buffered bytes from SSLClient::write to the network.">SSLClient::flush</a>, which will detect that the buffer is ready for writing, and will write the data to the network. Alternatively, if this function is requested to write a larger amount of data than SSLClientImpl::m_iobuf can handle, data will be written to the network in pages the size of SSLClientImpl::m_iobuf until all the data in buf is sent&ndash;attempting to keep all writes to the network grouped together. For information on why this is the case check out <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> .</p>
+<p>Assuming all preconditions are met, this function writes data to the BearSSL IO buffer, BUT does not initially send the data. Instead, you must call <a class="el" href="class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e" title="Returns the number of bytes available to read from the data that has been received and decrypted.">SSLClient::available</a> or <a class="el" href="class_s_s_l_client.html#a2ee6a3134d07ca09cf61ee04d32c3d44" title="Force writing the buffered bytes from SSLClient::write to the network.">SSLClient::flush</a>, which will detect that the buffer is ready for writing, and will write the data to the network. Alternatively, if this function is requested to write a larger amount of data than SSLClientImpl::m_iobuf can handle, data will be written to the network in pages the size of SSLClientImpl::m_iobuf until all the data in buf is sent&ndash;attempting to keep all writes to the network grouped together. For information on why this is the case check out <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> .</p>
 <p>The implementation for this function can be found in <a class="el" href="class_s_s_l_client_impl.html#a807656f814f24cf6cd711e429b716c4d">SSLClientImpl::write_impl(const uint8_t*, size_t)</a></p>
-<dl class="section pre"><dt>Precondition</dt><dd>The socket and SSL layer must be connected, meaning <a class="el" href="class_s_s_l_client.html#a7318aadc0ec9775bffaaac0b1f00aaf8" title="Check if the device is connected.">SSLClient::connected</a> must be true. </dd>
+<dl class="section pre"><dt>Precondition</dt><dd>The socket and SSL layer must be connected, meaning <a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc" title="Check if the device is connected.">SSLClient::connected</a> must be true. </dd>
 <dd>
 BearSSL must not be waiting for the recipt of user data (if it is, there is probably an error with how the protocol in implemented in your code).</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>

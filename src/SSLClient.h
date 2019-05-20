@@ -121,7 +121,7 @@ public:
      * @param port the port to connect to
      * @returns 1 if success, 0 if failure
      */
-    virtual int connect(IPAddress ip, uint16_t port) { return connect_impl(ip, port); }
+    int connect(IPAddress ip, uint16_t port) override { return connect_impl(ip, port); }
 
     /**
      * @brief Connect over SSL to a host specified by a hostname.
@@ -159,10 +159,10 @@ public:
      * @param port The port to connect to on the host (443 for HTTPS)
      * @returns 1 of success, 0 if failure
      */
-	virtual int connect(const char *host, uint16_t port) { return connect_impl(host, port); }
+	int connect(const char *host, uint16_t port) override { return connect_impl(host, port); }
 
     /** @see SSLClient::write(uint8_t*, size_t) */
-    virtual size_t write(uint8_t b) { return write_impl(&b, 1); }
+    size_t write(uint8_t b) override { return write_impl(&b, 1); }
     /**
      * @brief Write some bytes to the SSL connection
      * 
@@ -186,7 +186,7 @@ public:
      * @returns The number of bytes copied to the buffer (size), or zero if the BearSSL engine 
      * fails to become ready for writing data.
      */
-	virtual size_t write(const uint8_t *buf, size_t size) { return write_impl(buf, size); }
+	size_t write(const uint8_t *buf, size_t size) override { return write_impl(buf, size); }
 
     /**
      * @brief Returns the number of bytes available to read from the data that has been received and decrypted.
@@ -206,13 +206,13 @@ public:
      * @returns The number of bytes available (can be zero), or zero if any of the pre
      * conditions aren't satisfied.
      */
-	virtual int available() { return available_impl(); }
+	int available() override { return available_impl(); }
 
     /** 
      * @brief Read a single byte, or -1 if none is available.
      * @see SSLClient::read(uint8_t*, size_t) 
      */
-	virtual int read() { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; };
+	int read() override { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; };
     /**
      * @brief Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes read.
      * 
@@ -234,7 +234,7 @@ public:
      * 
      * @returns The number of bytes copied (<= size), or -1 if the preconditions are not satisfied.
      */
-	virtual int read(uint8_t *buf, size_t size) { return read_impl(buf, size); }
+	int read(uint8_t *buf, size_t size) override { return read_impl(buf, size); }
 
     /** 
      * @brief View the first byte of the buffer, without removing it from the SSLClient Buffer
@@ -244,7 +244,7 @@ public:
      * @returns The first byte received, or -1 if the preconditions are not satisfied (warning: 
      * do not use if your data may be -1, as the return value is ambiguous)
      */
-    virtual int peek() { return peek_impl(); }
+    int peek() override { return peek_impl(); }
 
     /**
      * @brief Force writing the buffered bytes from SSLClient::write to the network.
@@ -253,7 +253,7 @@ public:
      * an explanation of how writing with SSLClient works, please see SSLClient::write.
      * The implementation for this function can be found in SSLClientImpl::flush.
      */
-	virtual void flush() { return flush_impl(); }
+	void flush() override { return flush_impl(); }
 
     /**
      * @brief Close the connection
@@ -263,7 +263,7 @@ public:
      * error was encountered previously, this function will simply call m_client::stop.
      * The implementation for this function can be found in SSLClientImpl::peek.
      */
-	virtual void stop() { return stop_impl(); }
+	void stop() override { return stop_impl(); }
 
     /**
      * @brief Check if the device is connected.
@@ -277,7 +277,7 @@ public:
      * 
      * @returns 1 if connected, 0 if not
      */
-	virtual uint8_t connected() { return connected_impl(); }
+	uint8_t connected() override { return connected_impl(); }
 
     //========================================
     //= Functions Not in the Client Interface
@@ -297,7 +297,7 @@ public:
      * @param addr An IP address
      * @returns A reference to an SSLSession object
      */
-    virtual SSLSession& getSession(const char* host, const IPAddress& addr) { return get_session_impl(host, addr); }
+    SSLSession& getSession(const char* host, const IPAddress& addr) { return get_session_impl(host, addr); }
 
     /**
      * @brief Clear the session corresponding to a host and IP
@@ -307,31 +307,31 @@ public:
      * @param host A hostname c string, or NULL if one is not available
      * @param addr An IP address
      */
-    virtual void removeSession(const char* host, const IPAddress& addr) { return remove_session_impl(host, addr); }
+    void removeSession(const char* host, const IPAddress& addr) { return remove_session_impl(host, addr); }
 
     /**
      * @brief Get the maximum number of SSL sessions that can be stored at once
      *
      *  @returns The SessionCache template parameter.
      */
-    virtual size_t getSessionCount() const { return SessionCache; }
+    size_t getSessionCount() const override { return SessionCache; }
 
     /** 
      * @brief Equivalent to SSLClient::connected() > 0
      * 
      * @returns true if connected, false if not
      */
-	virtual operator bool() { return connected() > 0; }
+	operator bool() { return connected() > 0; }
     /** @see SSLClient::operator bool */
-	virtual bool operator==(const bool value) { return bool() == value; }
+	bool operator==(const bool value) { return bool() == value; }
     /** @see SSLClient::operator bool */
-	virtual bool operator!=(const bool value) { return bool() != value; }
+	bool operator!=(const bool value) { return bool() != value; }
     /** @brief Returns whether or not two SSLClient objects have the same underlying client object */
-	virtual bool operator==(const C& rhs) { return m_client == rhs; }
+    bool operator==(const C& rhs) { return m_client == rhs; }
     /** @brief Returns whether or not two SSLClient objects do not have the same underlying client object */
-	virtual bool operator!=(const C& rhs) { return m_client != rhs; }
+	bool operator!=(const C& rhs) { return m_client != rhs; }
     /** @brief Returns the local port, C::localPort exists. Else return 0. */
-	virtual uint16_t localPort() {
+	uint16_t localPort() override {
         if (std::is_member_function_pointer<decltype(&C::localPort)>::value) return m_client.localPort();
         else {
             m_warn("Client class has no localPort function, so localPort() will always return 0", __func__);
@@ -339,7 +339,7 @@ public:
         } 
     }
     /** @brief Returns the remote IP, if C::remoteIP exists. Else return INADDR_NONE. */
-	virtual IPAddress remoteIP() { 
+	IPAddress remoteIP() override { 
         if (std::is_member_function_pointer<decltype(&C::remoteIP)>::value) return m_client.remoteIP();
         else {
             m_warn("Client class has no remoteIP function, so remoteIP() will always return INADDR_NONE. This means that sessions caching will always be disabled.", __func__);
@@ -347,7 +347,7 @@ public:
         } 
     }
     /** @brief Returns the remote port, if C::remotePort exists. Else return 0. */
-	virtual uint16_t remotePort() {
+	uint16_t remotePort() override {
         if (std::is_member_function_pointer<decltype(&C::remotePort)>::value) return m_client.remotePort();
         else {
             m_warn("Client class has no remotePort function, so remotePort() will always return 0", __func__);
@@ -360,11 +360,11 @@ public:
 
 protected:
     /** @brief Returns an instance of m_client that is polymorphic and can be used by SSLClientImpl */
-    virtual Client& get_arduino_client() { return m_client; }
-    virtual const Client& get_arduino_client() const { return m_client; }
+    Client& get_arduino_client() override { return m_client; }
+    const Client& get_arduino_client() const override { return m_client; }
     /** @brief Returns an instance of the session array that is on the stack */
-    virtual SSLSession* get_session_array() { return m_sessions; }
-    virtual const SSLSession* get_session_array() const { return m_sessions; }
+    SSLSession* get_session_array() override { return m_sessions; }
+    const SSLSession* get_session_array() const override { return m_sessions; }
 
 private:
     // create a copy of the client

@@ -26,6 +26,6 @@ var searchData=
   ['sslsession',['SSLSession',['../class_s_s_l_session.html',1,'SSLSession'],['../class_s_s_l_session.html#ae05648200cea66577f024d5d09a6fcbb',1,'SSLSession::SSLSession()']]],
   ['sslsession_2ecpp',['SSLSession.cpp',['../_s_s_l_session_8cpp.html',1,'']]],
   ['sslsession_2eh',['SSLSession.h',['../_s_s_l_session_8h.html',1,'']]],
-  ['stop',['stop',['../class_s_s_l_client.html#a158d87df3fe118b7565a19b72f310322',1,'SSLClient']]],
+  ['stop',['stop',['../class_s_s_l_client.html#ad30db47248d78df7c12dedfb27f06529',1,'SSLClient']]],
   ['stop_5fimpl',['stop_impl',['../class_s_s_l_client_impl.html#a81eb5ede3a894f281ae586d463b624e6',1,'SSLClientImpl']]]
 ];
