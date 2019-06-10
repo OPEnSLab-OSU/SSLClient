@@ -75,7 +75,7 @@ public:
     {
         // set the timeout to a reasonable number (it can always be changes later)
         // SSL Connections take a really long time so we don't want to time out a legitimate thing
-        setTimeout(10 * 1000);
+        setTimeout(30 * 1000);
     }
     
     //========================================
