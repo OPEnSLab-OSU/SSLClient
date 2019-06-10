@@ -57,6 +57,7 @@ SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors,
     , m_analog_pin(analog_pin)
     , m_session_index(0)
     , m_debug(debug)
+    , m_is_connected(false)
     , m_write_idx(0) {
     
     // zero the iobuf just in case it's still garbage
@@ -101,6 +102,7 @@ int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
         m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
         return -1;
     }
+    m_info("Client not connected, continuing...", func_name);
     // reset indexs for saftey
     m_write_idx = 0;
     // first, if we have a session, check if we're trying to resolve the same host
@@ -244,6 +246,8 @@ void SSLClientImpl::stop_impl() {
 	}
     // close the ethernet socket
     get_arduino_client().stop();
+    // we are no longer connected 
+    m_is_connected = false;
 }
 
 /* see SSLClientImpl.h */
@@ -251,7 +255,7 @@ uint8_t SSLClientImpl::connected_impl() {
     const char* func_name = __func__;
     // check all of the error cases 
     const auto c_con = get_arduino_client().connected();
-    const auto br_con = br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED;
+    const auto br_con = br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED && m_is_connected;
     const auto wr_ok = getWriteError() == 0;
     // if we're in an error state, close the connection and set a write error
     if (br_con && !c_con) {
@@ -310,7 +314,7 @@ bool SSLClientImpl::m_soft_connected(const char* func_name) {
         return false;
     }
     // check if the ssl engine is still open
-    if(br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED) {
+    if(!m_is_connected || br_ssl_engine_current_state(&m_sslctx.eng) == BR_SSL_CLOSED) {
         m_error("Cannot operate on a closed SSL connection.", func_name);
         int error = br_ssl_engine_last_error(&m_sslctx.eng);
         if(error != BR_ERR_OK) m_print_br_error(error, SSL_ERROR);   
@@ -352,6 +356,7 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
         return 0;
 	}
     m_info("Connection successful!", func_name);
+    m_is_connected = true;
     // all good to go! the SSL socket should be up and running
     // overwrite the session we got with new parameters
     br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());

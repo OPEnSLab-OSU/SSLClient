@@ -181,6 +181,8 @@ private:
     size_t m_session_index;
     // store whether to enable debug logging
     const DebugLevel m_debug;
+    // store if we are connected in bearssl or not
+    bool m_is_connected;
     // store the context values required for SSL
     br_ssl_client_context m_sslctx;
     br_x509_minimal_context m_x509ctx;
