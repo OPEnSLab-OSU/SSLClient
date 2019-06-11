@@ -201,7 +201,7 @@ public:
      * 
      * The implementation for this function can be found in SSLClientImpl::available
      * 
-     * @pre SSLClient::connected must be true.
+     * @pre SSLClient::connected must be true. (Call SSLClient::connected before this function)
      * 
      * @returns The number of bytes available (can be zero), or zero if any of the pre
      * conditions aren't satisfied.
@@ -269,9 +269,10 @@ public:
      * @brief Check if the device is connected.
      *
      * Use this function to determine if SSLClient is still connected and a SSL connection is active.
-     * It should be noted that SSLClient::available should be preferred over this function for rapid
-     * polling--both functions send and receive data with the SSLClient::m_client device, however SSLClient::available
-     * has some delays built in to protect SSLClient::m_client from being polled too frequently. 
+     * It should be noted that this function should be called before SSLClient::available--
+     * both functions send and receive data with the SSLClient::m_client device, however SSLClient::available
+     * has some delays built in to protect SSLClient::m_client from being polled too frequently, and SSLClient::connected
+     * contains logic to ensure that if the socket is dropped SSLClient will react accordingly.
      * 
      * The implementation for this function can be found in SSLClientImpl::connected_impl.
      * 
