@@ -229,6 +229,7 @@ void SSLClientImpl::flush_impl() {
 
 /* see SSLClientImpl.h */
 void SSLClientImpl::stop_impl() {
+    const char* func_name = __func__;
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
@@ -245,6 +246,13 @@ void SSLClientImpl::stop_impl() {
 		}
 	}
     // close the ethernet socket
+    get_arduino_client().flush();
+    // clear the intake buffer, if any
+    const auto avail = get_arduino_client().available();
+    if (avail > 0) {
+        m_info("Flushing bytes from client: ", func_name);
+        get_arduino_client().read(NULL, avail);
+    }
     get_arduino_client().stop();
     // we are no longer connected 
     m_is_connected = false;
