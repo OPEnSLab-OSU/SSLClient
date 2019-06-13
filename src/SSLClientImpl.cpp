@@ -132,7 +132,7 @@ int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
 size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
     const char* func_name = __func__;
     // check if the socket is still open and such
-    if (!m_soft_connected(func_name)) return 0;
+    if (!m_soft_connected(func_name) || !buf || !size) return 0;
     // add to the bearssl io buffer, simply appending whatever we want to write
     size_t alen;
     unsigned char *br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
@@ -195,12 +195,12 @@ int SSLClientImpl::available_impl() {
 /* see SSLClientImpl.h */
 int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
-    if (available_impl() <= 0) return -1;
+    if (available_impl() <= 0 || !size) return -1;
     // read the buffer, send the ack, and return the bytes read
     size_t alen;
     unsigned char* br_buf = br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
     const size_t read_amount = size > alen ? alen : size;
-    memcpy(buf, br_buf, read_amount);
+    if(buf) memcpy(buf, br_buf, read_amount);
     // tell engine we read that many bytes
     br_ssl_engine_recvapp_ack(&m_sslctx.eng, read_amount);
     // tell the user we read that many bytes
@@ -234,6 +234,7 @@ void SSLClientImpl::stop_impl() {
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
     while (getWriteError() == SSL_OK
+        && m_is_connected
         && br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
         && m_run_until(BR_SSL_RECVAPP) == 0) {
         /*
@@ -271,17 +272,22 @@ uint8_t SSLClientImpl::connected_impl() {
         if (get_arduino_client().getWriteError()) {
             m_error("Socket was unexpectedly interrupted. m_client error: ", func_name);
             m_error(get_arduino_client().getWriteError(), func_name);
+            setWriteError(SSL_CLIENT_WRTIE_ERROR);
         }
         // Else tell the user the endpoint closed the socket on us (ouch)
-        else m_warn("Socket was dropped unexpectedly (this can be an alternative to closing the connection)", func_name);
+        else {
+            m_warn("Socket was dropped unexpectedly (this can be an alternative to closing the connection)", func_name);
+        }
+        // we are not connected
+        m_is_connected = false;
         // set the write error so the engine doesn't try to close the connection
-        setWriteError(SSL_CLIENT_WRTIE_ERROR);
         stop_impl();
     }
     else if (!wr_ok) {
         m_error("Not connected because write error is set", func_name);
+        m_print_ssl_error(getWriteError(), SSL_ERROR);
     }
-    return c_con && br_con && wr_ok;
+    return c_con && br_con;
 }
 
 /* see SSLClientImpl.h */
@@ -370,12 +376,6 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
     // set the hostname and ip in the session as well
     ssl_ses.set_parameters(remoteIP(), host);
-    // print the handshake cipher chioce
-    m_info("Cipher suite: ", func_name);
-    if (m_debug >= SSL_INFO) {
-        m_print_prefix(func_name, SSL_INFO);
-        Serial.println(ssl_ses.cipher_suite, HEX);
-    }
     return 1;
 }
 
@@ -389,7 +389,6 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         unsigned state = m_update_engine();
 		// error check
         if (state == BR_SSL_CLOSED || getWriteError() != SSL_OK) {
-            m_warn("Tried to run_until when the engine is closed", func_name);
             return -1;
         }
         // timeout check
@@ -584,9 +583,6 @@ unsigned SSLClientImpl::m_update_engine() {
                     stop_impl();
                     return 0;
                 }
-                m_info("Read bytes from client: ", func_name);
-                m_info(avail, func_name);
-                m_info(len, func_name);
                 // I suppose so!
                 int rlen = get_arduino_client().read(buf, len);
                 if (rlen <= 0) {
@@ -631,7 +627,6 @@ int SSLClientImpl::m_get_session_index(const char* host, const IPAddress& addr) 
                 // there is no hostname and the IP address matches    
                 || (host == NULL && addr == get_session_array()[i].get_ip())
             )) {
-            m_info("Found session match: ", func_name);
             m_info(get_session_array()[i].get_hostname(), func_name);
             return i;
         }
