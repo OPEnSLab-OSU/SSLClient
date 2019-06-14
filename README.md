@@ -133,7 +133,11 @@ If you need to clear a session, you can do so using the SSLSession::removeSessio
 Some ideas that didn't quite fit in the API documentation.
 
 ### SSLClient with Ethernet
-If you are using the [Arduino Ethernet library](https://github.com/arduino-libraries/Ethernet), you will need to modify the library to support the large buffer sizes required by SSL (detailed in [resources](#resources)). To do this, first find the location of the library in the directory where Arduino is installed (`C:\Program Files (x86)\Arduino` on Windows). Inside of this directory, navigate to `libraries\Ethernet\src` (`C:\Program Files (x86)\Arduino\libraries\Ethernet\src` on Windows). Modify `Ethernet.h` to replace these lines:
+If you are using the [Arduino Ethernet library](https://github.com/arduino-libraries/Ethernet), you will need to modify the library to support the large buffer sizes required by SSL (detailed in [resources](#resources)). You can either modify the library yourself, or use [this fork of the Ethernet library with the modification](https://github.com/OPEnSLab-OSU/EthernetLarge). To use the fork, simply install the library using the "add a .zip library" button in Arduino, and replace `#include "Ethernet.h"` with `#include "EthernetLarge.h"` in your sketch. Alternatively if for some reason this solution does not work, you can apply the modification using the instructions below.
+
+#### Manual Modification
+
+ First find the location of the library in the directory where Arduino is installed (`C:\Program Files (x86)\Arduino` on Windows). Inside of this directory, navigate to `libraries\Ethernet\src` (`C:\Program Files (x86)\Arduino\libraries\Ethernet\src` on Windows). Modify `Ethernet.h` to replace these lines:
 ```C++
 ...
 // Configure the maximum number of sockets to support.  W5100 chips can have

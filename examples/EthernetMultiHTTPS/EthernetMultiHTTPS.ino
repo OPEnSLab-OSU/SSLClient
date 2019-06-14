@@ -15,11 +15,11 @@
  */
 
 
- // NOTE: The Ethernet library MUST be modified to use this example!
- // For more detailed instructions check out https://github.com/OPEnSLab-OSU/SSLClient#sslclient-with-ethernet
+  // NOTE: This example REQUIRES the EthernetLarge library.
+  // You can get it here: https://github.com/OPEnSLab-OSU/EthernetLarge
 
 #include <SPI.h>
-#include <Ethernet.h>
+#include <EthernetLarge.h>
 #include <SSLClient.h>
 #include "trustanchors.h"
 // Enter a MAC address for your controller below.
