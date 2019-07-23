@@ -575,9 +575,9 @@ unsigned SSLClientImpl::m_update_engine() {
                 m_info(mem, func_name);
                 // free memory check
                 // BearSSL takes up so much memory on the stack it tends
-                // to overflow if there isn't at least 8000 bytes available
+                // to overflow if there isn't at least 7000 bytes available
                 // when it starts
-                if(mem < 8000) {
+                if(mem < 7000) {
                     m_error("Out of memory! Decrease the number of sessions or the size of m_iobuf", func_name);
                     setWriteError(SSL_OUT_OF_MEMORY);
                     stop_impl();

@@ -1,6 +1,6 @@
 # SSLClient - Arduino Library For SSL
 
-**SSLClient requires at least 110kb flash and 8kb RAM, and will not compile otherwise. This means that most Arduino boards are not supported. Check your board's specifications before attempting to use this library.**
+**SSLClient requires at least 110kb flash and 7kb RAM, and will not compile otherwise. This means that most Arduino boards are not supported. Check your board's specifications before attempting to use this library.**
 
 You can also view this README in [doxygen](https://openslab-osu.github.io/SSLClient/html/index.html).
 
@@ -10,7 +10,7 @@ SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.
 
 Using SSLClient should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient). There are a few extra things, however, that you will need to get started:
 
-1. A board with a lot of resources (>110kb flash and >8kb RAM), and a network peripheral with a large internal buffer (>8kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Gotchas](#sslclient-with-ethernet)).
+1. A board with a lot of resources (>110kb flash and >7kb RAM), and a network peripheral with a large internal buffer (>7kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Gotchas](#sslclient-with-ethernet)).
 2. A header containing array of trust anchors, which will look like [this file](./readme/cert.h). These are used to verify the SSL connection later on, and without them you will be unable to use this library. Check out [this document](./TrustAnchors.md) on how to generate this file for your project, and for more information about what a trust anchor is.
 3. A Client class associated with a network interface. We tested this library using [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient), however in theory it will work for any class implementing Client.
 4. An analog pin, used for generating random data at the start of the connection (see the [Implementation Gotchas](#implementation-gotchas)).

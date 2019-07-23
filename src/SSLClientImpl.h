@@ -199,7 +199,7 @@ private:
      * As a rule of thumb SSLClient will fail if it does not have at least 8000 bytes when starting a
      * connection.
      */
-    unsigned char m_iobuf[BR_SSL_BUFSIZE_MONO / 8];
+    unsigned char m_iobuf[1536];
     static_assert(sizeof m_iobuf <= BR_SSL_BUFSIZE_BIDI, "m_iobuf must be below maximum buffer size");
     // store the index of where we are writing in the buffer
     // so we can send our records all at once to prevent
