@@ -22,6 +22,7 @@
 #include "Arduino.h"
 #include "Client.h"
 #include "SSLSession.h"
+#include "SSLClientParameters.h"
 
 #ifndef SSLClientImpl_H_
 #define SSLClientImpl_H_
@@ -72,7 +73,13 @@ class SSLClientImpl : public Client {
 public:
     /** @see SSLClient::SSLClient */
     explicit SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
-        const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug);
+        const size_t trust_anchors_num, const int analog_pin, 
+        const DebugLevel debug);
+
+    /** @see SSLClient::SSLClient */
+    explicit SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
+        const size_t trust_anchors_num, const int analog_pin, 
+        const DebugLevel debug, const SSLClientParameters* mutual_auth_params);
 
     //============================================
     //= Functions implemented in SSLClientImpl.cpp
@@ -171,10 +178,6 @@ private:
     //= Data Members
     //============================================
     
-    // store pointers to the trust anchors
-    // should not be computed at runtime
-    const br_x509_trust_anchor *m_trust_anchors;
-    const size_t m_trust_anchors_num;
     // store the pin to fetch an RNG see from
     const int m_analog_pin;
     // store an index of where a new session can be placed if we don't have any corresponding sessions

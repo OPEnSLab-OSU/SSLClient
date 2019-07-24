@@ -22,6 +22,7 @@
 #include "Client.h"
 #include "SSLClientImpl.h"
 #include "SSLSession.h"
+#include "SSLClientParameters.h"
 
 #ifndef SSLClient_H_
 #define SSLClient_H_
@@ -67,17 +68,41 @@ public:
      * @param trust_anchors_num The number of objects in the trust_anchors array.
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG.
      * @param debug The level of debug logging (use the ::DebugLevel enum).
+     * @param mutual_auth_params Configuration to use for mutual authentication, nullptr to disable mutual auth. (see ::SSLClientParameters).
      */
-    explicit SSLClient(const C& client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug = SSL_WARN)
+    explicit SSLClient( const C& client, 
+                        const br_x509_trust_anchor *trust_anchors, 
+                        const size_t trust_anchors_num, 
+                        const int analog_pin, 
+                        const DebugLevel debug = SSL_WARN)
     : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) 
     , m_client(client)
-    , m_sessions{SSLSession()}
+    , m_sessions{}
     {
         // set the timeout to a reasonable number (it can always be changes later)
         // SSL Connections take a really long time so we don't want to time out a legitimate thing
         setTimeout(30 * 1000);
     }
     
+    /** 
+     * Same as SSLClient::SSLClient(const C &, const br_x509_trust_anchor*, const size_t, const int, const DebugLevel), 
+     * but can compile support for mutual authentication.
+     */
+    explicit SSLClient( const C& client, 
+                        const br_x509_trust_anchor *trust_anchors, 
+                        const size_t trust_anchors_num, 
+                        const int analog_pin, 
+                        const DebugLevel debug,
+                        const SSLClientParameters* mutual_auth_params)
+    : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug, mutual_auth_params) 
+    , m_client(client)
+    , m_sessions{}
+    {
+        // set the timeout to a reasonable number (it can always be changes later)
+        // SSL Connections take a really long time so we don't want to time out a legitimate thing
+        setTimeout(30 * 1000);
+    }
+
     //========================================
     //= Functions implemented in SSLClientImpl
     //========================================

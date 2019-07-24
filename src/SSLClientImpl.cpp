@@ -52,9 +52,7 @@ static int freeMemory() {
 /* see SSLClientImpl.h */
 SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
     const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug)
-    : m_trust_anchors(trust_anchors)
-    , m_trust_anchors_num(trust_anchors_num)
-    , m_analog_pin(analog_pin)
+    : m_analog_pin(analog_pin)
     , m_session_index(0)
     , m_debug(debug)
     , m_is_connected(false)
@@ -63,13 +61,30 @@ SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors,
     // zero the iobuf just in case it's still garbage
     memset(m_iobuf, 0, sizeof m_iobuf);
     // initlalize the various bearssl libraries so they're ready to go when we connect
-    br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
+    br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, trust_anchors, trust_anchors_num);
     // comment the above line and uncomment the line below if you're having trouble connecting over SSL
     // br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // check if the buffer size is half or full duplex
     constexpr auto duplex = sizeof m_iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
     br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
 }
+
+/* see SSLClientImpl.h */
+SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
+    const size_t trust_anchors_num, const int analog_pin, 
+    const DebugLevel debug, const SSLClientParameters* mutual_auth_params)
+    : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) {
+    // if mutual authentication if needed, configure bearssl to support it.
+    if (mutual_auth_params != nullptr)
+        br_ssl_client_set_single_ec(    &m_sslctx, 
+                                        mutual_auth_params->client_cert_chain, 
+                                        mutual_auth_params->chain_len,
+                                        &mutual_auth_params->ec_key,
+                                        BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN,
+                                        BR_KEYTYPE_EC,
+                                        br_ssl_engine_get_ec(&m_sslctx.eng),
+                                        &br_ecdsa_i15_sign_asn1);
+    }
 
 /* see SSLClientImpl.h*/
 int SSLClientImpl::connect_impl(IPAddress ip, uint16_t port) {

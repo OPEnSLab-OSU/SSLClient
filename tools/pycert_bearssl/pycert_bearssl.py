@@ -100,8 +100,10 @@ def download(port, cert_var, cert_length_var, output, use_store, keep_dupes, dom
               help='the location of the .pem file containing a list of trusted root certificates (default: use certifi.where())')
 @click.option('--keep-dupes', '-d', is_flag=True, default=False,
               help='write all certs including any duplicates (default: remove duplicates)')
+@click.option('--no-verify', '-n', is_flag=True, default=False,
+              help='Do not attempt to match a root certificate to the provided PEM files')
 @click.argument('cert', type=click.File('r'), nargs=-1)
-def convert(cert_var, cert_length_var, output, use_store, keep_dupes, cert):
+def convert(cert_var, cert_length_var, output, use_store, keep_dupes, no_verify, cert):
     """Convert PEM certificates into a C header that can be imported into a
     sketch.  Specify each certificate to encode as a separate argument (each
     must be in PEM format) and they will be merged into a single file.
@@ -132,12 +134,15 @@ def convert(cert_var, cert_length_var, output, use_store, keep_dupes, cert):
           cert_objs.append(cert_parsed)
     # find a root certificate for each
     root_certs = []
-    for i, c in enumerate(cert_objs):
-      cn_hash = c.get_issuer().hash()
-      if cn_hash not in cert_dict:
-        click.echo('Could not find a root certificate for {0}'.format(cert[i].name))
-      else:
-        root_certs.append(cert_dict[cn_hash])
+    if no_verify:
+      root_certs = cert_objs
+    else:
+      for i, c in enumerate(cert_objs):
+        cn_hash = c.get_issuer().hash()
+        if cn_hash not in cert_dict:
+          click.echo('Could not find a root certificate for {0}'.format(cert[i].name))
+        else:
+          root_certs.append(cert_dict[cn_hash])
     # Combine PEMs and write output header.
     cert_util.x509_to_header(root_certs, cert_var, cert_length_var, output, keep_dupes)
 
