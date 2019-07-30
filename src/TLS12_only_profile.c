@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
+ * Copyright (c) 2019 OSU OPEnS Lab
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the
@@ -79,21 +79,13 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 		
 		BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		BR_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		BR_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 		BR_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
 		BR_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-		BR_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
-		BR_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
 		
 		BR_TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,
 		BR_TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256,
-		BR_TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,
-		BR_TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384,
 		BR_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,
 		BR_TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256,
-		BR_TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384,
-		BR_TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384,
 	};
 
 	/*
@@ -125,7 +117,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 */
 	// br_ssl_engine_set_prf10(&cc->eng, &br_tls10_prf);
 	br_ssl_engine_set_prf_sha256(&cc->eng, &br_tls12_sha256_prf);
-	br_ssl_engine_set_prf_sha384(&cc->eng, &br_tls12_sha384_prf);
+	// br_ssl_engine_set_prf_sha384(&cc->eng, &br_tls12_sha384_prf);
 
 	/*
 	 * Set hash functions for the engine. Required hash functions
@@ -158,7 +150,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	br_ssl_engine_set_hash(&cc->eng, br_sha224_ID, &br_sha224_vtable);
 	br_ssl_engine_set_hash(&cc->eng, br_sha256_ID, &br_sha256_vtable);
 	br_ssl_engine_set_hash(&cc->eng, br_sha384_ID, &br_sha384_vtable);
-	// br_ssl_engine_set_hash(&cc->eng, br_sha512_ID, &br_sha512_vtable);
+	br_ssl_engine_set_hash(&cc->eng, br_sha512_ID, &br_sha512_vtable);
 
 	/*
 	 * Set the cipher suites. All specified cipher suite MUST be
@@ -237,7 +229,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	//* Alternate: set implementations explicitly.
 	// br_ssl_client_set_rsapub(cc, &br_rsa_i31_public);
 	br_ssl_engine_set_rsavrfy(&cc->eng, &br_rsa_i15_pkcs1_vrfy);
-	br_ssl_engine_set_ec(&cc->eng, &br_ec_all_m15);
+	br_ssl_engine_set_ec(&cc->eng, &br_ec_prime_i15);
 	br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 	//*/
 
@@ -323,11 +315,12 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * implementations only if duly measured performance issues make
 	 * it mandatory.
 	 */
+	/*
 	br_ssl_engine_set_aes_cbc(&cc->eng,
 		&br_aes_ct_cbcenc_vtable,
 		&br_aes_ct_cbcdec_vtable);
 	br_ssl_engine_set_aes_ctr(&cc->eng,
-		&br_aes_ct_ctr_vtable);
+		&br_aes_ct_ctr_vtable); */
 	/* Alternate: aes_ct64
 	br_ssl_engine_set_aes_cbc(&cc->eng,
 		&br_aes_ct64_cbcenc_vtable,
@@ -335,13 +328,12 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	br_ssl_engine_set_aes_ctr(&cc->eng,
 		&br_aes_ct64_ctr_vtable);
 	*/
-	/* Alternate: aes_small
+	// Alternate: aes_small
 	br_ssl_engine_set_aes_cbc(&cc->eng,
 		&br_aes_small_cbcenc_vtable,
 		&br_aes_small_cbcdec_vtable);
 	br_ssl_engine_set_aes_ctr(&cc->eng,
 		&br_aes_small_ctr_vtable);
-	*/
 	/* Alternate: aes_big
 	br_ssl_engine_set_aes_cbc(&cc->eng,
 		&br_aes_big_cbcenc_vtable,
@@ -472,7 +464,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	br_x509_minimal_set_hash(xc, br_sha224_ID, &br_sha224_vtable);
 	br_x509_minimal_set_hash(xc, br_sha256_ID, &br_sha256_vtable);
 	br_x509_minimal_set_hash(xc, br_sha384_ID, &br_sha384_vtable);
-	// br_x509_minimal_set_hash(xc, br_sha512_ID, &br_sha512_vtable);
+	br_x509_minimal_set_hash(xc, br_sha512_ID, &br_sha512_vtable);
 
 	/*
 	 * Link the X.509 engine in the SSL engine.
