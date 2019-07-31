@@ -68,24 +68,14 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 *    better than RSA key exchange (slightly more expensive on the
 	 *    client, but much cheaper on the server, and it implies smaller
 	 *    messages).
-	 * -- ChaCha20+Poly1305 is better than AES/GCM (faster, smaller code).
-	 * -- GCM is better than CBC.
 	 * -- AES-128 is preferred over AES-256 (AES-128 is already
 	 *    strong enough, and AES-256 is 40% more expensive).
 	 */
-	static const uint16_t suites[] = {
-		BR_TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-		BR_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-		
+	static const uint16_t suites[] = {		
 		BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		BR_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-		BR_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-		
 		BR_TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,
 		BR_TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256,
-		BR_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,
-		BR_TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256,
 	};
 
 	/*
@@ -229,7 +219,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	//* Alternate: set implementations explicitly.
 	// br_ssl_client_set_rsapub(cc, &br_rsa_i31_public);
 	br_ssl_engine_set_rsavrfy(&cc->eng, &br_rsa_i15_pkcs1_vrfy);
-	br_ssl_engine_set_ec(&cc->eng, &br_ec_prime_i15);
+	br_ssl_engine_set_ec(&cc->eng, &br_ec_all_m15);
 	br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 	//*/
 
@@ -242,9 +232,9 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * -- Cipher suites in CHACHA20_POLY1305 need the ChaCha20+Poly1305
 	 *    record handler ("set_chapol").
 	 */
-	br_ssl_engine_set_cbc(&cc->eng,
-		&br_sslrec_in_cbc_vtable,
-		&br_sslrec_out_cbc_vtable);
+	// br_ssl_engine_set_cbc(&cc->eng,
+	//	&br_sslrec_in_cbc_vtable,
+	//	&br_sslrec_out_cbc_vtable);
 	br_ssl_engine_set_gcm(&cc->eng,
 		&br_sslrec_in_gcm_vtable,
 		&br_sslrec_out_gcm_vtable);
@@ -256,7 +246,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * Set the ChaCha20 and Poly1305 implementations
 	 * Not included in this file orignally for some reason
 	 */
-	br_ssl_engine_set_default_chapol(&cc->eng);
+	// br_ssl_engine_set_default_chapol(&cc->eng);
 
 	/*
 	 * Symmetric encryption:
@@ -329,9 +319,9 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 		&br_aes_ct64_ctr_vtable);
 	*/
 	// Alternate: aes_small
-	br_ssl_engine_set_aes_cbc(&cc->eng,
-		&br_aes_small_cbcenc_vtable,
-		&br_aes_small_cbcdec_vtable);
+	// br_ssl_engine_set_aes_cbc(&cc->eng,
+	//	&br_aes_small_cbcenc_vtable,
+	//	&br_aes_small_cbcdec_vtable);*/
 	br_ssl_engine_set_aes_ctr(&cc->eng,
 		&br_aes_small_ctr_vtable);
 	/* Alternate: aes_big
