@@ -154,6 +154,7 @@ def get_server_root_cert(address, port, certDict):
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ssl_soc = SSL.Connection(ctx, soc)
     ssl_soc.connect((address, port))
+    ssl_soc.set_tlsext_host_name(bytes(address, "utf8"))
     try:
         ssl_soc.do_handshake()
         cert = ssl_soc.get_peer_cert_chain()[-1]
