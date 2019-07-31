@@ -248,10 +248,12 @@ void SSLClientImpl::stop_impl() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
+    const auto state = br_ssl_engine_current_state(&m_sslctx.eng);
     while (getWriteError() == SSL_OK
         && m_is_connected
-        && br_ssl_engine_current_state(&m_sslctx.eng) != BR_SSL_CLOSED
-        && m_run_until(BR_SSL_RECVAPP) == 0) {
+        && state != BR_SSL_CLOSED
+        && state != 0
+        && m_run_until(BR_SSL_SENDAPP | BR_SSL_RECVAPP) == 0) {
         /*
 		 * Discard any incoming application data.
 		 */
@@ -263,12 +265,6 @@ void SSLClientImpl::stop_impl() {
 	}
     // close the ethernet socket
     get_arduino_client().flush();
-    // clear the intake buffer, if any
-    const auto avail = get_arduino_client().available();
-    if (avail > 0) {
-        m_info("Flushing bytes from client: ", func_name);
-        get_arduino_client().read(NULL, avail);
-    }
     get_arduino_client().stop();
     // we are no longer connected 
     m_is_connected = false;
@@ -414,7 +410,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
             return -1;
         }
         // debug
-        if (state != lastState) {
+        if (state != lastState || lastState == 0) {
             lastState = state;
             m_info("m_run changed state:", func_name);
             if(m_debug == DebugLevel::SSL_INFO) {
@@ -440,7 +436,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         /*
 		 * If we reached our target, then we are finished.
 		 */
-		if (state & target) return 0;
+		if (state & target || (target == 0 && state == 0)) return 0;
 
 		/*
 		 * If some application data must be read, and we did not
