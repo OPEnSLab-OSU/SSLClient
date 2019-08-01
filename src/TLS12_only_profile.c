@@ -71,7 +71,9 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * -- AES-128 is preferred over AES-256 (AES-128 is already
 	 *    strong enough, and AES-256 is 40% more expensive).
 	 */
-	static const uint16_t suites[] = {		
+	static const uint16_t suites[] = {
+		BR_TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+		BR_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		BR_TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -219,7 +221,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	//* Alternate: set implementations explicitly.
 	// br_ssl_client_set_rsapub(cc, &br_rsa_i31_public);
 	br_ssl_engine_set_rsavrfy(&cc->eng, &br_rsa_i15_pkcs1_vrfy);
-	br_ssl_engine_set_ec(&cc->eng, &br_ec_all_m15);
+	br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
 	br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 	//*/
 
@@ -246,7 +248,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	 * Set the ChaCha20 and Poly1305 implementations
 	 * Not included in this file orignally for some reason
 	 */
-	// br_ssl_engine_set_default_chapol(&cc->eng);
+	br_ssl_engine_set_default_chapol(&cc->eng);
 
 	/*
 	 * Symmetric encryption:
@@ -437,7 +439,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	// br_x509_minimal_set_ecdsa(xc,
 	//	&br_ec_prime_i31, &br_ecdsa_i31_vrfy_asn1);
 	br_x509_minimal_set_ecdsa(xc,
-		br_ssl_engine_get_ec(&cc->eng),
+		&br_ec_prime_fast_256,
 		br_ssl_engine_get_ecdsa(&cc->eng));
 
 	/*

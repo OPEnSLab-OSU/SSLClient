@@ -530,6 +530,16 @@ extern const br_ec_impl br_ec_all_m15;
 extern const br_ec_impl br_ec_all_m31;
 
 /**
+ * \brief Aggregate EC implementation "m31".
+ *
+ * This implementation is a wrapper for:
+ *
+ * - `br_ec_p256_m31` for NIST P-256
+ * - `br_ec_prime_i31` for other curves (NIST P-384 and NIST-P512)
+ */
+extern const br_ec_impl br_ec_prime_fast_256;
+
+/**
  * \brief Get the "default" EC implementation for the current system.
  *
  * This returns a pointer to the preferred implementation on the

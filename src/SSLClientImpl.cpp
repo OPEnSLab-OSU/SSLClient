@@ -385,6 +385,9 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     // all good to go! the SSL socket should be up and running
     // overwrite the session we got with new parameters
     br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
+    // print the cipher suite
+    m_info("Used cipher suite: ", func_name);
+    m_info(ssl_ses.cipher_suite, func_name);
     // set the hostname and ip in the session as well
     ssl_ses.set_parameters(remoteIP(), host);
     return 1;
