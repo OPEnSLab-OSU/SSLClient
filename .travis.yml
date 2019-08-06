@@ -1,0 +1,22 @@
+language: c
+sudo: false
+cache:
+  directories:
+    - ~/arduino_ide
+    - ~/.arduino15/packages/
+git:
+  depth: false
+  quiet: true
+env:
+  global:
+     # You can uncomment this to explicitly choose an (old) version of the Arduino IDE
+     #- ARDUINO_IDE_VERSION="1.8.7"
+     - INSTALL_PLATFORMS=samd
+before_install:
+  - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
+install:
+  # Note that every library should be installed in a seperate command
+  - if [! -d "$HOME/arduino_ide/libraries/EthernetLarge" ]; then git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/arduino_ide/libraries/EthernetLarge; fi
+
+script:
+  - build_platform zero

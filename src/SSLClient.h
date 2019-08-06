@@ -18,7 +18,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <type_traits>
 #include "Client.h"
 #include "SSLClientImpl.h"
 #include "SSLSession.h"
@@ -48,7 +47,6 @@ class SSLClient : public SSLClientImpl {
  * amount past that will require special modification of this library, and 
  * assumes you know what you are doing.
  */
-static_assert(std::is_base_of<Client, C>::value, "SSLClient can only accept a type with base class Client!");
 static_assert(SessionCache > 0 && SessionCache < 255, "There can be no less than one and no more than 255 sessions in the cache!");
 static_assert(SessionCache <= 3, "You need to decrease the size of m_iobuf in order to have more than 3 sessions at once, otherwise memory issues will occur.");
 
@@ -356,30 +354,12 @@ public:
     bool operator==(const C& rhs) { return m_client == rhs; }
     /** @brief Returns whether or not two SSLClient objects do not have the same underlying client object */
 	bool operator!=(const C& rhs) { return m_client != rhs; }
-    /** @brief Returns the local port, C::localPort exists. Else return 0. */
-	uint16_t localPort() override {
-        if (std::is_member_function_pointer<decltype(&C::localPort)>::value) return m_client.localPort();
-        else {
-            m_warn("Client class has no localPort function, so localPort() will always return 0", __func__);
-            return 0;
-        } 
-    }
-    /** @brief Returns the remote IP, if C::remoteIP exists. Else return INADDR_NONE. */
-	IPAddress remoteIP() override { 
-        if (std::is_member_function_pointer<decltype(&C::remoteIP)>::value) return m_client.remoteIP();
-        else {
-            m_warn("Client class has no remoteIP function, so remoteIP() will always return INADDR_NONE. This means that sessions caching will always be disabled.", __func__);
-            return INADDR_NONE;
-        } 
-    }
+    /** @brief Returns the local port, if C::localPort exists */
+	uint16_t localPort() override { return m_client.localPort(); }
+    /** @brief Returns the remote IP, if C::remoteIP exists. */
+	IPAddress remoteIP() override { return m_client.remoteIP(); }
     /** @brief Returns the remote port, if C::remotePort exists. Else return 0. */
-	uint16_t remotePort() override {
-        if (std::is_member_function_pointer<decltype(&C::remotePort)>::value) return m_client.remotePort();
-        else {
-            m_warn("Client class has no remotePort function, so remotePort() will always return 0", __func__);
-            return 0;
-        } 
-    }
+	uint16_t remotePort() override { return m_client.remotePort(); }
 
     /** @brief Returns a reference to the client object stored in this class. Take care not to break it. */
     C& getClient() { return m_client; }

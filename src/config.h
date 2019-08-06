@@ -159,7 +159,9 @@
  * Note: if BR_LOMUL is not explicitly enabled or disabled, then
  * enabling BR_ARMEL_CORTEXM_GCC also enables BR_LOMUL.
  */
+#ifdef ARDUINO_ARCH_SAMD
 #define BR_ARMEL_CORTEXM_GCC   1
+#endif
 
 /*
  * When BR_AES_X86NI is enabled, the AES implementation using the x86 "NI"
