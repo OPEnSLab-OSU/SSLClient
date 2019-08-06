@@ -1,5 +1,7 @@
 # SSLClient - Arduino Library For SSL
 
+[![Build Status](https://travis-ci.org/OPEnSLab-OSU/SSLClient.svg?branch=master)](https://travis-ci.org/OPEnSLab-OSU/SSLClient)
+
 **SSLClient requires at least 110kb flash and 7kb RAM, and will not compile otherwise. This means that most Arduino boards are not supported. Check your board's specifications before attempting to use this library.**
 
 You can also view this README in [doxygen](https://openslab-osu.github.io/SSLClient/html/index.html).
