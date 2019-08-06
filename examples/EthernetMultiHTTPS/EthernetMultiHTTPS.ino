@@ -39,7 +39,7 @@ IPAddress myDns(8, 8, 8, 8);
 
 // Choose the analog pin to get semi-random data from for SSL
 // Pick a pin that's not connected or attached to a randomish voltage source
-const int rand_pin = A7;
+const int rand_pin = A5;
 
 // Initialize the SSL client library
 // We input an EthernetClient, our trust anchors, and the analog pin
