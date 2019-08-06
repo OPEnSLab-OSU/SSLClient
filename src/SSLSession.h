@@ -57,7 +57,7 @@ public:
      * 
      * Sets all parameters to zero, and invalidates the session
      */
-    explicit SSLSession()
+    SSLSession()
         : m_valid_session(false)
         , m_hostname()
         , m_ip(INADDR_NONE) {}
