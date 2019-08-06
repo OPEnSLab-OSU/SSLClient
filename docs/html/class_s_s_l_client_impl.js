@@ -1,6 +1,7 @@
 var class_s_s_l_client_impl =
 [
     [ "SSLClientImpl", "class_s_s_l_client_impl.html#a2b0b9043c8252871272bf6ba199ab67b", null ],
+    [ "SSLClientImpl", "class_s_s_l_client_impl.html#a8314c7dab1d923db5624f8075a53e6ea", null ],
     [ "available_impl", "class_s_s_l_client_impl.html#abe33c793ec37f11087651cf4e586569b", null ],
     [ "connect_impl", "class_s_s_l_client_impl.html#aa5c14ecf301c268306946c85825e565b", null ],
     [ "connect_impl", "class_s_s_l_client_impl.html#ae6c947ad92979ab99364428004abbeba", null ],

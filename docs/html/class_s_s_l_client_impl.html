@@ -114,6 +114,8 @@ Inheritance diagram for SSLClientImpl:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a2b0b9043c8252871272bf6ba199ab67b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a2b0b9043c8252871272bf6ba199ab67b">SSLClientImpl</a> (const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a> debug)</td></tr>
 <tr class="separator:a2b0b9043c8252871272bf6ba199ab67b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8314c7dab1d923db5624f8075a53e6ea"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a8314c7dab1d923db5624f8075a53e6ea">SSLClientImpl</a> (const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a> debug, const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *mutual_auth_params)</td></tr>
+<tr class="separator:a8314c7dab1d923db5624f8075a53e6ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5c14ecf301c268306946c85825e565b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#aa5c14ecf301c268306946c85825e565b">connect_impl</a> (IPAddress ip, uint16_t port)</td></tr>
 <tr class="separator:aa5c14ecf301c268306946c85825e565b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6c947ad92979ab99364428004abbeba"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#ae6c947ad92979ab99364428004abbeba">connect_impl</a> (const char *host, uint16_t port)</td></tr>
@@ -183,7 +185,7 @@ Protected Member Functions</h2></td></tr>
 <div class="textblock"><p>Implementation code to be inherited by <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a2b0b9043c8252871272bf6ba199ab67b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2b0b9043c8252871272bf6ba199ab67b">&#9670;&nbsp;</a></span>SSLClientImpl()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b0b9043c8252871272bf6ba199ab67b">&#9670;&nbsp;</a></span>SSLClientImpl() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -214,6 +216,61 @@ Protected Member Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a>&#160;</td>
           <td class="paramname"><em>debug</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#ae9a7509bc8a18f67e286547c19deb3c0" title="Initialize SSLClient with all of the prerequisites needed.">SSLClient::SSLClient</a> </dd></dl>
+
+</div>
+</div>
+<a id="a8314c7dab1d923db5624f8075a53e6ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8314c7dab1d923db5624f8075a53e6ea">&#9670;&nbsp;</a></span>SSLClientImpl() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SSLClientImpl::SSLClientImpl </td>
+          <td>(</td>
+          <td class="paramtype">const br_x509_trust_anchor *&#160;</td>
+          <td class="paramname"><em>trust_anchors</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const size_t&#160;</td>
+          <td class="paramname"><em>trust_anchors_num</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>analog_pin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a>&#160;</td>
+          <td class="paramname"><em>debug</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *&#160;</td>
+          <td class="paramname"><em>mutual_auth_params</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -533,7 +590,7 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73" title="Returns the local port, C::localPort exists. Else return 0.">SSLClient::localPort</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73" title="Returns the local port, if C::localPort exists.">SSLClient::localPort</a> </dd></dl>
 
 <p>Implemented in <a class="el" href="class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73">SSLClient&lt; C, SessionCache &gt;</a>.</p>
 
@@ -884,7 +941,7 @@ template&lt;typename T &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#af76a0df76834e0d0999dbf44c7c0a174" title="Returns the remote IP, if C::remoteIP exists. Else return INADDR_NONE.">SSLClient::remoteIP</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#af76a0df76834e0d0999dbf44c7c0a174" title="Returns the remote IP, if C::remoteIP exists.">SSLClient::remoteIP</a> </dd></dl>
 
 <p>Implemented in <a class="el" href="class_s_s_l_client.html#af76a0df76834e0d0999dbf44c7c0a174">SSLClient&lt; C, SessionCache &gt;</a>.</p>
 
@@ -912,7 +969,7 @@ template&lt;typename T &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73" title="Returns the local port, C::localPort exists. Else return 0.">SSLClient::localPort</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73" title="Returns the local port, if C::localPort exists.">SSLClient::localPort</a> </dd></dl>
 
 <p>Implemented in <a class="el" href="class_s_s_l_client.html#a5974a5f8722a752f121af4fac498bb22">SSLClient&lt; C, SessionCache &gt;</a>.</p>
 

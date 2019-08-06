@@ -1,6 +1,7 @@
 var class_s_s_l_client =
 [
     [ "SSLClient", "class_s_s_l_client.html#ae9a7509bc8a18f67e286547c19deb3c0", null ],
+    [ "SSLClient", "class_s_s_l_client.html#ad7b20a2ac220d346a8047db77d97723d", null ],
     [ "available", "class_s_s_l_client.html#a5d13fd2f32ee2ea65a1f3820f758e77e", null ],
     [ "connect", "class_s_s_l_client.html#a4a2172aedfcc483ba2a256ad12148630", null ],
     [ "connect", "class_s_s_l_client.html#a91c63e35f31652c20faa5b9be95984bf", null ],
