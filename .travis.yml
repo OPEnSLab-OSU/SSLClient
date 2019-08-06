@@ -13,9 +13,6 @@ env:
      #- ARDUINO_IDE_VERSION="1.8.7"
 before_install:
   - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
-install:
-  # Note that every library should be installed in a seperate command
-  - if [! -d "$HOME/arduino_ide/libraries/EthernetLarge" ]; then git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/arduino_ide/libraries/EthernetLarge; fi
-
+  - if [! -d "$HOME/arduino_ide/libraries/<Name>" ]; then git clone <URL> $HOME/arduino_ide/libraries/<Name>; fi
 script:
   - build_platform zero
