@@ -107,7 +107,8 @@ public:
     SSLSession& get_session_impl(const char* host, const IPAddress& addr);
     /** @see SSLClient::removeSession */
     void remove_session_impl(const char* host, const IPAddress& addr);
-
+    /** @see SSLClient::setMutualAuthParams */
+    void set_mutual_impl(const SSLClientParameters* params);
     //============================================
     //= Functions implemented in SSLClient.h
     //============================================

@@ -22,6 +22,7 @@
 #include "SSLClientImpl.h"
 #include "SSLSession.h"
 #include "SSLClientParameters.h"
+#include "SSLObj.h"
 
 #ifndef SSLClient_H_
 #define SSLClient_H_
@@ -74,25 +75,6 @@ public:
                         const int analog_pin, 
                         const DebugLevel debug = SSL_WARN)
     : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) 
-    , m_client(client)
-    , m_sessions{}
-    {
-        // set the timeout to a reasonable number (it can always be changes later)
-        // SSL Connections take a really long time so we don't want to time out a legitimate thing
-        setTimeout(30 * 1000);
-    }
-    
-    /** 
-     * Same as SSLClient::SSLClient(const C &, const br_x509_trust_anchor*, const size_t, const int, const DebugLevel), 
-     * but can compile support for mutual authentication.
-     */
-    explicit SSLClient( const C& client, 
-                        const br_x509_trust_anchor *trust_anchors, 
-                        const size_t trust_anchors_num, 
-                        const int analog_pin, 
-                        const DebugLevel debug,
-                        const SSLClientParameters* mutual_auth_params)
-    : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug, mutual_auth_params) 
     , m_client(client)
     , m_sessions{}
     {
@@ -306,6 +288,13 @@ public:
     //========================================
     //= Functions Not in the Client Interface
     //========================================
+
+    /**
+     * @brief Add a client certificate and enable support for mutual auth
+     * 
+     * This function must be called BEFORE making an SSL connection.
+     */
+    void setMutualAuthParams(const SSLClientParameters* params) { return set_mutual_impl(params); }
 
     /**
      * @brief Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist

@@ -69,23 +69,6 @@ SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors,
     br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
 }
 
-/* see SSLClientImpl.h */
-SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
-    const size_t trust_anchors_num, const int analog_pin, 
-    const DebugLevel debug, const SSLClientParameters* mutual_auth_params)
-    : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) {
-    // if mutual authentication if needed, configure bearssl to support it.
-    if (mutual_auth_params != nullptr)
-        br_ssl_client_set_single_ec(    &m_sslctx, 
-                                        mutual_auth_params->client_cert_chain, 
-                                        mutual_auth_params->chain_len,
-                                        &mutual_auth_params->ec_key,
-                                        BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN,
-                                        BR_KEYTYPE_EC,
-                                        br_ssl_engine_get_ec(&m_sslctx.eng),
-                                        &br_ecdsa_i15_sign_asn1);
-    }
-
 /* see SSLClientImpl.h*/
 int SSLClientImpl::connect_impl(IPAddress ip, uint16_t port) {
     const char* func_name = __func__;
@@ -329,6 +312,20 @@ void SSLClientImpl::remove_session_impl(const char* host, const IPAddress& addr)
         m_info(temp_index, func_name);
         get_session_array()[temp_index].clear_parameters();
     }
+}
+
+/* see SSLClientImpl.h */
+void SSLClientImpl::set_mutual_impl(const SSLClientParameters* params) {
+    // if mutual authentication if needed, configure bearssl to support it.
+    if (params != nullptr)
+        br_ssl_client_set_single_ec(    &m_sslctx, 
+                                        params->client_cert_chain, 
+                                        params->chain_len,
+                                        &params->ec_key,
+                                        BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN,
+                                        BR_KEYTYPE_EC,
+                                        br_ssl_engine_get_ec(&m_sslctx.eng),
+                                        &br_ecdsa_i15_sign_asn1);
 }
 
 bool SSLClientImpl::m_soft_connected(const char* func_name) {
