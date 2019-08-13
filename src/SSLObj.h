@@ -24,13 +24,15 @@
  * This file contains a utility class to take PEM input and store it as a DER object
  * for later use by BearSSL.
  */
-
-#include <vector>
+#include <cstring>
 #include "bearssl_pem.h"
-#include "Arduino.h"
 
 #ifndef SSLObj_H_
 #define SSLObj_H_
+
+#undef min
+#undef max
+#include <vector>
 
 /**
  * \brief This namespace works with raw DER byte arrays for use later with TLS mutual auth.

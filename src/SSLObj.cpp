@@ -1,5 +1,12 @@
 #include "SSLObj.h"
 
+// fix for non-exception arduino platforms
+#ifdef ADAFRUIT_FEATHER_M0
+namespace std {
+    void __throw_length_error(char const*) {}
+}
+#endif
+
 struct ssl_pem_decode_state {
     std::vector<unsigned char>* vect;
     size_t index = 0;
@@ -7,23 +14,18 @@ struct ssl_pem_decode_state {
 
 static void ssl_pem_decode(void *dest_ctx, const void *src, size_t len) {
     ssl_pem_decode_state* ctx = static_cast<ssl_pem_decode_state*>(dest_ctx);
-    // copy the recieved bytes into the vector, resizing if needed
-    if (ctx->vect->size() < len + ctx->index) {
-        Serial.println("Overflow!");
-        return;
-    }
-    for (size_t i = 0; i < len; i++) (*(ctx->vect))[i + ctx->index] = static_cast<const unsigned char*>(src)[i];
+    for (size_t i = 0; i < len; i++) ctx->vect->emplace_back(static_cast<const unsigned char*>(src)[i]);
     // update index
     ctx->index += len;
 }
 
 const std::vector<unsigned char> SSLObj::make_vector_pem(const char* data, const size_t len) {
-    if (data == nullptr || len == 0) return { 0 };
+    if (data == nullptr || len < 80) return {};
     // initialize the bearssl PEM context
     br_pem_decoder_context pctx;
     br_pem_decoder_init(&pctx);
     // create a temporary vector
-    std::vector<unsigned char> temp(len * 3 / 4 + 5);
+    std::vector<unsigned char> temp;
     // initialize the DER storage context
     ssl_pem_decode_state state;
     state.vect = &temp;
@@ -36,22 +38,28 @@ const std::vector<unsigned char> SSLObj::make_vector_pem(const char* data, const
     do {
         index += br_pem_decoder_push(&pctx, static_cast<const void*>(&data[index]), len - index);
         br_state = br_pem_decoder_event(&pctx);
-    } while (br_state != BR_PEM_ERROR && br_state != BR_PEM_END_OBJ);
+        // if we found the begining object, reserve the vector based on the remaining relavent bytes
+        if (br_state == BR_PEM_BEGIN_OBJ) {
+            // 22 = five dashes for header and footer + four newlines - character difference between `BEGIN` and `END`
+            const size_t relavant_bytes_base64 = len - (2*strlen(br_pem_decoder_name(&pctx)) + 22);
+            temp.reserve(relavant_bytes_base64 * 3 / 4);
+        }
+    } while (br_state != BR_PEM_ERROR && br_state != BR_PEM_END_OBJ && len != index);
     // error check
     if (br_state == BR_PEM_ERROR) {
         // set data to error
         temp.clear();
     }
     // else we're good!
-    return { temp };
+    return temp;
 }
 
 const std::vector<unsigned char> SSLObj::make_vector_der(const char* data, const size_t len) {
-    if (data == nullptr || len == 0) return { 0 };
+    if (data == nullptr || len == 0) return {};
     // create a temporary vector
     std::vector<unsigned char> temp(len);
     // copy the elements over
     for (size_t i = 0; i < len; i++) temp[i] = data[i];
     // return the new SSLObj
-    return { temp };
+    return temp;
 }
