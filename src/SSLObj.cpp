@@ -12,7 +12,7 @@ struct ssl_pem_decode_state {
     size_t index = 0;
 };
 
-static void ssl_pem_decode(void *dest_ctx, const void *src, size_t len) {
+static void ssl_pem_decode_callback(void *dest_ctx, const void *src, size_t len) {
     ssl_pem_decode_state* ctx = static_cast<ssl_pem_decode_state*>(dest_ctx);
     for (size_t i = 0; i < len; i++) ctx->vect->emplace_back(static_cast<const unsigned char*>(src)[i]);
     // update index
@@ -31,7 +31,7 @@ const std::vector<unsigned char> SSLObj::make_vector_pem(const char* data, const
     state.vect = &temp;
     state.index = 0;
     // set the byte reciever
-    br_pem_decoder_setdest(&pctx, &ssl_pem_decode, &state);
+    br_pem_decoder_setdest(&pctx, &ssl_pem_decode_callback, &state);
     // start decoding!
     int br_state = 0;
     size_t index = 0;
@@ -51,15 +51,5 @@ const std::vector<unsigned char> SSLObj::make_vector_pem(const char* data, const
         temp.clear();
     }
     // else we're good!
-    return temp;
-}
-
-const std::vector<unsigned char> SSLObj::make_vector_der(const char* data, const size_t len) {
-    if (data == nullptr || len == 0) return {};
-    // create a temporary vector
-    std::vector<unsigned char> temp(len);
-    // copy the elements over
-    for (size_t i = 0; i < len; i++) temp[i] = data[i];
-    // return the new SSLObj
     return temp;
 }

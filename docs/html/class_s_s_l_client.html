@@ -115,8 +115,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae9a7509bc8a18f67e286547c19deb3c0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ae9a7509bc8a18f67e286547c19deb3c0">SSLClient</a> (const C &amp;client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a> debug=<a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395a86c8fdfc38831619d5ed73dff5b0911d">SSL_WARN</a>)</td></tr>
 <tr class="memdesc:ae9a7509bc8a18f67e286547c19deb3c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> with all of the prerequisites needed.  <a href="#ae9a7509bc8a18f67e286547c19deb3c0">More...</a><br /></td></tr>
 <tr class="separator:ae9a7509bc8a18f67e286547c19deb3c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7b20a2ac220d346a8047db77d97723d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#ad7b20a2ac220d346a8047db77d97723d">SSLClient</a> (const C &amp;client, const br_x509_trust_anchor *trust_anchors, const size_t trust_anchors_num, const int analog_pin, const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a> debug, const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *mutual_auth_params)</td></tr>
-<tr class="separator:ad7b20a2ac220d346a8047db77d97723d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a2172aedfcc483ba2a256ad12148630"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a4a2172aedfcc483ba2a256ad12148630">connect</a> (IPAddress ip, uint16_t port) override</td></tr>
 <tr class="memdesc:a4a2172aedfcc483ba2a256ad12148630"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect over SSL to a host specified by an IP address.  <a href="#a4a2172aedfcc483ba2a256ad12148630">More...</a><br /></td></tr>
 <tr class="separator:a4a2172aedfcc483ba2a256ad12148630"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,6 +147,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a25e4414ab0c9424d09592f9567a678dc"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a25e4414ab0c9424d09592f9567a678dc">connected</a> () override</td></tr>
 <tr class="memdesc:a25e4414ab0c9424d09592f9567a678dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the device is connected.  <a href="#a25e4414ab0c9424d09592f9567a678dc">More...</a><br /></td></tr>
 <tr class="separator:a25e4414ab0c9424d09592f9567a678dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16aa9765bd450dcbba21c598456f464f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a16aa9765bd450dcbba21c598456f464f">setMutualAuthParams</a> (const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *params)</td></tr>
+<tr class="memdesc:a16aa9765bd450dcbba21c598456f464f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a client certificate and enable support for mutual auth.  <a href="#a16aa9765bd450dcbba21c598456f464f">More...</a><br /></td></tr>
+<tr class="separator:a16aa9765bd450dcbba21c598456f464f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d8bf9b891151bc5b0b865d70cf9c086"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_s_l_session.html">SSLSession</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2d8bf9b891151bc5b0b865d70cf9c086">getSession</a> (const char *host, const IPAddress &amp;addr)</td></tr>
 <tr class="memdesc:a2d8bf9b891151bc5b0b865d70cf9c086"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist.  <a href="#a2d8bf9b891151bc5b0b865d70cf9c086">More...</a><br /></td></tr>
 <tr class="separator:a2d8bf9b891151bc5b0b865d70cf9c086"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -210,6 +211,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab4e38d4319ec504395d67d2ab21a639e inherit pub_methods_class_s_s_l_client_impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6baed094969874fb9d2bea3a00ecbee1 inherit pub_methods_class_s_s_l_client_impl"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a6baed094969874fb9d2bea3a00ecbee1">remove_session_impl</a> (const char *host, const IPAddress &amp;addr)</td></tr>
 <tr class="separator:a6baed094969874fb9d2bea3a00ecbee1 inherit pub_methods_class_s_s_l_client_impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dd694f8e0e65624b103dc781a7744af inherit pub_methods_class_s_s_l_client_impl"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a9dd694f8e0e65624b103dc781a7744af">set_mutual_impl</a> (const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *params)</td></tr>
+<tr class="separator:a9dd694f8e0e65624b103dc781a7744af inherit pub_methods_class_s_s_l_client_impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -255,7 +258,7 @@ class SSLClient&lt; C, SessionCache &gt;</h3>
 <p>The main <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> class. Check out <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> for more info. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae9a7509bc8a18f67e286547c19deb3c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9a7509bc8a18f67e286547c19deb3c0">&#9670;&nbsp;</a></span>SSLClient() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae9a7509bc8a18f67e286547c19deb3c0">&#9670;&nbsp;</a></span>SSLClient()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -323,69 +326,6 @@ The analog_pin should be set to input.</dd></dl>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a id="ad7b20a2ac220d346a8047db77d97723d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad7b20a2ac220d346a8047db77d97723d">&#9670;&nbsp;</a></span>SSLClient() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class C , size_t SessionCache = 1&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::<a class="el" href="class_s_s_l_client.html">SSLClient</a> </td>
-          <td>(</td>
-          <td class="paramtype">const C &amp;&#160;</td>
-          <td class="paramname"><em>client</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const br_x509_trust_anchor *&#160;</td>
-          <td class="paramname"><em>trust_anchors</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const size_t&#160;</td>
-          <td class="paramname"><em>trust_anchors_num</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>analog_pin</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395">DebugLevel</a>&#160;</td>
-          <td class="paramname"><em>debug</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *&#160;</td>
-          <td class="paramname"><em>mutual_auth_params</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Same as <a class="el" href="class_s_s_l_client.html#ae9a7509bc8a18f67e286547c19deb3c0" title="Initialize SSLClient with all of the prerequisites needed.">SSLClient::SSLClient(const C &amp;, const br_x509_trust_anchor*, const size_t, const int, const DebugLevel)</a>, but can compile support for mutual authentication. </p>
 
 </div>
 </div>
@@ -1233,6 +1173,37 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a16aa9765bd450dcbba21c598456f464f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16aa9765bd450dcbba21c598456f464f">&#9670;&nbsp;</a></span>setMutualAuthParams()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class C , size_t SessionCache = 1&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="class_s_s_l_client.html">SSLClient</a>&lt; C, SessionCache &gt;::setMutualAuthParams </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *&#160;</td>
+          <td class="paramname"><em>params</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Add a client certificate and enable support for mutual auth. </p>
+<p>This function must be called BEFORE making an SSL connection. </p>
 
 </div>
 </div>

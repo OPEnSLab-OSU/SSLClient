@@ -41,13 +41,23 @@
  * which allow BearSSL use client certificates when creating a TLS connection. Since
  * most certificates are transmitted over the internet in PEM format, a certificate can
  * be provided in PEM or DER format, and will be converted internally to DER format for
- * later use. A PEM file provided to this class MUST CONTAIN the `----BEGIN ... -----`
- * header in order to be parsed correctly.
+ * later use.
  */
 
 namespace SSLObj {
+    /**
+     * @brief Convert a PEM buffer into a vector of raw DER bytes
+     * 
+     * This function takes a PEM buffer (e.g. `----BEGIN CERTIFICATE...`) and converts
+     * it into a vector of raw bytes. The bytes given to this function must:
+     * * Contain both the `-----BEGIN XXX-----` and `-----END XXX-----` strings. These are
+     * removed during processing.
+     * * Have a base64 encoded body
+     * * Only contain a single object (certificate, private key, etc.).
+     * 
+     * @returns The raw bytes decoded from the PEM file.
+     */
     const std::vector<unsigned char> make_vector_pem(const char* data, const size_t len);
-    const std::vector<unsigned char> make_vector_der(const char* data, const size_t len);
 }
 
 #endif

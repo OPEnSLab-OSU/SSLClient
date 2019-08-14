@@ -26,6 +26,7 @@ var class_s_s_l_client_impl =
     [ "remoteIP", "class_s_s_l_client_impl.html#ae97adc55212c1aa96880aac28dd71387", null ],
     [ "remotePort", "class_s_s_l_client_impl.html#a93cdb32491fc08b035e40f840ff2e8f5", null ],
     [ "remove_session_impl", "class_s_s_l_client_impl.html#a6baed094969874fb9d2bea3a00ecbee1", null ],
+    [ "set_mutual_impl", "class_s_s_l_client_impl.html#a9dd694f8e0e65624b103dc781a7744af", null ],
     [ "stop_impl", "class_s_s_l_client_impl.html#a81eb5ede3a894f281ae586d463b624e6", null ],
     [ "write_impl", "class_s_s_l_client_impl.html#a807656f814f24cf6cd711e429b716c4d", null ]
 ];

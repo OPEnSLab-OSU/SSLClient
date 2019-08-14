@@ -8,5 +8,6 @@ var hierarchy =
         [ "SSLClient< C, SessionCache >", "class_s_s_l_client.html", null ]
       ] ]
     ] ],
+    [ "ssl_pem_decode_state", "structssl__pem__decode__state.html", null ],
     [ "SSLClientParameters", "struct_s_s_l_client_parameters.html", null ]
 ];

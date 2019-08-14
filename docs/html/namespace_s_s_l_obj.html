@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.15"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SSLClient: Class Hierarchy</title>
+<title>SSLClient: SSLObj Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -68,7 +68,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
-$(document).ready(function(){initNavTree('hierarchy.html','');});
+$(document).ready(function(){initNavTree('namespace_s_s_l_obj.html','');});
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -87,26 +87,69 @@ $(document).ready(function(){initNavTree('hierarchy.html','');});
 </div>
 
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">Class Hierarchy</div>  </div>
+<div class="title">SSLObj Namespace Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">This inheritance list is sorted roughly, but not completely, alphabetically:</div><div class="directory">
-<div class="levels">[detail level <span onclick="javascript:toggleLevel(1);">1</span><span onclick="javascript:toggleLevel(2);">2</span><span onclick="javascript:toggleLevel(3);">3</span>]</div><table class="directory">
-<tr id="row_0_" class="even"><td class="entry"><span style="width:0px;display:inline-block;">&#160;</span><span id="arr_0_" class="arrow" onclick="toggleFolder('0_')">&#9660;</span><span class="icona"><span class="icon">C</span></span><b>br_ssl_session_parameters</b></td><td class="desc"></td></tr>
-<tr id="row_0_0_"><td class="entry"><span style="width:32px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="class_s_s_l_session.html" target="_self">SSLSession</a></td><td class="desc">This class stores values which allow <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> to save and resume SSL sessions </td></tr>
-<tr id="row_1_" class="even"><td class="entry"><span style="width:0px;display:inline-block;">&#160;</span><span id="arr_1_" class="arrow" onclick="toggleFolder('1_')">&#9660;</span><span class="icona"><span class="icon">C</span></span><b>Client</b></td><td class="desc"></td></tr>
-<tr id="row_1_0_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span id="arr_1_0_" class="arrow" onclick="toggleFolder('1_0_')">&#9660;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="class_s_s_l_client_impl.html" target="_self">SSLClientImpl</a></td><td class="desc">Implementation code to be inherited by <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> </td></tr>
-<tr id="row_1_0_0_" class="even"><td class="entry"><span style="width:48px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="class_s_s_l_client.html" target="_self">SSLClient&lt; C, SessionCache &gt;</a></td><td class="desc">The main <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> class. Check out <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> for more info </td></tr>
-<tr id="row_2_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="structssl__pem__decode__state.html" target="_self">ssl_pem_decode_state</a></td><td class="desc"></td></tr>
-<tr id="row_3_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="struct_s_s_l_client_parameters.html" target="_self">SSLClientParameters</a></td><td class="desc">This struct stores data required for <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> to use mutual authentication </td></tr>
+
+<p>This namespace works with raw DER byte arrays for use later with TLS mutual auth.  
+<a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a9a58d01c9073b90f2b42c655828aea6d"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; unsigned char &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_s_l_obj.html#a9a58d01c9073b90f2b42c655828aea6d">make_vector_pem</a> (const char *data, const size_t len)</td></tr>
+<tr class="memdesc:a9a58d01c9073b90f2b42c655828aea6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a PEM buffer into a vector of raw DER bytes.  <a href="#a9a58d01c9073b90f2b42c655828aea6d">More...</a><br /></td></tr>
+<tr class="separator:a9a58d01c9073b90f2b42c655828aea6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-</div><!-- directory -->
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>This namespace works with raw DER byte arrays for use later with TLS mutual auth. </p>
+<p><a class="el" href="_s_s_l_obj_8h.html">SSLObj.h</a></p>
+<p>This file contains a utility class to take PEM input and store it as a DER object for later use by BearSSL.This namespace was created to store some of the values stored in <a class="el" href="struct_s_s_l_client_parameters.html" title="This struct stores data required for SSLClient to use mutual authentication.">SSLClientParameters</a>, which allow BearSSL use client certificates when creating a TLS connection. Since most certificates are transmitted over the internet in PEM format, a certificate can be provided in PEM or DER format, and will be converted internally to DER format for later use. </p>
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a9a58d01c9073b90f2b42c655828aea6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a58d01c9073b90f2b42c655828aea6d">&#9670;&nbsp;</a></span>make_vector_pem()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; unsigned char &gt; SSLObj::make_vector_pem </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const size_t&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convert a PEM buffer into a vector of raw DER bytes. </p>
+<p>This function takes a PEM buffer (e.g. <code>----BEGIN CERTIFICATE...</code>) and converts it into a vector of raw bytes. The bytes given to this function must:</p><ul>
+<li>Contain both the <code>-----BEGIN XXX-----</code> and <code>-----END XXX-----</code> strings. These are removed during processing.</li>
+<li>Have a base64 encoded body</li>
+<li>Only contain a single object (certificate, private key, etc.).</li>
+</ul>
+<dl class="section return"><dt>Returns</dt><dd>The raw bytes decoded from the PEM file. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
+    <li class="navelem"><a class="el" href="namespace_s_s_l_obj.html">SSLObj</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>

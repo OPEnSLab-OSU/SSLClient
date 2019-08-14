@@ -138,6 +138,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab4e38d4319ec504395d67d2ab21a639e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6baed094969874fb9d2bea3a00ecbee1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a6baed094969874fb9d2bea3a00ecbee1">remove_session_impl</a> (const char *host, const IPAddress &amp;addr)</td></tr>
 <tr class="separator:a6baed094969874fb9d2bea3a00ecbee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dd694f8e0e65624b103dc781a7744af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a9dd694f8e0e65624b103dc781a7744af">set_mutual_impl</a> (const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *params)</td></tr>
+<tr class="separator:a9dd694f8e0e65624b103dc781a7744af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45f26385ee1975b12265943efb1ff0d5"><td class="memItemLeft" align="right" valign="top">virtual uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#a45f26385ee1975b12265943efb1ff0d5">localPort</a> ()=0</td></tr>
 <tr class="separator:a45f26385ee1975b12265943efb1ff0d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae97adc55212c1aa96880aac28dd71387"><td class="memItemLeft" align="right" valign="top">virtual IPAddress&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client_impl.html#ae97adc55212c1aa96880aac28dd71387">remoteIP</a> ()=0</td></tr>
@@ -1001,6 +1003,25 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#a5b626703a24089dbb0480a9b6ddf348c" title="Clear the session corresponding to a host and IP.">SSLClient::removeSession</a> </dd></dl>
+
+</div>
+</div>
+<a id="a9dd694f8e0e65624b103dc781a7744af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9dd694f8e0e65624b103dc781a7744af">&#9670;&nbsp;</a></span>set_mutual_impl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SSLClientImpl::set_mutual_impl </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *&#160;</td>
+          <td class="paramname"><em>params</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="class_s_s_l_client.html#a16aa9765bd450dcbba21c598456f464f" title="Add a client certificate and enable support for mutual auth.">SSLClient::setMutualAuthParams</a> </dd></dl>
 
 </div>
 </div>
