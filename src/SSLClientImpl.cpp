@@ -219,10 +219,8 @@ int SSLClientImpl::peek_impl() {
 
 /* see SSLClientImpl.h */
 void SSLClientImpl::flush_impl() {
-    // trigger a flush, incase there's any leftover data
-    br_ssl_engine_flush(&m_sslctx.eng, 0);
-    // run until application data is ready for pickup
-    if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
+    if (m_write_idx > 0)
+        if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
 }
 
 /* see SSLClientImpl.h */
@@ -524,6 +522,8 @@ unsigned SSLClientImpl::m_update_engine() {
             // data has been written to the io buffer, something is wrong
             if (!(state & BR_SSL_SENDAPP)) {
                 m_error("Error m_write_idx > 0 but the ssl engine is not ready for data", func_name);
+                m_error(br_ssl_engine_current_state(&m_sslctx.eng), func_name);
+                m_error(br_ssl_engine_last_error(&m_sslctx.eng), func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
                 stop_impl();
                 return 0;
