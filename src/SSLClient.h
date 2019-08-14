@@ -292,7 +292,10 @@ public:
     /**
      * @brief Add a client certificate and enable support for mutual auth
      * 
-     * This function must be called BEFORE making an SSL connection.
+     * Please ensure that the values in `params` are valid for the lifetime
+     * of SSLClient. You may want to make them global constants.
+     * 
+     * @pre SSLClient has not already started an SSL connection.
      */
     void setMutualAuthParams(const SSLClientParameters* params) { return set_mutual_impl(params); }
 

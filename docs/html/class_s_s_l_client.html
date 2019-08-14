@@ -1203,7 +1203,8 @@ template&lt;class C , size_t SessionCache = 1&gt; </div>
 </div><div class="memdoc">
 
 <p>Add a client certificate and enable support for mutual auth. </p>
-<p>This function must be called BEFORE making an SSL connection. </p>
+<p>Please ensure that the values in <code>params</code> are valid for the lifetime of <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a>. You may want to make them global constants.</p>
+<dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> has not already started an SSL connection. </dd></dl>
 
 </div>
 </div>
