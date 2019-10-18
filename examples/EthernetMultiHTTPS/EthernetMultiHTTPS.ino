@@ -2,7 +2,8 @@
   Multi Domain HTTPS Client
 
  This sketch connects to a website (http://www.arduino.cc/asciilogo.txt)
- using an Arduino Wiznet Ethernet shield.
+ using an Arduino Wiznet Ethernet shield or STM32 built-in Ethernet.
+ Tested on ST Micro Nucleo-F767ZI.
 
  Circuit:
  * Ethernet shield attached to pins 10, 11, 12, 13
@@ -12,19 +13,39 @@
  modified 9 Apr 2012
  by Noah Koontz, based on work by Adrian McEwen and Tom Igoe
 
+ Modified 16 Oct 2019 by gdsports625@gmail.com for STM32duino_STM32Ethernet
  */
 
 
   // NOTE: This example REQUIRES the EthernetLarge library.
   // You can get it here: https://github.com/OPEnSLab-OSU/EthernetLarge
 
+#if defined(ARDUINO_NUCLEO_F767ZI)
+extern "C" {
+  // This must exist to keep the linker happy but is never called.
+  int _gettimeofday( struct timeval *tv, void *tzvp )
+  {
+    Serial.println("_gettimeofday dummy");
+    uint64_t t = 0;  // get uptime in nanoseconds
+    tv->tv_sec = t / 1000000000;  // convert to seconds
+    tv->tv_usec = ( t % 1000000000 ) / 1000;  // get remaining microseconds
+    return 0;  // return non-zero for error
+  } // end _gettimeofday()
+}
+#include <LwIP.h>
+#include <STM32Ethernet.h>
+#else
 #include <SPI.h>
 #include <EthernetLarge.h>
+#endif
 #include <SSLClient.h>
 #include "trustanchors.h"
+
+#if !defined(ARDUINO_NUCLEO_F767ZI)
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+#endif
 
 // the two domains we want to query
 char server1[] = "www.arduino.cc";
@@ -51,6 +72,7 @@ unsigned long byteCount = 0;
 bool printWebData = true;  // set to false for better speed measurement
 
 void setup() {
+#if !defined(ARDUINO_NUCLEO_F767ZI)
   // You can use Ethernet.init(pin) to configure the CS pin
   Ethernet.init(10);  // Most Arduino shields
   //Ethernet.init(5);   // MKR ETH shield
@@ -58,6 +80,7 @@ void setup() {
   //Ethernet.init(20);  // Teensy++ 2.0
   //Ethernet.init(15);  // ESP8266 with Adafruit Featherwing Ethernet
   //Ethernet.init(33);  // ESP32 with Adafruit Featherwing Ethernet
+#endif
 
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
@@ -67,6 +90,16 @@ void setup() {
   
   // start the Ethernet connection:
   Serial.println("Initialize Ethernet with DHCP:");
+#if defined(ARDUINO_NUCLEO_F767ZI)
+  // STM32 built-in Ethernet has a factory installed MAC address.
+  if (Ethernet.begin() == 0) {
+    Serial.println("Failed to configure Ethernet using DHCP");
+    while (1) delay(1);
+  } else {
+    Serial.print("  DHCP assigned IP ");
+    Serial.println(Ethernet.localIP());
+  }
+#else
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
     // Check for Ethernet hardware present
@@ -85,6 +118,7 @@ void setup() {
     Serial.print("  DHCP assigned IP ");
     Serial.println(Ethernet.localIP());
   }
+#endif
   // give the Ethernet shield a second to initialize:
   delay(2000);
   // connect!

@@ -20,6 +20,7 @@
 
 #include "SSLClient.h"
 
+#if defined(ARDUINO_ARCH_SAMD)
 // system reset definitions
 static constexpr auto SYSRESETREQ = (1<<2);
 static constexpr auto VECTKEY = (0x05fa0000UL);
@@ -29,6 +30,7 @@ static constexpr auto VECTKEY_MASK = (0x0000ffffUL);
     (*(uint32_t*)0xe000ed0cUL)=((*(uint32_t*)0xe000ed0cUL)&VECTKEY_MASK)|VECTKEY|SYSRESETREQ;
     while(1) { }
 }
+#endif
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -476,6 +478,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
 /* see SSLClientImpl.h*/
 unsigned SSLClientImpl::m_update_engine() {
     const char* func_name = __func__;
+    uint8_t retry = 5;
     for(;;) {
         // get the state
         unsigned state = br_ssl_engine_current_state(&m_sslctx.eng);
@@ -510,7 +513,8 @@ unsigned SSLClientImpl::m_update_engine() {
             if (wlen > 0) {
                 br_ssl_engine_sendrec_ack(&m_sslctx.eng, wlen);
             }
-            continue;
+            if (retry--) continue;
+            return state;
         }
         
         /*
@@ -572,6 +576,7 @@ unsigned SSLClientImpl::m_update_engine() {
             const auto avail = get_arduino_client().available();
             if (avail > 0 && avail >= len) {
                 int mem = freeMemory();
+#if defined(ARDUINO_ARCH_SAMD)
                 // check for a stack overflow
                 // if the stack overflows we basically have to crash, and
                 // hope the user is ok with that
@@ -581,6 +586,7 @@ unsigned SSLClientImpl::m_update_engine() {
                     // software reset
                     RESET();
                 }
+#endif
                 // debug info 
                 m_info("Memory: ", func_name);
                 m_info(mem, func_name);

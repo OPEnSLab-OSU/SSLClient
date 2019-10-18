@@ -1,23 +1,45 @@
 /*
   Web client
 
- This sketch connects to a website (http://www.arduino.cc/asciilogo.txt)
- using an Arduino Wiznet Ethernet shield or STM32 built-in Ethernet.
- Tested on ST Micro Nucleo-F767ZI.
+  This sketch connects to a website (http://www.howsmyssl.com/a/check)
+  using an Arduino Wiznet Ethernet shield or STM32 built-in Ethernet.
+  Tested on ST Micro Nucleo-F767ZI.
 
- Circuit:
- * Ethernet shield attached to pins 10, 11, 12, 13
+  The JSON output looks like this when pretty printed. "Probably Okay"
+  is the highest rating.
+  {
+  "given_cipher_suites": [
+    "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+    "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+    "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256"
+  ],
+  "ephemeral_keys_supported": true,
+  "session_ticket_supported": false,
+  "tls_compression_supported": false,
+  "unknown_cipher_suite_supported": false,
+  "beast_vuln": false,
+  "able_to_detect_n_minus_one_splitting": false,
+  "insecure_cipher_suites": {},
+  "tls_version": "TLS 1.2",
+  "rating": "Probably Okay"
+  }
 
- created 18 Dec 2009
- by David A. Mellis
- modified 9 Apr 2012
- by Noah Koontz, based on work by Adrian McEwen and Tom Igoe
+  Circuit:
+   Ethernet shield attached to pins 10, 11, 12, 13
 
- Modified 16 Oct 2019 by gdsports625@gmail.com for STM32duino_STM32Ethernet
- */
+  created 18 Dec 2009
+  by David A. Mellis
+  modified 9 Apr 2012
+  by Noah Koontz, based on work by Adrian McEwen and Tom Igoe
 
-  // NOTE: This example REQUIRES the EthernetLarge library.
-  // You can get it here: https://github.com/OPEnSLab-OSU/EthernetLarge
+  Modified 16 Oct 2019 by gdsports625@gmail.com for STM32duino_STM32Ethernet
+*/
+
+// NOTE: This example REQUIRES the EthernetLarge library.
+// You can get it here: https://github.com/OPEnSLab-OSU/EthernetLarge
 
 #if defined(ARDUINO_NUCLEO_F767ZI)
 extern "C" {
@@ -49,8 +71,8 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 // if you don't want to use DNS (and reduce your sketch size)
 // use the numeric IP instead of the name for the server:
 //IPAddress server(54,85,55,79);  // numeric IP for Google (no DNS)
-const char server[] = "www.arduino.cc";    // name address for Arduino (using DNS)
-const char server_host[] = "www.arduino.cc"; // leave this alone, change only above two
+const char server[] = "www.howsmyssl.com";    // name address for Arduino (using DNS)
+const char server_host[] = "www.howsmyssl.com"; // leave this alone, change only above two
 
 // Set the static IP address to use if the DHCP fails to assign
 IPAddress ip(192, 168, 0, 177);
@@ -62,7 +84,7 @@ const int rand_pin = A5;
 
 // Initialize the SSL client library
 // We input an EthernetClient, our trust anchors, and the analog pin
-SSLClient<EthernetClient> client(EthernetClient(), TAs, (size_t)TAs_NUM, rand_pin);
+SSLClient<EthernetClient> client(EthernetClient(), TAs, (size_t)TAs_NUM, rand_pin, SSL_NONE);
 // Variables to measure the speed
 unsigned long beginMicros, endMicros;
 unsigned long byteCount = 0;
@@ -84,7 +106,7 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  
+
   // start the Ethernet connection:
   Serial.println("Initialize Ethernet with DHCP:");
 #if defined(ARDUINO_NUCLEO_F767ZI)
@@ -115,10 +137,10 @@ void setup() {
     Serial.print("  DHCP assigned IP ");
     Serial.println(Ethernet.localIP());
   }
-#endif
   // give the Ethernet shield a second to initialize:
   delay(2000);
-  
+#endif
+
   Serial.print("connecting to ");
   Serial.print(server);
   Serial.println("...");
@@ -133,12 +155,13 @@ void setup() {
     Serial.print("Took: ");
     Serial.println(time);
     // Make a HTTP request:
-    client.println("GET /asciilogo.txt HTTP/1.1");
+    client.println("GET /a/check HTTP/1.1");
     client.println("User-Agent: SSLClientOverEthernet");
     client.print("Host: ");
     client.println(server_host);
     client.println("Connection: close");
     client.println();
+    client.flush();
   } else {
     // if you didn't get a connection to the server:
     Serial.println("connection failed");
@@ -147,21 +170,22 @@ void setup() {
 }
 
 void loop() {
-  // if there are incoming bytes available
-  // from the server, read them and print them:
-  int len = client.available();
-  if (len > 0) {
-    byte buffer[80];
-    if (len > 80) len = 80;
-    client.read(buffer, len);
-    if (printWebData) {
-      Serial.write(buffer, len); // show in the serial monitor (slows some boards)
-    }
-    byteCount = byteCount + len;
-  }
-
   // if the server's disconnected, stop the client:
-  if (!client.connected()) {
+  if (client.connected()) {
+    // if there are incoming bytes available
+    // from the server, read them and print them:
+    int len = client.available();
+    if (len > 0) {
+      byte buffer[80];
+      if (len > 80) len = 80;
+      client.read(buffer, len);
+      if (printWebData) {
+        Serial.write(buffer, len); // show in the serial monitor (slows some boards)
+      }
+      byteCount = byteCount + len;
+    }
+  }
+  else {
     endMicros = micros();
     Serial.println();
     Serial.println("disconnecting.");
