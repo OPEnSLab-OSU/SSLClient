@@ -227,7 +227,6 @@ void SSLClientImpl::flush_impl() {
 
 /* see SSLClientImpl.h */
 void SSLClientImpl::stop_impl() {
-    const char* func_name = __func__;
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
@@ -290,13 +289,13 @@ SSLSession& SSLClientImpl::get_session_impl(const char* host, const IPAddress& a
     // search for a matching session with the IP
     int temp_index = m_get_session_index(host, addr);
     // if none are availible, use m_session_index
-    if (temp_index == -1) {
+    if (temp_index < 0) {
         temp_index = m_session_index;
         // reset the session so we don't try to send one sites session to another
         get_session_array()[temp_index].clear_parameters();
     }
     // increment m_session_index so the session cache is a circular buffer
-    if (temp_index == m_session_index && ++m_session_index >= getSessionCount()) m_session_index = 0;
+    if (static_cast<size_t>(temp_index) == m_session_index && ++m_session_index >= getSessionCount()) m_session_index = 0;
     // return the pointed to value
     m_info("Using session index: ", func_name);
     m_info(temp_index, func_name);
@@ -493,14 +492,14 @@ unsigned SSLClientImpl::m_update_engine() {
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
             wlen = get_arduino_client().write(buf, len);
-            if (wlen =< 0) {
-		// if the arduino client encountered an error
-		if (get_arduino_client().getWriteError() || !get_arduino_client().connected())
-			m_error("Error writing to m_client", func_name);
-			m_error(get_arduino_client().getWriteError(), func_name);
-			setWriteError(SSL_CLIENT_WRTIE_ERROR);
-		}
-		// else presumably the socket just closed itself, so just stop the engine
+            if (wlen <= 0) {
+                // if the arduino client encountered an error
+                if (get_arduino_client().getWriteError() || !get_arduino_client().connected()) {
+                    m_error("Error writing to m_client", func_name);
+                    m_error(get_arduino_client().getWriteError(), func_name);
+                    setWriteError(SSL_CLIENT_WRTIE_ERROR);
+                }
+                // else presumably the socket just closed itself, so just stop the engine
                 stop_impl();
                 return 0;
             }
@@ -567,7 +566,7 @@ unsigned SSLClientImpl::m_update_engine() {
 			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
             const auto avail = get_arduino_client().available();
-            if (avail > 0 && avail >= len) {
+            if (avail > 0 && static_cast<size_t>(avail) >= len) {
                 int mem = freeMemory();
 #if defined(ARDUINO_ARCH_SAMD)
                 // check for a stack overflow
