@@ -398,7 +398,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
     const unsigned long start = millis();
     for (;;) {
         unsigned state = m_update_engine();
-		// error check
+	// error check
         if (state == BR_SSL_CLOSED || getWriteError() != SSL_OK) {
             return -1;
         }
@@ -478,7 +478,6 @@ int SSLClientImpl::m_run_until(const unsigned target) {
 /* see SSLClientImpl.h*/
 unsigned SSLClientImpl::m_update_engine() {
     const char* func_name = __func__;
-    uint8_t retry = 5;
     for(;;) {
         // get the state
         unsigned state = br_ssl_engine_current_state(&m_sslctx.eng);
@@ -494,27 +493,21 @@ unsigned SSLClientImpl::m_update_engine() {
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
             wlen = get_arduino_client().write(buf, len);
-            // let the chip recover
-            if (wlen < 0) {
-                m_error("Error writing to m_client", func_name);
-                m_error(get_arduino_client().getWriteError(), func_name);
-                setWriteError(SSL_CLIENT_WRTIE_ERROR);
-                /*
-                    * If we received a close_notify and we
-                    * still send something, then we have our
-                    * own response close_notify to send, and
-                    * the peer is allowed by RFC 5246 not to
-                    * wait for it.
-                    */
-                if (!&m_sslctx.eng.shutdown_recv) return 0;
+            if (wlen =< 0) {
+		// if the arduino client encountered an error
+		if (get_arduino_client().getWriteError() || !get_arduino_client().connected())
+			m_error("Error writing to m_client", func_name);
+			m_error(get_arduino_client().getWriteError(), func_name);
+			setWriteError(SSL_CLIENT_WRTIE_ERROR);
+		}
+		// else presumably the socket just closed itself, so just stop the engine
                 stop_impl();
                 return 0;
             }
             if (wlen > 0) {
                 br_ssl_engine_sendrec_ack(&m_sslctx.eng, wlen);
             }
-            if (retry--) continue;
-            return state;
+	    continue;
         }
         
         /*
