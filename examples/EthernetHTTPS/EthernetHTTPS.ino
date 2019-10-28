@@ -20,17 +20,6 @@
   // You can get it here: https://github.com/OPEnSLab-OSU/EthernetLarge
 
 #if defined(ARDUINO_NUCLEO_F767ZI)
-extern "C" {
-  // This must exist to keep the linker happy but is never called.
-  int _gettimeofday( struct timeval *tv, void *tzvp )
-  {
-    Serial.println("_gettimeofday dummy");
-    uint64_t t = 0;  // get uptime in nanoseconds
-    tv->tv_sec = t / 1000000000;  // convert to seconds
-    tv->tv_usec = ( t % 1000000000 ) / 1000;  // get remaining microseconds
-    return 0;  // return non-zero for error
-  } // end _gettimeofday()
-}
 #include <LwIP.h>
 #include <STM32Ethernet.h>
 #else
