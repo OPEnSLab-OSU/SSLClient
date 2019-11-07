@@ -1,19 +1,44 @@
 language: c
-sudo: false
-cache:
-  directories:
-    - ~/arduino_ide
-    - ~/.arduino15/packages/
-git:
-  depth: false
-  quiet: true
 env:
   global:
      # You can uncomment this to explicitly choose an (old) version of the Arduino IDE
      #- ARDUINO_IDE_VERSION="1.8.7"
+    - ADDITIONAL_URLS="https://adafruit.github.io/arduino-board-index/package_adafruit_index.json"
+cache:
+  directories:
+    - ~/arduino_ide
+    - ~/.arduino15/packages/
+jobs:
+  include:
+    - env:
+      - ARCH="cortex-m0plus"
+      - CORE="adafruit:samd"
+      - BOARD="adafruit:samd:adafruit_feather_m0"
+      - DEPLOY=1
+    - env:
+      - ARCH="cortex-m0plus"
+      - CORE="arduino:samd"
+      - BOARD="arduino:samd:mzero_bl"
+      - DEPLOY=0
+
 before_install:
-  - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
+  - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
+  - arduino-cli core update-index --additional-urls $ADDITIONAL_URLS
+  - arduino-cli core install arduino:samd -v
+  - arduino-cli core install adafruit:samd -v --additional-urls $ADDITIONAL_URLS
+  - mkdir -p $HOME/Arduino/libraries
+  - git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/Arduino/libraries/EthernetLarge
 install:
-  - if [ ! -d "$HOME/arduino_ide/libraries/EthernetLarge" ]; then git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/arduino_ide/libraries/EthernetLarge; fi
+  - ln -s $PWD $HOME/Arduino/libraries/.
 script:
-  - build_platform zero
+  - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetHTTPS
+  - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMultiHTTPS
+deploy:
+  - provider: script
+    script: bash .travis/upload_precompiled.sh
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: develop
+      condition: $DEPLOY = 1
+    
