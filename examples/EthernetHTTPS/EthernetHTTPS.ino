@@ -42,7 +42,8 @@ const int rand_pin = A5;
 
 // Initialize the SSL client library
 // We input an EthernetClient, our trust anchors, and the analog pin
-SSLClient<EthernetClient> client(EthernetClient(), TAs, (size_t)TAs_NUM, rand_pin);
+EthernetClient base_client;
+SSLClient client(base_client, TAs, (size_t)TAs_NUM, rand_pin);
 // Variables to measure the speed
 unsigned long beginMicros, endMicros;
 unsigned long byteCount = 0;
@@ -95,8 +96,6 @@ void setup() {
   // specify the server and port, 443 is the standard port for HTTPS
   if (client.connect(server, 443)) {
     auto time = millis() - start;
-    Serial.print("connected to ");
-    Serial.println(client.remoteIP());
     Serial.print("Took: ");
     Serial.println(time);
     // Make a HTTP request:

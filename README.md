@@ -19,18 +19,20 @@ Using SSLClient should be similar to using any other Arduino-based Client class,
 
 Once all those are ready, you can create a simple SSLClient object like this:
 ```C++
-SSLClient<BaseClientType> client(BaseClientInstance, TAs, (size_t)TAs_NUM, AnalogPin);
+BaseClientType baseClientInstance;
+SSLClient client(baseClientInstance, TAs, (size_t)TAs_NUM, AnalogPin);
 ```
 Where:
-* BaseClientType - The type of BaseClientInstance
-* BaseClientInstance - An instance of the class you are using for SSLClient (the class associated with the network interface, from step 3)
+* BaseClientType - The type of baseClientInstance
+* BaseClientInstance - An instance of the class you are using for SSLClient (the class associated with the network interface, from step 3). It is important that this instance be stored *outside* the SSLClient declaration (for instance, `SSLClient(BaseClientType() ...)` wouldn't work).
 * TAs - The name of the trust anchor array created in step 2. If you generated a header using the tutorial this will probably be `TAs`.
 * TAs_NUM -  The number of trust anchors in TAs. If you generated a header using the tutorial this will probably be `TAs_NUM`.
 * AnalogPin - The analog pin to pull random data from (step 4).
  
  For example, if I am using EthernetClient, a generated array of 2 trust anchors, and the analog pin A7, I would declare an SSLClient instance using:
  ```C++
-SSLClient<EthernetClient> client(EthernetClient(), TAs, 2, A7);
+EthernetClient baseClient;
+SSLClient client(baseClient, TAs, 2, A7);
  ```
 Once that is setup, simply use SSLClient as you would the base client class:
 ```C++
@@ -62,7 +64,8 @@ Additionally, the bulk of SSLClient is split into two components: a template cla
 ### Logging
 SSLClient also allows for changing the debugging level by adding an additional parameter to the constructor:
 ```C++
-SSLClient<EthernetClient> client(EthernetClient(), TAs, (size_t)2, A7, SSL_INFO);
+EthernetClient baseClient;
+SSLClient client(baseClient, TAs, (size_t)2, A7, 1, SSLClient::SSL_INFO);
 ```
 Logging is always outputted through the [Arduino Serial interface](https://www.arduino.cc/reference/en/language/functions/communication/serial/), so you'll need to setup Serial before you can view the SSL logs. Log levels are enumerated in ::DebugLevel. The log level is set to `SSL_WARN` by default.
 
@@ -90,7 +93,8 @@ while (!client.available()) { /* ... */ }
 Notice that every single write() call immediately writes to the network, which is fine with most network clients. With SSL, however, if we are encrypting and writing to the network every write() call, this will result in a lot of small encryption tasks. Encryption takes a lot of time and code, so to reduce the overhead of an SSL connection, SSLClient::write implicitly buffers until the developer states that they are waiting for data to be received with SSLClient::available. A simple example can be found below:
 
 ```C++
-SSLClient<EthernetClient> client(EthernetClient(), TAs, 2, A7);
+EthernetClient baseClient;
+SSLClient client(baseClient, TAs, (size_t)2, A7);
 // ...
 // connect to ardiuino.cc over ssl (port 443 for websites)
 client.connect("www.arduino.cc", 443);
@@ -114,17 +118,19 @@ In order to use SSL session resumption:
  *  You must reuse the same SSLClient object (SSL Sessions are stored in the object itself).
  *  You must reconnect to the exact same server.
 
-SSLClient automatically stores an IP address and hostname in each session, ensuring that if you call `connect("www.google.com")` SSLClient will use a IP address that recognizes the SSL session instead of another IP address associated with `"www.google.com"`. However, because some websites have multiple servers on a single IP address (github.com being an example), you may find that even if you are connecting to the same host the connection does not resume. This is a flaw in the SSL session protocol — though it has been resolved in TLS 1.3, the lack of widespread adoption of the new protocol prevents it from being used here. SSL sessions can also expire based on server criteria, which will result in a standard 4-10 second connection.
+SSLClient automatically stores an IP address and hostname in each session, ensuring that if you call `connect("www.google.com")` SSLClient will use the SSL session with that hostname. However, because some websites have multiple servers on a single IP address (github.com being an example), you may find that even if you are connecting to the same host the connection does not resume. This is a flaw in the SSL session protocol — though it has been resolved in TLS 1.3, the lack of widespread adoption of the new protocol prevents it from being used here. SSL sessions can also expire based on server criteria, which will result in a standard 4-10 second connection.
 
 You can test whether or not a website can resume SSL Sessions using the [Session Example](./examples/Session_Example/Session_Example.ino) included with this library. Because of all the confounding factors of SSL Sessions, it is generally prudent while programming to assume the session will always fail to resume.
 
 SSL sessions take a lot of memory to store, so by default SSLClient will only store one at a time. You can change this behavior by adding the following to your SSLClient declaration:
 ```C++
-SSLClient<EthernetClient, SomeNumber> client(EthernetClient(), TAs, 2, A7);
+EthernetClient baseClient;
+SSLClient client(baseClient, TAs, (size_t)2, A7, SomeNumber);
 ```
 Where `SomeNumber` is the number of sessions you would like to store. For example this declaration can store 3 sessions:
 ```C++
-SSLClient<EthernetClient, 3> client(EthernetClient(), TAs, 2, A7);
+EthernetClient baseClient;
+SSLClient client(baseClient, TAs, (size_t)2, A7, 3);
 ```
 Sessions are managed internally using the SSLSession::getSession function. This function will cycle through sessions in a rotating order, allowing the session cache to continually overwrite old sessions. In general, it is a good idea to use a SessionCache size equal to the number of domains you plan on connecting to.
 
@@ -181,7 +187,7 @@ With this:
 ```
 You may need to use `sudo` or administrator permissions to make this modification. We change `MAX_SOCK_NUM` and `ETHERNET_LARGE_BUFFERS` so the Ethernet hardware can allocate a larger space for SSLClient, however a downside of this modification is we are now only able to have two sockets concurrently. As most microprocessors barely have enough memory for one SSL connection, this limitation will rarely be encountered in practice.
 
-### Random Data
+### Seeding Random Data
 The SSL protocol requires that SSLClient generate some random bits before connecting with a server. BearSSL provides a random number generator but requires a [some entropy for a seed](https://bearssl.org/apidoc/bearssl__ssl_8h.html#a7d8e8de2afd49d6794eae02f56f81152). Normally this seed is generated by taking the microsecond time using the internal clock, however since most microcontrollers are not build with this feature another source must be found. As a simple solution, SSLClient uses a floating analog pin as an external source of random data, passed through to the constructor in the `analog_pin` argument. Before every connection, SSLClient will take the bottom byte from 16 analog reads on `analog_pin`, and combine these bytes into a 16 byte random number, which is used as a seed for BearSSL. To ensure the most random data, it is recommended that this analog pin be either floating or connected to a location not modifiable by the microcontroller (i.e. a battery voltage readout). 
 
 ### Certificate Verification

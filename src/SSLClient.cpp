@@ -20,6 +20,7 @@
 
 #include "SSLClient.h"
 
+#if defined(ARDUINO_ARCH_SAMD)
 // system reset definitions
 static constexpr auto SYSRESETREQ = (1<<2);
 static constexpr auto VECTKEY = (0x05fa0000UL);
@@ -29,6 +30,7 @@ static constexpr auto VECTKEY_MASK = (0x0000ffffUL);
     (*(uint32_t*)0xe000ed0cUL)=((*(uint32_t*)0xe000ed0cUL)&VECTKEY_MASK)|VECTKEY|SYSRESETREQ;
     while(1) { }
 }
+#endif
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
@@ -49,15 +51,22 @@ static int freeMemory() {
 #endif  // __arm__
 }
 
-/* see SSLClientImpl.h */
-SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors, 
-    const size_t trust_anchors_num, const int analog_pin, const DebugLevel debug)
-    : m_analog_pin(analog_pin)
-    , m_session_index(0)
+/* see SSLClient.h */
+SSLClient::SSLClient(   Client& client, 
+                        const br_x509_trust_anchor *trust_anchors, 
+                        const size_t trust_anchors_num, 
+                        const int analog_pin, 
+                        const size_t max_sessions,
+                        const DebugLevel debug)
+    : m_client(client) 
+    , m_sessions()
+    , m_max_sessions(max_sessions)
+    , m_analog_pin(analog_pin)
     , m_debug(debug)
     , m_is_connected(false)
     , m_write_idx(0) {
-    
+
+    setTimeout(30*1000);
     // zero the iobuf just in case it's still garbage
     memset(m_iobuf, 0, sizeof m_iobuf);
     // initlalize the various bearssl libraries so they're ready to go when we connect
@@ -69,8 +78,8 @@ SSLClientImpl::SSLClientImpl(const br_x509_trust_anchor *trust_anchors,
     br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
 }
 
-/* see SSLClientImpl.h*/
-int SSLClientImpl::connect_impl(IPAddress ip, uint16_t port) {
+/* see SSLClient.h*/
+int SSLClient::connect(IPAddress ip, uint16_t port) {
     const char* func_name = __func__;
     // connection check
     if (get_arduino_client().connected()) {
@@ -89,11 +98,11 @@ int SSLClientImpl::connect_impl(IPAddress ip, uint16_t port) {
         return 0;
     }
     m_info("Base client connected!", func_name);
-    return m_start_ssl(NULL, get_session_impl(NULL, ip));
+    return m_start_ssl(nullptr);
 }
 
-/* see SSLClientImpl.h*/
-int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
+/* see SSLClient.h*/
+int SSLClient::connect(const char *host, uint16_t port) {
     const char* func_name = __func__;
     // connection check
     if (get_arduino_client().connected()) {
@@ -105,15 +114,7 @@ int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
     m_write_idx = 0;
     // first, if we have a session, check if we're trying to resolve the same host
     // as before
-    bool connect_ok;
-    SSLSession& ses = get_session_impl(host, INADDR_NONE);
-    if (ses.is_valid_session()) {
-        // if so, then connect using the stored session
-        m_info("Connecting using a cached IP", func_name);
-        connect_ok = get_arduino_client().connect(ses.get_ip(), port);
-    }
-    // else connect with the provided hostname
-    else connect_ok = get_arduino_client().connect(host, port);
+    const bool connect_ok = get_arduino_client().connect(host, port);
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
     if (!connect_ok) {
@@ -123,11 +124,11 @@ int SSLClientImpl::connect_impl(const char *host, uint16_t port) {
     }
     m_info("Base client connected!", func_name);
     // start ssl!
-    return m_start_ssl(host, ses);
+    return m_start_ssl(host, getSession(host));
 }
 
-/* see SSLClientImpl.h*/
-size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
+/* see SSLClient.h*/
+size_t SSLClient::write(const uint8_t *buf, size_t size) {
     const char* func_name = __func__;
     // check if the socket is still open and such
     if (!m_soft_connected(func_name) || !buf || !size) return 0;
@@ -169,8 +170,8 @@ size_t SSLClientImpl::write_impl(const uint8_t *buf, size_t size) {
     return size;
 }
 
-/* see SSLClientImpl.h*/
-int SSLClientImpl::available_impl() {
+/* see SSLClient.h*/
+int SSLClient::available() {
     const char* func_name = __func__;
     // connection check
     if (!m_soft_connected(func_name)) return 0;
@@ -190,10 +191,10 @@ int SSLClientImpl::available_impl() {
     return 0;
 }
 
-/* see SSLClientImpl.h */
-int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
+/* see SSLClient.h */
+int SSLClient::read(uint8_t *buf, size_t size) {
     // check that the engine is ready to read
-    if (available_impl() <= 0 || !size) return -1;
+    if (available() <= 0 || !size) return -1;
     // read the buffer, send the ack, and return the bytes read
     size_t alen;
     unsigned char* br_buf = br_ssl_engine_recvapp_buf(&m_sslctx.eng, &alen);
@@ -205,10 +206,10 @@ int SSLClientImpl::read_impl(uint8_t *buf, size_t size) {
     return read_amount;
 }
 
-/* see SSLClientImpl.h */
-int SSLClientImpl::peek_impl() {
+/* see SSLClient.h */
+int SSLClient::peek() {
     // check that the engine is ready to read
-    if (available_impl() <= 0) return -1; 
+    if (available() <= 0) return -1; 
     // read the buffer, send the ack, and return the bytes read
     size_t alen;
     uint8_t read_num;
@@ -217,15 +218,14 @@ int SSLClientImpl::peek_impl() {
     return (int)read_num;
 }
 
-/* see SSLClientImpl.h */
-void SSLClientImpl::flush_impl() {
+/* see SSLClient.h */
+void SSLClient::flush() {
     if (m_write_idx > 0)
         if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
 }
 
-/* see SSLClientImpl.h */
-void SSLClientImpl::stop_impl() {
-    const char* func_name = __func__;
+/* see SSLClient.h */
+void SSLClient::stop() {
     // tell the SSL connection to gracefully close
     br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
@@ -240,7 +240,7 @@ void SSLClientImpl::stop_impl() {
 		 */
 		size_t len;
 
-		if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != NULL) {
+		if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != nullptr) {
 			br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
 		}
 	}
@@ -251,8 +251,8 @@ void SSLClientImpl::stop_impl() {
     m_is_connected = false;
 }
 
-/* see SSLClientImpl.h */
-uint8_t SSLClientImpl::connected_impl() {
+/* see SSLClient.h */
+uint8_t SSLClient::connected() {
     const char* func_name = __func__;
     // check all of the error cases 
     const auto c_con = get_arduino_client().connected();
@@ -273,7 +273,7 @@ uint8_t SSLClientImpl::connected_impl() {
         // we are not connected
         m_is_connected = false;
         // set the write error so the engine doesn't try to close the connection
-        stop_impl();
+        stop();
     }
     else if (!wr_ok) {
         m_error("Not connected because write error is set", func_name);
@@ -282,38 +282,32 @@ uint8_t SSLClientImpl::connected_impl() {
     return c_con && br_con;
 }
 
-/* see SSLClientImpl.h */
-SSLSession& SSLClientImpl::get_session_impl(const char* host, const IPAddress& addr) {
+/* see SSLClient.h */
+SSLSession* SSLClient::getSession(const char* host) {
     const char* func_name = __func__;
     // search for a matching session with the IP
-    int temp_index = m_get_session_index(host, addr);
+    int temp_index = m_get_session_index(host);
     // if none are availible, use m_session_index
-    if (temp_index == -1) {
-        temp_index = m_session_index;
-        // reset the session so we don't try to send one sites session to another
-        get_session_array()[temp_index].clear_parameters();
-    }
-    // increment m_session_index so the session cache is a circular buffer
-    if (temp_index == m_session_index && ++m_session_index >= getSessionCount()) m_session_index = 0;
+    if (temp_index < 0) return nullptr;
     // return the pointed to value
     m_info("Using session index: ", func_name);
     m_info(temp_index, func_name);
-    return get_session_array()[temp_index];
+    return &(m_sessions[temp_index]);
 }
 
-/* see SSLClientImpl.h */
-void SSLClientImpl::remove_session_impl(const char* host, const IPAddress& addr) {
+/* see SSLClient.h */
+void SSLClient::removeSession(const char* host) {
     const char* func_name = __func__;
-    int temp_index = m_get_session_index(host, addr);
-    if (temp_index != -1) {
+    int temp_index = m_get_session_index(host);
+    if (temp_index >= 0) {
         m_info(" Deleted session ", func_name);
         m_info(temp_index, func_name);
-        get_session_array()[temp_index].clear_parameters();
+        m_sessions.erase(m_sessions.begin() + static_cast<size_t>(temp_index));
     }
 }
 
-/* see SSLClientImpl.h */
-void SSLClientImpl::set_mutual_impl(const SSLClientParameters* params) {
+/* see SSLClient.h */
+void SSLClient::setMutualAuthParams(const SSLClientParameters* params) {
     // if mutual authentication if needed, configure bearssl to support it.
     if (params != nullptr)
         br_ssl_client_set_single_ec(    &m_sslctx, 
@@ -326,7 +320,7 @@ void SSLClientImpl::set_mutual_impl(const SSLClientParameters* params) {
                                         &br_ecdsa_i15_sign_asn1);
 }
 
-bool SSLClientImpl::m_soft_connected(const char* func_name) {
+bool SSLClient::m_soft_connected(const char* func_name) {
     // check if the socket is still open and such
     if (getWriteError()) {
         m_error("Cannot operate if the write error is not reset: ", func_name); 
@@ -343,8 +337,8 @@ bool SSLClientImpl::m_soft_connected(const char* func_name) {
     return true;
 }
 
-/* see SSLClientImpl.h */
-int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
+/* see SSLClient.h */
+int SSLClient::m_start_ssl(const char* host, SSLSession* ssl_ses) {
     const char* func_name = __func__;
     // clear the write error
     setWriteError(SSL_OK);
@@ -352,11 +346,12 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     // we want 128 bits to be safe, as recommended by the bearssl docs
     uint8_t rng_seeds[16];
     // take the bottom 8 bits of the analog read
-    for (uint8_t i = 0; i < sizeof rng_seeds; i++) rng_seeds[i] = static_cast<uint8_t>(analogRead(m_analog_pin));
+    for (uint8_t i = 0; i < sizeof rng_seeds; i++) 
+        rng_seeds[i] = static_cast<uint8_t>(analogRead(m_analog_pin));
     br_ssl_engine_inject_entropy(&m_sslctx.eng, rng_seeds, sizeof rng_seeds);
     // inject session parameters for faster reconnection, if we have any
-    if(ssl_ses.is_valid_session()) {
-        br_ssl_engine_set_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
+    if(ssl_ses != nullptr) {
+        br_ssl_engine_set_session_parameters(&m_sslctx.eng, ssl_ses->to_br_session());
         m_info("Set SSL session!", func_name);
     }
     // reset the engine, but make sure that it reset successfully
@@ -379,24 +374,27 @@ int SSLClientImpl::m_start_ssl(const char* host, SSLSession& ssl_ses) {
     m_is_connected = true;
     // all good to go! the SSL socket should be up and running
     // overwrite the session we got with new parameters
-    br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses.to_br_session());
-    // print the cipher suite
-    m_info("Used cipher suite: ", func_name);
-    m_info(ssl_ses.cipher_suite, func_name);
-    // set the hostname and ip in the session as well
-    ssl_ses.set_parameters(remoteIP(), host);
+    if (ssl_ses != nullptr)
+        br_ssl_engine_get_session_parameters(&m_sslctx.eng, ssl_ses->to_br_session());
+    else if (host != nullptr) {
+        if (m_sessions.size() >= m_max_sessions)
+            m_sessions.erase(m_sessions.begin());
+        SSLSession session(host);
+        br_ssl_engine_get_session_parameters(&m_sslctx.eng, session.to_br_session());
+        m_sessions.push_back(session);
+    }
     return 1;
 }
 
-/* see SSLClientImpl.h*/
-int SSLClientImpl::m_run_until(const unsigned target) {
+/* see SSLClient.h */
+int SSLClient::m_run_until(const unsigned target) {
     const char* func_name = __func__;
     unsigned lastState = 0;
     size_t lastLen = 0;
     const unsigned long start = millis();
     for (;;) {
         unsigned state = m_update_engine();
-		// error check
+	// error check
         if (state == BR_SSL_CLOSED || getWriteError() != SSL_OK) {
             return -1;
         }
@@ -404,7 +402,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
         if (millis() - start > getTimeout()) {
             m_error("SSL internals timed out! This could be an internal error, bad data sent from the server, or data being discarded due to a buffer overflow. If you are using Ethernet, did you modify the library properly (see README)?", func_name);
             setWriteError(SSL_BR_WRITE_ERROR);
-            stop_impl();
+            stop();
             return -1;
         }
         // debug
@@ -448,7 +446,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
 		 */
 		if (state & BR_SSL_RECVAPP && target & BR_SSL_SENDAPP) {
             size_t len;
-            if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != NULL) {
+            if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != nullptr) {
                 m_write_idx = 0;
                 m_warn("Discarded unread data to favor a write operation", func_name);
                 br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
@@ -457,7 +455,7 @@ int SSLClientImpl::m_run_until(const unsigned target) {
             else {
                 m_error("SSL engine state is RECVAPP, however the buffer was null! (This is a problem with BearSSL internals)", func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
-                stop_impl();
+                stop();
                 return -1;
             }
         }
@@ -473,8 +471,8 @@ int SSLClientImpl::m_run_until(const unsigned target) {
     }
 }
 
-/* see SSLClientImpl.h*/
-unsigned SSLClientImpl::m_update_engine() {
+/* see SSLClient.h*/
+unsigned SSLClient::m_update_engine() {
     const char* func_name = __func__;
     for(;;) {
         // get the state
@@ -491,26 +489,21 @@ unsigned SSLClientImpl::m_update_engine() {
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
             wlen = get_arduino_client().write(buf, len);
-            // let the chip recover
-            if (wlen < 0) {
-                m_error("Error writing to m_client", func_name);
-                m_error(get_arduino_client().getWriteError(), func_name);
-                setWriteError(SSL_CLIENT_WRTIE_ERROR);
-                /*
-                    * If we received a close_notify and we
-                    * still send something, then we have our
-                    * own response close_notify to send, and
-                    * the peer is allowed by RFC 5246 not to
-                    * wait for it.
-                    */
-                if (!&m_sslctx.eng.shutdown_recv) return 0;
-                stop_impl();
+            if (wlen <= 0) {
+                // if the arduino client encountered an error
+                if (get_arduino_client().getWriteError() || !get_arduino_client().connected()) {
+                    m_error("Error writing to m_client", func_name);
+                    m_error(get_arduino_client().getWriteError(), func_name);
+                    setWriteError(SSL_CLIENT_WRTIE_ERROR);
+                }
+                // else presumably the socket just closed itself, so just stop the engine
+                stop();
                 return 0;
             }
             if (wlen > 0) {
                 br_ssl_engine_sendrec_ack(&m_sslctx.eng, wlen);
             }
-            continue;
+	    continue;
         }
         
         /*
@@ -525,7 +518,7 @@ unsigned SSLClientImpl::m_update_engine() {
                 m_error(br_ssl_engine_current_state(&m_sslctx.eng), func_name);
                 m_error(br_ssl_engine_last_error(&m_sslctx.eng), func_name);
                 setWriteError(SSL_BR_WRITE_ERROR);
-                stop_impl();
+                stop();
                 return 0;
             }
             // else time to send the application data
@@ -533,17 +526,17 @@ unsigned SSLClientImpl::m_update_engine() {
 	            size_t alen;
                 unsigned char *buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
                 // engine check
-                if (alen == 0 || buf == NULL) {
+                if (alen == 0 || buf == nullptr) {
                     m_error("Engine set write flag but returned null buffer", func_name);
                     setWriteError(SSL_BR_WRITE_ERROR);
-                    stop_impl();
+                    stop();
                     return 0;
                 }
                 // sanity check
                 if (alen < m_write_idx) {
                     m_error("Alen is less than m_write_idx", func_name);
                     setWriteError(SSL_INTERNAL_ERROR);
-                    stop_impl();
+                    stop();
                     return 0;
                 }
                 // all good? lets send the data
@@ -570,8 +563,9 @@ unsigned SSLClientImpl::m_update_engine() {
 			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
             const auto avail = get_arduino_client().available();
-            if (avail > 0 && avail >= len) {
+            if (avail > 0 && static_cast<size_t>(avail) >= len) {
                 int mem = freeMemory();
+#if defined(ARDUINO_ARCH_SAMD)
                 // check for a stack overflow
                 // if the stack overflows we basically have to crash, and
                 // hope the user is ok with that
@@ -581,6 +575,7 @@ unsigned SSLClientImpl::m_update_engine() {
                     // software reset
                     RESET();
                 }
+#endif
                 // debug info 
                 m_info("Memory: ", func_name);
                 m_info(mem, func_name);
@@ -591,7 +586,7 @@ unsigned SSLClientImpl::m_update_engine() {
                 if(mem < 7000) {
                     m_error("Out of memory! Decrease the number of sessions or the size of m_iobuf", func_name);
                     setWriteError(SSL_OUT_OF_MEMORY);
-                    stop_impl();
+                    stop();
                     return 0;
                 }
                 // I suppose so!
@@ -600,7 +595,7 @@ unsigned SSLClientImpl::m_update_engine() {
                     m_error("Error reading bytes from m_client. Write Error: ", func_name);
                     m_error(get_arduino_client().getWriteError(), func_name);
                     setWriteError(SSL_CLIENT_WRTIE_ERROR);
-                    stop_impl();
+                    stop();
                     return 0;
                 }
                 if (rlen > 0) {
@@ -626,19 +621,14 @@ unsigned SSLClientImpl::m_update_engine() {
 }
 
 /* see SSLClientImpl.h */
-int SSLClientImpl::m_get_session_index(const char* host, const IPAddress& addr) const {
+int SSLClient::m_get_session_index(const char* host) const {
     const char* func_name = __func__;
+    if(host == nullptr) return -1;
     // search for a matching session with the IP
     for (uint8_t i = 0; i < getSessionCount(); i++) {
         // if we're looking at a real session
-        if (get_session_array()[i].is_valid_session() 
-            && (
-                // and the hostname matches, or
-                (host != NULL && get_session_array()[i].get_hostname().equals(host))
-                // there is no hostname and the IP address matches    
-                || (host == NULL && addr == get_session_array()[i].get_ip())
-            )) {
-            m_info(get_session_array()[i].get_hostname(), func_name);
+        if (m_sessions[i].get_hostname().equals(host)) {
+            m_info(m_sessions[i].get_hostname(), func_name);
             return i;
         }
     }
@@ -646,8 +636,8 @@ int SSLClientImpl::m_get_session_index(const char* host, const IPAddress& addr) 
     return -1;
 }
 
-/* See SSLClientImpl.h */
-void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level) const
+/* See SSLClient.h */
+void SSLClient::m_print_prefix(const char* func_name, const DebugLevel level) const
 {
     // print the sslclient prefix
     Serial.print("(SSLClient)");
@@ -664,8 +654,8 @@ void SSLClientImpl::m_print_prefix(const char* func_name, const DebugLevel level
     Serial.print("): ");
 }
 
-/* See SSLClientImpl.h */
-void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel level) const {
+/* See SSLClient.h */
+void SSLClient::m_print_ssl_error(const int ssl_error, const DebugLevel level) const {
     if (level > m_debug) return;
     m_print_prefix(__func__, level);
     switch(ssl_error) {
@@ -679,8 +669,8 @@ void SSLClientImpl::m_print_ssl_error(const int ssl_error, const DebugLevel leve
     }
 }
 
-/* See SSLClientImpl.h */
-void SSLClientImpl::m_print_br_error(const unsigned br_error_code, const DebugLevel level) const {
+/* See SSLClient.h */
+void SSLClient::m_print_br_error(const unsigned br_error_code, const DebugLevel level) const {
   if (level > m_debug) return;
   m_print_prefix(__func__, level);
   switch (br_error_code) {

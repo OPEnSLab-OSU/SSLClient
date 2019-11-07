@@ -19,10 +19,10 @@
  */
 
 #include "Client.h"
-#include "SSLClientImpl.h"
 #include "SSLSession.h"
 #include "SSLClientParameters.h"
 #include "SSLObj.h"
+#include <vector>
 
 #ifndef SSLClient_H_
 #define SSLClient_H_
@@ -32,26 +32,49 @@
  * Check out README.md for more info.
  */
 
-template <class C, size_t SessionCache = 1>
-class SSLClient : public SSLClientImpl {
-/* 
- * static checks
- * I'm a java developer, so I want to ensure that my inheritance is safe.
- * These checks ensure that all the functions we use on class C are
- * actually present on class C. It does this by checking that the
- * class inherits from Client.
- * 
- * Additionally, I ran into a lot of memory issues with large sessions caches.
- * Since each session contains at max 352 bytes of memory, they eat of the
- * stack quite quickly and can cause overflows. As a result, I have added a
- * warning here to discourage the use of more than 3 sessions at a time. Any
- * amount past that will require special modification of this library, and 
- * assumes you know what you are doing.
- */
-static_assert(SessionCache > 0 && SessionCache < 255, "There can be no less than one and no more than 255 sessions in the cache!");
-static_assert(SessionCache <= 3, "You need to decrease the size of m_iobuf in order to have more than 3 sessions at once, otherwise memory issues will occur.");
-
+class SSLClient : public Client {
 public:
+    /**
+     * @brief Static constants defining the possible errors encountered.
+     * 
+     * If SSLClient encounters an error, it will generally output
+     * logs into the serial monitor. If you need a way of programmatically
+     * checking the errors, you can do so with SSLClient::getWriteError(),
+     * which will return one of these values.
+     */
+    enum Error {
+        SSL_OK = 0,
+        /** The underlying client failed to connect, probably not an issue with SSL */
+        SSL_CLIENT_CONNECT_FAIL,
+        /** BearSSL failed to complete the SSL handshake, check logs for bear ssl error output */
+        SSL_BR_CONNECT_FAIL,
+        /** The underlying client failed to write a payload, probably not an issue with SSL */
+        SSL_CLIENT_WRTIE_ERROR,
+        /** An internal error occurred with BearSSL, check logs for diagnosis. */
+        SSL_BR_WRITE_ERROR,
+        /** An internal error occurred with SSLClient, and you probably need to submit an issue on Github. */
+        SSL_INTERNAL_ERROR,
+        /** SSLClient detected that there was not enough memory (>8000 bytes) to continue. */
+        SSL_OUT_OF_MEMORY
+    };
+
+    /**
+     * @brief Level of verbosity used in logging for SSLClient.
+     * 
+     * Use these values when initializing SSLClient to set how many logs you
+     * would like to see in the Serial monitor.
+     */
+    enum DebugLevel {
+        /** No logging output */
+        SSL_NONE = 0,
+        /** Only output errors that result in connection failure */
+        SSL_ERROR = 1,
+        /** Output errors and warnings (useful when just starting to develop) */
+        SSL_WARN = 2,
+        /** Output errors, warnings, and internal information (very verbose) */
+        SSL_INFO = 3,
+    };
+
     /**
      * @brief Initialize SSLClient with all of the prerequisites needed.
      * 
@@ -66,25 +89,18 @@ public:
      * of the SSL server certificate. Check out TrustAnchors.md for more info.
      * @param trust_anchors_num The number of objects in the trust_anchors array.
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG.
+     * @param max_sessions The maximum number of SSL sessions to store connection information from.
      * @param debug The level of debug logging (use the ::DebugLevel enum).
-     * @param mutual_auth_params Configuration to use for mutual authentication, nullptr to disable mutual auth. (see ::SSLClientParameters).
      */
-    explicit SSLClient( const C& client, 
+    explicit SSLClient( Client& client, 
                         const br_x509_trust_anchor *trust_anchors, 
                         const size_t trust_anchors_num, 
                         const int analog_pin, 
-                        const DebugLevel debug = SSL_WARN)
-    : SSLClientImpl(trust_anchors, trust_anchors_num, analog_pin, debug) 
-    , m_client(client)
-    , m_sessions{}
-    {
-        // set the timeout to a reasonable number (it can always be changes later)
-        // SSL Connections take a really long time so we don't want to time out a legitimate thing
-        setTimeout(30 * 1000);
-    }
+                        const size_t max_sessions = 1,
+                        const DebugLevel debug = SSL_WARN);
 
     //========================================
-    //= Functions implemented in SSLClientImpl
+    //= Functions implemented in SSLClient.cpp
     //========================================
 
     /**
@@ -126,7 +142,7 @@ public:
      * @param port the port to connect to
      * @returns 1 if success, 0 if failure
      */
-    int connect(IPAddress ip, uint16_t port) override { return connect_impl(ip, port); }
+    int connect(IPAddress ip, uint16_t port) override;
 
     /**
      * @brief Connect over SSL to a host specified by a hostname.
@@ -164,10 +180,8 @@ public:
      * @param port The port to connect to on the host (443 for HTTPS)
      * @returns 1 of success, 0 if failure
      */
-	int connect(const char *host, uint16_t port) override { return connect_impl(host, port); }
+	int connect(const char *host, uint16_t port) override;
 
-    /** @see SSLClient::write(uint8_t*, size_t) */
-    size_t write(uint8_t b) override { return write_impl(&b, 1); }
     /**
      * @brief Write some bytes to the SSL connection
      * 
@@ -191,7 +205,9 @@ public:
      * @returns The number of bytes copied to the buffer (size), or zero if the BearSSL engine 
      * fails to become ready for writing data.
      */
-	size_t write(const uint8_t *buf, size_t size) override { return write_impl(buf, size); }
+	size_t write(const uint8_t *buf, size_t size) override;
+    /** @see SSLClient::write(uint8_t*, size_t) */
+    size_t write(uint8_t b) override { return write(&b, 1); }
 
     /**
      * @brief Returns the number of bytes available to read from the data that has been received and decrypted.
@@ -211,13 +227,8 @@ public:
      * @returns The number of bytes available (can be zero), or zero if any of the pre
      * conditions aren't satisfied.
      */
-	int available() override { return available_impl(); }
+	int available() override;
 
-    /** 
-     * @brief Read a single byte, or -1 if none is available.
-     * @see SSLClient::read(uint8_t*, size_t) 
-     */
-	int read() override { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; };
     /**
      * @brief Read size bytes from the SSL client buffer, copying them into *buf, and return the number of bytes read.
      * 
@@ -239,7 +250,12 @@ public:
      * 
      * @returns The number of bytes copied (<= size), or -1 if the preconditions are not satisfied.
      */
-	int read(uint8_t *buf, size_t size) override { return read_impl(buf, size); }
+	int read(uint8_t *buf, size_t size) override;
+    /** 
+     * @brief Read a single byte, or -1 if none is available.
+     * @see SSLClient::read(uint8_t*, size_t) 
+     */
+	int read() override { uint8_t read_val; return read(&read_val, 1) > 0 ? read_val : -1; };
 
     /** 
      * @brief View the first byte of the buffer, without removing it from the SSLClient Buffer
@@ -249,7 +265,7 @@ public:
      * @returns The first byte received, or -1 if the preconditions are not satisfied (warning: 
      * do not use if your data may be -1, as the return value is ambiguous)
      */
-    int peek() override { return peek_impl(); }
+    int peek() override;
 
     /**
      * @brief Force writing the buffered bytes from SSLClient::write to the network.
@@ -258,7 +274,7 @@ public:
      * an explanation of how writing with SSLClient works, please see SSLClient::write.
      * The implementation for this function can be found in SSLClientImpl::flush.
      */
-	void flush() override { return flush_impl(); }
+	void flush() override;
 
     /**
      * @brief Close the connection
@@ -268,7 +284,7 @@ public:
      * error was encountered previously, this function will simply call m_client::stop.
      * The implementation for this function can be found in SSLClientImpl::peek.
      */
-	void stop() override { return stop_impl(); }
+	void stop() override;
 
     /**
      * @brief Check if the device is connected.
@@ -283,7 +299,7 @@ public:
      * 
      * @returns 1 if connected, 0 if not
      */
-	uint8_t connected() override { return connected_impl(); }
+	uint8_t connected() override;
 
     //========================================
     //= Functions Not in the Client Interface
@@ -297,7 +313,7 @@ public:
      * 
      * @pre SSLClient has not already started an SSL connection.
      */
-    void setMutualAuthParams(const SSLClientParameters* params) { return set_mutual_impl(params); }
+    void setMutualAuthParams(const SSLClientParameters* params);
 
     /**
      * @brief Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist
@@ -311,26 +327,26 @@ public:
      * 
      * @param host A hostname c string, or NULL if one is not available
      * @param addr An IP address
-     * @returns A reference to an SSLSession object
+     * @returns A pointer to the SSLSession, or NULL of none matched the criteria available
      */
-    SSLSession& getSession(const char* host, const IPAddress& addr) { return get_session_impl(host, addr); }
+    SSLSession* getSession(const char* host);
 
     /**
      * @brief Clear the session corresponding to a host and IP
      * 
      * The implementation for this function can be found at SSLClientImpl::remove_session_impl.
      * 
-     * @param host A hostname c string, or NULL if one is not available
+     * @param host A hostname c string, or nullptr if one is not available
      * @param addr An IP address
      */
-    void removeSession(const char* host, const IPAddress& addr) { return remove_session_impl(host, addr); }
+    void removeSession(const char* host);
 
     /**
      * @brief Get the maximum number of SSL sessions that can be stored at once
      *
      *  @returns The SessionCache template parameter.
      */
-    size_t getSessionCount() const override { return SessionCache; }
+    size_t getSessionCount() const { return m_sessions.size(); }
 
     /** 
      * @brief Equivalent to SSLClient::connected() > 0
@@ -338,37 +354,92 @@ public:
      * @returns true if connected, false if not
      */
 	operator bool() { return connected() > 0; }
-    /** @see SSLClient::operator bool */
-	bool operator==(const bool value) { return bool() == value; }
-    /** @see SSLClient::operator bool */
-	bool operator!=(const bool value) { return bool() != value; }
-    /** @brief Returns whether or not two SSLClient objects have the same underlying client object */
-    bool operator==(const C& rhs) { return m_client == rhs; }
-    /** @brief Returns whether or not two SSLClient objects do not have the same underlying client object */
-	bool operator!=(const C& rhs) { return m_client != rhs; }
-    /** @brief Returns the local port, if C::localPort exists */
-	uint16_t localPort() override { return m_client.localPort(); }
-    /** @brief Returns the remote IP, if C::remoteIP exists. */
-	IPAddress remoteIP() override { return m_client.remoteIP(); }
-    /** @brief Returns the remote port, if C::remotePort exists. Else return 0. */
-	uint16_t remotePort() override { return m_client.remotePort(); }
 
     /** @brief Returns a reference to the client object stored in this class. Take care not to break it. */
-    C& getClient() { return m_client; }
-
-protected:
-    /** @brief Returns an instance of m_client that is polymorphic and can be used by SSLClientImpl */
-    Client& get_arduino_client() override { return m_client; }
-    const Client& get_arduino_client() const override { return m_client; }
-    /** @brief Returns an instance of the session array that is on the stack */
-    SSLSession* get_session_array() override { return m_sessions; }
-    const SSLSession* get_session_array() const override { return m_sessions; }
+    Client& getClient() { return m_client; }
 
 private:
+    /** @brief Returns an instance of m_client that is polymorphic and can be used by SSLClientImpl */
+    Client& get_arduino_client() { return m_client; }
+    const Client& get_arduino_client() const { return m_client; }
+
+    /** Returns whether or not the engine is connected, without polling the client over SPI or other (as opposed to connected()) */
+    bool m_soft_connected(const char* func_name);
+    /** start the ssl engine on the connected client */
+    int m_start_ssl(const char* host = nullptr, SSLSession* ssl_ses = nullptr);
+    /** run the bearssl engine until a certain state */
+    int m_run_until(const unsigned target);
+    /** proxy for available that returns the state */
+    unsigned m_update_engine();
+    /** utility function to find a session index based off of a host and IP */
+    int m_get_session_index(const char* host) const; 
+
+    /** @brief Prints a debugging prefix to all logs, so we can attatch them to useful information */
+    void m_print_prefix(const char* func_name, const DebugLevel level) const;
+
+    /** @brief Prints the string associated with a write error */
+    void m_print_ssl_error(const int ssl_error, const DebugLevel level) const;
+
+    /** @brief Print the text string associated with a BearSSL error code */
+    void m_print_br_error(const unsigned br_error_code, const DebugLevel level) const;
+
+    /** @brief debugging print function, only prints if m_debug is true */
+    template<typename T>
+    void m_print(const T str, const char* func_name, const DebugLevel level) const { 
+        // check the current debug level and serial status
+        if (level > m_debug || !Serial) return;
+        // print prefix
+        m_print_prefix(func_name, level);
+        // print the message
+        Serial.println(str);
+    }
+
+    /** @brief Prints a info message to serial, if info messages are enabled */
+    template<typename T>
+    void m_info(const T str, const char* func_name) const { m_print(str, func_name, SSL_INFO); }
+
+    template<typename T>
+    void m_warn(const T str, const char* func_name) const { m_print(str, func_name, SSL_WARN); }
+
+    template<typename T>
+    void m_error(const T str, const char* func_name) const { m_print(str, func_name, SSL_ERROR); }
+
+    //============================================
+    //= Data Members
+    //============================================
     // create a copy of the client
-    C m_client;
+    Client& m_client;
     // also store an array of SSLSessions, so we can resume communication with multiple websites
-    SSLSession m_sessions[SessionCache];
+    std::vector<SSLSession> m_sessions;
+    // as well as the maximmum number of sessions we can store
+    const size_t m_max_sessions;
+    // store the pin to fetch an RNG see from
+    const int m_analog_pin;
+    // store whether to enable debug logging
+    const DebugLevel m_debug;
+    // store if we are connected in bearssl or not
+    bool m_is_connected;
+    // store the context values required for SSL
+    br_ssl_client_context m_sslctx;
+    br_x509_minimal_context m_x509ctx;
+    // use a mono-directional buffer by default to cut memory in half
+    // can expand to a bi-directional buffer with maximum of BR_SSL_BUFSIZE_BIDI
+    // or shrink to below BR_SSL_BUFSIZE_MONO, and bearSSL will adapt automatically
+    // simply edit this value to change the buffer size to the desired value
+    // additionally, we need to correct buffer size based off of how many sessions we decide to cache
+    // since SSL takes so much memory if we don't it will cause the stack and heap to collide 
+    /**
+     * @brief The internal buffer to use with BearSSL.
+     * This buffer controls how much data BearSSL can encrypt/decrypt at a given time. It can be expanded
+     * or shrunk to [255, BR_SSL_BUFSIZE_BIDI], depending on the memory and speed needs of your application.
+     * As a rule of thumb SSLClient will fail if it does not have at least 8000 bytes when starting a
+     * connection.
+     */
+    unsigned char m_iobuf[2048];
+    // store the index of where we are writing in the buffer
+    // so we can send our records all at once to prevent
+    // weird timing issues
+    size_t m_write_idx;
 };
 
 #endif /** SSLClient_H_ */
