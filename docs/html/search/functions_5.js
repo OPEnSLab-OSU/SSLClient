@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['is_5fvalid_5fsession',['is_valid_session',['../class_s_s_l_session.html#a0c36cee72cfa862b7d4b2f5c112d5076',1,'SSLSession']]]
+  ['make_5fvector_5fpem',['make_vector_pem',['../namespace_s_s_l_obj.html#a9a58d01c9073b90f2b42c655828aea6d',1,'SSLObj']]]
 ];

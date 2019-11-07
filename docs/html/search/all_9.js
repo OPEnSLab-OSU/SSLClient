@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['localport',['localPort',['../class_s_s_l_client.html#a563c5f9829757075bf16742cffa4cf73',1,'SSLClient::localPort()'],['../class_s_s_l_client_impl.html#a45f26385ee1975b12265943efb1ff0d5',1,'SSLClientImpl::localPort()']]]
+  ['make_5fvector_5fpem',['make_vector_pem',['../namespace_s_s_l_obj.html#a9a58d01c9073b90f2b42c655828aea6d',1,'SSLObj']]]
 ];

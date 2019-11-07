@@ -1,14 +1,14 @@
 var searchData=
 [
-  ['ssl_5fbr_5fconnect_5ffail',['SSL_BR_CONNECT_FAIL',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5afb90a695332a7c96044dc97c577ee3c3',1,'SSLClientImpl.h']]],
-  ['ssl_5fbr_5fwrite_5ferror',['SSL_BR_WRITE_ERROR',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5a1d9afd51e0012e791f099657797c9aa9',1,'SSLClientImpl.h']]],
-  ['ssl_5fclient_5fconnect_5ffail',['SSL_CLIENT_CONNECT_FAIL',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5aaa79045423a355885738cd239dff6c2b',1,'SSLClientImpl.h']]],
-  ['ssl_5fclient_5fwrtie_5ferror',['SSL_CLIENT_WRTIE_ERROR',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5a1d5f8248fac85f56b05d49c7cb53494b',1,'SSLClientImpl.h']]],
-  ['ssl_5ferror',['SSL_ERROR',['../_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395ad3f9f0591dcabc4fac1222c462bf17ec',1,'SSLClientImpl.h']]],
-  ['ssl_5finfo',['SSL_INFO',['../_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395a8c0bb62be3d0e6bfe5ed2f7ebbed3d91',1,'SSLClientImpl.h']]],
-  ['ssl_5finternal_5ferror',['SSL_INTERNAL_ERROR',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5afd588a56dcccf4f6943defa7ab699afc',1,'SSLClientImpl.h']]],
-  ['ssl_5fnone',['SSL_NONE',['../_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395af16e73d8cce9a2c987bde5afe5524d7f',1,'SSLClientImpl.h']]],
-  ['ssl_5fok',['SSL_OK',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5a1218c16a5bf50589e0c498983851612c',1,'SSLClientImpl.h']]],
-  ['ssl_5fout_5fof_5fmemory',['SSL_OUT_OF_MEMORY',['../_s_s_l_client_impl_8h.html#a2c3e4bb40f36b262a5214e2da2bca9c5adec799caf92b4fe2b6d2b362136f6ef6',1,'SSLClientImpl.h']]],
-  ['ssl_5fwarn',['SSL_WARN',['../_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395a86c8fdfc38831619d5ed73dff5b0911d',1,'SSLClientImpl.h']]]
+  ['ssl_5fbr_5fconnect_5ffail',['SSL_BR_CONNECT_FAIL',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa6a9cc2412a53b5981e937a41523eece5',1,'SSLClient']]],
+  ['ssl_5fbr_5fwrite_5ferror',['SSL_BR_WRITE_ERROR',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa37bef298be71b84a57e59fadbfbd9016',1,'SSLClient']]],
+  ['ssl_5fclient_5fconnect_5ffail',['SSL_CLIENT_CONNECT_FAIL',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa7510402478ffbecd6e1aa3811b175cfd',1,'SSLClient']]],
+  ['ssl_5fclient_5fwrtie_5ferror',['SSL_CLIENT_WRTIE_ERROR',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaab8581e1172fbf15067d435706d3a03a8',1,'SSLClient']]],
+  ['ssl_5ferror',['SSL_ERROR',['../class_s_s_l_client.html#af632625f8d247f3885c81e1f05043ad1a199742ec5c99c72d9cede1fda0f125c5',1,'SSLClient']]],
+  ['ssl_5finfo',['SSL_INFO',['../class_s_s_l_client.html#af632625f8d247f3885c81e1f05043ad1a8d5f7561f9cc0a2f3e5f362b02f4a5b2',1,'SSLClient']]],
+  ['ssl_5finternal_5ferror',['SSL_INTERNAL_ERROR',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaaf66f8d5f6601f9e7607b78bf7a07fc84',1,'SSLClient']]],
+  ['ssl_5fnone',['SSL_NONE',['../class_s_s_l_client.html#af632625f8d247f3885c81e1f05043ad1a24122d1e1bb724237f305a0b4a21ff75',1,'SSLClient']]],
+  ['ssl_5fok',['SSL_OK',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa18dbddc0a3d4a94ee0f298fe55a06a94',1,'SSLClient']]],
+  ['ssl_5fout_5fof_5fmemory',['SSL_OUT_OF_MEMORY',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa0a4f8af0226cf29ede8f6fe4a9047b08',1,'SSLClient']]],
+  ['ssl_5fwarn',['SSL_WARN',['../class_s_s_l_client.html#af632625f8d247f3885c81e1f05043ad1a26f3e5f1481f3ea22ea4ab5370b0fa97',1,'SSLClient']]]
 ];

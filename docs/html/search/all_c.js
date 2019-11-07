@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['peek',['peek',['../class_s_s_l_client.html#a31742867b00bd8d130637af0935bacbd',1,'SSLClient']]],
-  ['peek_5fimpl',['peek_impl',['../class_s_s_l_client_impl.html#a1b90e7df3a77eea5efb955cc15a17f7d',1,'SSLClientImpl']]],
-  ['pst_5foffset',['PST_OFFSET',['../time__macros_8h.html#a243cf438274412bbecf4b8d5eeb02ccb',1,'time_macros.h']]]
+  ['read',['read',['../class_s_s_l_client.html#a4c5420541a06213133ae308a3bca1c95',1,'SSLClient::read(uint8_t *buf, size_t size) override'],['../class_s_s_l_client.html#aef1b52f4ad9633126cb68739175920eb',1,'SSLClient::read() override']]],
+  ['readme_2emd',['README.md',['../_r_e_a_d_m_e_8md.html',1,'']]],
+  ['removesession',['removeSession',['../class_s_s_l_client.html#ad5d9d8a4187a3f8918bf66af83e733c4',1,'SSLClient']]]
 ];

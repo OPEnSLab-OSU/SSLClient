@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['debuglevel',['DebugLevel',['../_s_s_l_client_impl_8h.html#ab658e6d84759440dbf3c890446075395',1,'SSLClientImpl.h']]]
+  ['debuglevel',['DebugLevel',['../class_s_s_l_client.html#af632625f8d247f3885c81e1f05043ad1',1,'SSLClient']]]
 ];
