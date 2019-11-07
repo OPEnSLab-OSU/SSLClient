@@ -33,12 +33,20 @@ install:
 script:
   - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetHTTPS
   - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMultiHTTPS
+before_deploy:
+  - mkdir src/$ARCH
+  - cp $(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print)/libraries/SSLClient/SSLClient.a src/$ARCH/SSLClient.a
+  - cp .travis/library.properties library.properties
+  - find src/ -iname "*.c" -delete
+  - find src/ -iname "*.cpp" -delete
+  - zip -r SSLClient.zip .
 deploy:
-  - provider: script
-    script: bash .travis/upload_precompiled.sh
-    skip_cleanup: true
-    on:
-      tags: true
-      branch: develop
-      condition: $DEPLOY = 1
+  provider: releases
+  api_key: "$GITHUB_TOKEN"
+  file: "SSLClient.zip"
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master
+    condition: $DEPLOY = 1
     
