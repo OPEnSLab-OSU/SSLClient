@@ -407,7 +407,7 @@ private:
     //============================================
     //= Data Members
     //============================================
-    // create a copy of the client
+    // create a reference the client
     Client& m_client;
     // also store an array of SSLSessions, so we can resume communication with multiple websites
     std::vector<SSLSession> m_sessions;

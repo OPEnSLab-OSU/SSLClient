@@ -563,7 +563,7 @@ unsigned SSLClient::m_update_engine() {
 			unsigned char * buf = br_ssl_engine_recvrec_buf(&m_sslctx.eng, &len);
             // do we have the record you're looking for?
             const auto avail = get_arduino_client().available();
-            if (avail > 0 && static_cast<size_t>(avail) >= len) {
+            if (avail > 0) {
                 int mem = freeMemory();
 #if defined(ARDUINO_ARCH_SAMD)
                 // check for a stack overflow
@@ -590,7 +590,7 @@ unsigned SSLClient::m_update_engine() {
                     return 0;
                 }
                 // I suppose so!
-                int rlen = get_arduino_client().read(buf, len);
+                int rlen = get_arduino_client().read(buf, avail < len ? avail : len);
                 if (rlen <= 0) {
                     m_error("Error reading bytes from m_client. Write Error: ", func_name);
                     m_error(get_arduino_client().getWriteError(), func_name);
