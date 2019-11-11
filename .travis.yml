@@ -43,7 +43,7 @@ before_deploy:
   - zip -r SSLClient.zip .
 deploy:
   provider: releases
-  api_key: "$GITHUB_TOKEN"
+  api_key: $GITHUB_TOKEN
   file: "SSLClient.zip"
   skip_cleanup: true
   on:
