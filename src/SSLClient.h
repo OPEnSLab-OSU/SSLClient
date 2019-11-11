@@ -45,17 +45,17 @@ public:
     enum Error {
         SSL_OK = 0,
         /** The underlying client failed to connect, probably not an issue with SSL */
-        SSL_CLIENT_CONNECT_FAIL,
+        SSL_CLIENT_CONNECT_FAIL = 2,
         /** BearSSL failed to complete the SSL handshake, check logs for bear ssl error output */
-        SSL_BR_CONNECT_FAIL,
+        SSL_BR_CONNECT_FAIL = 3,
         /** The underlying client failed to write a payload, probably not an issue with SSL */
-        SSL_CLIENT_WRTIE_ERROR,
+        SSL_CLIENT_WRTIE_ERROR = 4,
         /** An internal error occurred with BearSSL, check logs for diagnosis. */
-        SSL_BR_WRITE_ERROR,
+        SSL_BR_WRITE_ERROR = 5,
         /** An internal error occurred with SSLClient, and you probably need to submit an issue on Github. */
-        SSL_INTERNAL_ERROR,
+        SSL_INTERNAL_ERROR = 6,
         /** SSLClient detected that there was not enough memory (>8000 bytes) to continue. */
-        SSL_OUT_OF_MEMORY
+        SSL_OUT_OF_MEMORY = 7
     };
 
     /**

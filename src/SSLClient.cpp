@@ -109,7 +109,6 @@ int SSLClient::connect(const char *host, uint16_t port) {
         m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
         return -1;
     }
-    m_info("Client not connected, continuing...", func_name);
     // reset indexs for saftey
     m_write_idx = 0;
     // first, if we have a session, check if we're trying to resolve the same host
