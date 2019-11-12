@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">SSLClient
-   &#160;<span id="projectnumber">v1.3.0</span>
+   &#160;<span id="projectnumber">v1.4.2</span>
    </div>
    <div id="projectbrief">Add TLS 1.2 functionality to any network library.</div>
   </td>
@@ -111,13 +111,13 @@ Inheritance diagram for SSLClient:</div>
 Public Types</h2></td></tr>
 <tr class="memitem:a48239f60f1b4318cc112706fc40c6cea"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6cea">Error</a> { <br />
 &#160;&#160;<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa18dbddc0a3d4a94ee0f298fe55a06a94">SSL_OK</a> = 0, 
-<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa7510402478ffbecd6e1aa3811b175cfd">SSL_CLIENT_CONNECT_FAIL</a>, 
-<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa6a9cc2412a53b5981e937a41523eece5">SSL_BR_CONNECT_FAIL</a>, 
-<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaab8581e1172fbf15067d435706d3a03a8">SSL_CLIENT_WRTIE_ERROR</a>, 
+<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa7510402478ffbecd6e1aa3811b175cfd">SSL_CLIENT_CONNECT_FAIL</a> = 2, 
+<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa6a9cc2412a53b5981e937a41523eece5">SSL_BR_CONNECT_FAIL</a> = 3, 
+<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaab8581e1172fbf15067d435706d3a03a8">SSL_CLIENT_WRTIE_ERROR</a> = 4, 
 <br />
-&#160;&#160;<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa37bef298be71b84a57e59fadbfbd9016">SSL_BR_WRITE_ERROR</a>, 
-<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaaf66f8d5f6601f9e7607b78bf7a07fc84">SSL_INTERNAL_ERROR</a>, 
-<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa0a4f8af0226cf29ede8f6fe4a9047b08">SSL_OUT_OF_MEMORY</a>
+&#160;&#160;<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa37bef298be71b84a57e59fadbfbd9016">SSL_BR_WRITE_ERROR</a> = 5, 
+<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaaf66f8d5f6601f9e7607b78bf7a07fc84">SSL_INTERNAL_ERROR</a> = 6, 
+<a class="el" href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa0a4f8af0226cf29ede8f6fe4a9047b08">SSL_OUT_OF_MEMORY</a> = 7
 <br />
  }</td></tr>
 <tr class="memdesc:a48239f60f1b4318cc112706fc40c6cea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static constants defining the possible errors encountered.  <a href="class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6cea">More...</a><br /></td></tr>
