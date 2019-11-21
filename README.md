@@ -55,9 +55,7 @@ For more information on SSLClient, check out the [examples](./examples), [API do
 
 ## How It Works
 
-SSLClient was created to integrate SSL seamlessly with the Arduino infrastructure, and so it does just that: implementing the brilliant [BearSSL](https://bearssl.org/) as a proxy in front of any Arduino socket library. BearSSL is designed with low flash footprint in mind, and as a result does little verification of improper programming, relying on the developer to ensure the code is correct. Since SSLClient is built specifically for the Arduino ecosystem, most of the code adds those programming checks back in, making debugging a fast and simple process. The rest manages the state of BearSSL, and ensures a manageable memory footprint.
-
-Additionally, the bulk of SSLClient is split into two components: a template class [SSLClient](./src/SSLClient.h), and an implementation class [SSLClientImpl](./src/SSLClientImpl.h). The template class serves to abstract some functions not implemented in the Arduino Client interface (such as EthernetClient::remoteIP), and the implementation class is the rest of the SSLClient library.
+SSLClient was created to integrate SSL seamlessly with the Arduino infrastructure, and so it does just that: implementing the brilliant [BearSSL](https://bearssl.org/) as a proxy in front of any Arduino socket library. BearSSL is designed with low flash footprint in mind, and as a result does little verification of improper programming, relying on the developer to ensure the code is correct. Since SSLClient is built specifically for the Arduino ecosystem, most of SSLClient's code adds those programming checks back in, making debugging a fast and simple process.
 
 ## Other Features
 
