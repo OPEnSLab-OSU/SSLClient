@@ -1,4 +1,4 @@
-# SSLClient - Arduino Library For SSL
+# SSLClient
 
 [![Build Status](https://travis-ci.org/OPEnSLab-OSU/SSLClient.svg?branch=master)](https://travis-ci.org/OPEnSLab-OSU/SSLClient)
 
