@@ -35,6 +35,8 @@ static constexpr auto VECTKEY_MASK = (0x0000ffffUL);
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
 extern "C" char* sbrk(int incr);
+#elif defined(ESP8266) // esp8266
+#define SYSTEM_STACK_END_ADDRESS 0x3FFFC000
 #else  // __ARM__
 extern char *__brkval;
 #endif  // __arm__
@@ -44,6 +46,9 @@ static int freeMemory() {
   char top;
 #ifdef __arm__
   return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(ESP8266) // ESP8266
+  register volatile uint32_t stackAddress asm("a1");
+  return stackAddress-SYSTEM_STACK_END_ADDRESS;
 #elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
   return &top - __brkval;
 #else  // __arm__

@@ -358,6 +358,18 @@ public:
     /** @brief Returns a reference to the client object stored in this class. Take care not to break it. */
     Client& getClient() { return m_client; }
 
+    /** 
+     * @brief Set the timeout when waiting for an SSL response.
+     * @param t The timeout value, in milliseconds (defaults to 30 seconds if not set). Do not set to zero.
+     */
+	void setTimeout(unsigned int t) { m_timeout = t; }
+
+    /** 
+     * @brief Get the timeout when waiting for an SSL response.
+     * @returns The timeout value in milliseconds.
+     */
+    unsigned int getTimeout() const { return m_timeout; }
+
 private:
     /** @brief Returns an instance of m_client that is polymorphic and can be used by SSLClientImpl */
     Client& get_arduino_client() { return m_client; }
@@ -419,6 +431,8 @@ private:
     const DebugLevel m_debug;
     // store if we are connected in bearssl or not
     bool m_is_connected;
+    // store the timeout for SSL internals
+    unsigned int m_timeout;
     // store the context values required for SSL
     br_ssl_client_context m_sslctx;
     br_x509_minimal_context m_x509ctx;
