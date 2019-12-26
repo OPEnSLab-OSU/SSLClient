@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">SSLClient
-   &#160;<span id="projectnumber">v1.4.2</span>
+   &#160;<span id="projectnumber">v1.4.4</span>
    </div>
    <div id="projectbrief">Add TLS 1.2 functionality to any network library.</div>
   </td>
@@ -185,6 +185,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9a4e9c9877ab73cf7e82d6942cc7db21"><td class="memItemLeft" align="right" valign="top">Client &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a9a4e9c9877ab73cf7e82d6942cc7db21">getClient</a> ()</td></tr>
 <tr class="memdesc:a9a4e9c9877ab73cf7e82d6942cc7db21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the client object stored in this class. Take care not to break it.  <a href="#a9a4e9c9877ab73cf7e82d6942cc7db21">More...</a><br /></td></tr>
 <tr class="separator:a9a4e9c9877ab73cf7e82d6942cc7db21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8da354f30537c1064d554921937a73ae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a8da354f30537c1064d554921937a73ae">setTimeout</a> (unsigned int t)</td></tr>
+<tr class="memdesc:a8da354f30537c1064d554921937a73ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the timeout when waiting for an SSL response.  <a href="#a8da354f30537c1064d554921937a73ae">More...</a><br /></td></tr>
+<tr class="separator:a8da354f30537c1064d554921937a73ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a178251978e0622f7e241da702ae498"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2a178251978e0622f7e241da702ae498">getTimeout</a> () const</td></tr>
+<tr class="memdesc:a2a178251978e0622f7e241da702ae498"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the timeout when waiting for an SSL response.  <a href="#a2a178251978e0622f7e241da702ae498">More...</a><br /></td></tr>
+<tr class="separator:a2a178251978e0622f7e241da702ae498"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The main <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> class. Check out <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> for more info. </p>
@@ -614,6 +620,34 @@ There must be a trust anchor given to the constructor that corresponds to the ce
 
 </div>
 </div>
+<a id="a2a178251978e0622f7e241da702ae498"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a178251978e0622f7e241da702ae498">&#9670;&nbsp;</a></span>getTimeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int SSLClient::getTimeout </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the timeout when waiting for an SSL response. </p>
+<dl class="section return"><dt>Returns</dt><dd>The timeout value in milliseconds. </dd></dl>
+
+</div>
+</div>
 <a id="a4192ee3562c4806d4a6829356ca2636b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4192ee3562c4806d4a6829356ca2636b">&#9670;&nbsp;</a></span>operator bool()</h2>
 
@@ -796,6 +830,40 @@ There must be a trust anchor given to the constructor that corresponds to the ce
 <p>Add a client certificate and enable support for mutual auth. </p>
 <p>Please ensure that the values in <code>params</code> are valid for the lifetime of <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a>. You may want to make them global constants.</p>
 <dl class="section pre"><dt>Precondition</dt><dd><a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> has not already started an SSL connection. </dd></dl>
+
+</div>
+</div>
+<a id="a8da354f30537c1064d554921937a73ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8da354f30537c1064d554921937a73ae">&#9670;&nbsp;</a></span>setTimeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SSLClient::setTimeout </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>t</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the timeout when waiting for an SSL response. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t</td><td>The timeout value, in milliseconds (defaults to 30 seconds if not set). Do not set to zero. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

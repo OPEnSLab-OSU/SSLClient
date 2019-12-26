@@ -24,7 +24,6 @@ for the JavaScript code in this file
 var NAVTREE =
 [
   [ "SSLClient", "index.html", [
-    [ "SSLClient - Arduino Library For SSL", "index.html", null ],
     [ "Trust Anchors", "md__c_1__users__noah__documents__arduino_libraries__s_s_l_client__trust_anchors.html", null ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],

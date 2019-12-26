@@ -1,11 +1,12 @@
 var searchData=
 [
-  ['sslclient_20_2d_20arduino_20library_20for_20ssl',['SSLClient - Arduino Library For SSL',['../index.html',1,'']]],
+  ['sslclient',['SSLClient',['../index.html',1,'']]],
   ['sec_5fper_5fday',['SEC_PER_DAY',['../time__macros_8h.html#a3aaee30ddedb3f6675aac341a66e39e2',1,'time_macros.h']]],
   ['sec_5fper_5fhour',['SEC_PER_HOUR',['../time__macros_8h.html#a2d540510d5860d7f190d13124956bc57',1,'time_macros.h']]],
   ['sec_5fper_5fmin',['SEC_PER_MIN',['../time__macros_8h.html#ac47b302f1b8d2a7a9c035c417247be76',1,'time_macros.h']]],
   ['sec_5fper_5fyear',['SEC_PER_YEAR',['../time__macros_8h.html#a8cd8e04105fec7cd442d078c303e46b9',1,'time_macros.h']]],
   ['setmutualauthparams',['setMutualAuthParams',['../class_s_s_l_client.html#a9e7ce7f8a72d7cdc071be3fa7a4c8f29',1,'SSLClient']]],
+  ['settimeout',['setTimeout',['../class_s_s_l_client.html#a8da354f30537c1064d554921937a73ae',1,'SSLClient']]],
   ['ssl_5fbr_5fconnect_5ffail',['SSL_BR_CONNECT_FAIL',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa6a9cc2412a53b5981e937a41523eece5',1,'SSLClient']]],
   ['ssl_5fbr_5fwrite_5ferror',['SSL_BR_WRITE_ERROR',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa37bef298be71b84a57e59fadbfbd9016',1,'SSLClient']]],
   ['ssl_5fclient_5fconnect_5ffail',['SSL_CLIENT_CONNECT_FAIL',['../class_s_s_l_client.html#a48239f60f1b4318cc112706fc40c6ceaa7510402478ffbecd6e1aa3811b175cfd',1,'SSLClient']]],
