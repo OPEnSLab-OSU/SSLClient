@@ -89,7 +89,7 @@ int SSLClient::connect(IPAddress ip, uint16_t port) {
     // connection check
     if (get_arduino_client().connected()) {
         m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
-        return -1;
+        return 0;
     }
     // reset indexs for saftey
     m_write_idx = 0;
@@ -112,16 +112,13 @@ int SSLClient::connect(const char *host, uint16_t port) {
     // connection check
     if (get_arduino_client().connected()) {
         m_error("Cannot have two connections at the same time! Please create another SSLClient instance.", func_name);
-        return -1;
+        return 0;
     }
     // reset indexs for saftey
     m_write_idx = 0;
-    // first, if we have a session, check if we're trying to resolve the same host
-    // as before
-    const bool connect_ok = get_arduino_client().connect(host, port);
     // first we need our hidden client member to negotiate the socket for us,
     // since most times socket functionality is implemented in hardeware.
-    if (!connect_ok) {
+    if (!get_arduino_client().connect(host, port)) {
         m_error("Failed to connect using m_client. Are you connected to the internet?", func_name);
         setWriteError(SSL_CLIENT_CONNECT_FAIL);
         return 0;

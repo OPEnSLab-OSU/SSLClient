@@ -165,7 +165,7 @@ public:
      * 
      * The implementation for this function can be found in SSLClientImpl::connect_impl(const char*, uint16_t)
      * 
-    * @pre The underlying client object (passed in through the constructor) is in a non-
+     * @pre The underlying client object (passed in through the constructor) is in a non-
      * error state, and must be able to access the IP.
      * @pre SSLClient can only have one connection at a time, so the client
      * object must not already be connected.
