@@ -8,6 +8,8 @@ You can also view this README in [doxygen](https://openslab-osu.github.io/SSLCli
 
 SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, SSLClient implements encrypted communication through SSL on devices that do not otherwise support it.
 
+SSLClient has been tested on the SAMD21 and STM32 (in progress). SSClient does not currently support the ESP8266/ESP32 family (see [this issue](https://github.com/OPEnSLab-OSU/SSLClient/issues/5)).
+
 ## Overview
 
 Using SSLClient should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient). There are a few extra things, however, that you will need to get started:
