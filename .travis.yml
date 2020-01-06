@@ -25,7 +25,7 @@ before_install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
   - arduino-cli core update-index --additional-urls $ADDITIONAL_URLS
   - arduino-cli core install arduino:samd -v
-  - arduino-cli core install adafruit:samd@1.5.6 -v --additional-urls $ADDITIONAL_URLS
+  - arduino-cli core install adafruit:samd -v --additional-urls $ADDITIONAL_URLS
   - mkdir -p $HOME/Arduino/libraries
   - git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/Arduino/libraries/EthernetLarge
 install:

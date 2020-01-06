@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">SSLClient
-   &#160;<span id="projectnumber">v1.4.6</span>
+   &#160;<span id="projectnumber">v1.4.7</span>
    </div>
    <div id="projectbrief">Add TLS 1.2 functionality to any network library.</div>
   </td>
@@ -96,6 +96,7 @@ $(document).ready(function(){initNavTree('index.html','');});
 <p><b><a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> requires at least 110kb flash and 7kb RAM, and will not compile otherwise. This means that most Arduino boards are not supported. Check your board's specifications before attempting to use this library.</b></p>
 <p>You can also view this README in <a href="https://openslab-osu.github.io/SSLClient/html/index.html">doxygen</a>.</p>
 <p><a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> is a simple library to add <a href="https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https">TLS 1.2</a> functionality to any network library implementing the <a href="https://www.arduino.cc/en/Reference/ClientConstructor">Arduino Client interface</a>, including the Arduino <a href="https://www.arduino.cc/en/Reference/EthernetClient">EthernetClient</a> and <a href="https://www.arduino.cc/en/Reference/WiFiClient">WiFiClient</a> classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> implements encrypted communication through SSL on devices that do not otherwise support it.</p>
+<p><a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> has been tested on the SAMD21, ESP32, and STM32 (in progress). SSClient does not currently support the ESP8266 (see <a href="https://github.com/OPEnSLab-OSU/SSLClient/issues/5#issuecomment-569968546">this issue</a>).</p>
 <h2>Overview</h2>
 <p>Using <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with <a href="https://www.arduino.cc/en/Reference/EthernetClient">EthernetClient</a>. There are a few extra things, however, that you will need to get started:</p>
 <ol type="1">

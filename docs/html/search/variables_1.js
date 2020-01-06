@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['br_5fec_5fprime_5ffast_5f256',['br_ec_prime_fast_256',['../ec__prime__fast__256_8c.html#aedcd6aae4367c3fdfe7db296b4da85ab',1,'ec_prime_fast_256.c']]]
+  ['chain_5flen',['chain_len',['../struct_s_s_l_client_parameters.html#aa523f407ac673da95bf651617fbf94b2',1,'SSLClientParameters']]],
+  ['client_5fcert_5fchain',['client_cert_chain',['../struct_s_s_l_client_parameters.html#a3e0440790d1acdee221b8ef6be6def95',1,'SSLClientParameters']]]
 ];
