@@ -55,7 +55,7 @@ Once you've generated a trust anchor array, add it to your Arduino sketch using 
 ```C++
 #include "yourtrustanchorfile.h"
 // ...
-SSLClient<SomeClientType> client(SomeClient, TAs, (size_t)TAs_NUM, SomePin);
+SSLClient client(SomeClient, TAs, (size_t)TAs_NUM, SomePin);
 // ...
 ```
 Where `yourtrustanchorfile.h` contains a generated trust anchor array names `TAs`, with length `TAs_NUM`. BearSSL will now automatically use these trust anchors when `SSLClient::connect` is called.
