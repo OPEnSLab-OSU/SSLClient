@@ -69,7 +69,7 @@ def download(port, cert_var, cert_length_var, output, use_store, keep_dupes, dom
     Note that the certificates will be validated before they are downloaded!
     """
     # if array is emptey, exit
-    if len(domain) is 0:
+    if len(domain) == 0:
       return
     # prepare the root certificate store
     cert_obj_store = cert_util.parse_root_certificate_store(use_store)
@@ -100,8 +100,8 @@ def download(port, cert_var, cert_length_var, output, use_store, keep_dupes, dom
               help='the location of the .pem file containing a list of trusted root certificates (default: use certifi.where())')
 @click.option('--keep-dupes', '-d', is_flag=True, default=False,
               help='write all certs including any duplicates (default: remove duplicates)')
-@click.option('--no-verify', '-n', is_flag=True, default=False,
-              help='Do not attempt to match a root certificate to the provided PEM files')
+@click.option('--no-search', '-n', is_flag=True, default=False,
+              help='Do not attempt to search for a root certificate to the provided PEM files, instead treat the PEM files as the root certificates')
 @click.argument('cert', type=click.File('r'), nargs=-1)
 def convert(cert_var, cert_length_var, output, use_store, keep_dupes, no_verify, cert):
     """Convert PEM certificates into a C header that can be imported into a
@@ -117,7 +117,7 @@ def convert(cert_var, cert_length_var, output, use_store, keep_dupes, no_verify,
       pycert convert foo.pem bar.pem
     """
     # if array is emptey, exit
-    if len(cert) is 0:
+    if len(cert) == 0:
       return
     # prepare root certificate store
     cert_obj_store = cert_util.parse_root_certificate_store(use_store)
