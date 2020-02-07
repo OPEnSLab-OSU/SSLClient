@@ -1250,8 +1250,8 @@ static inline void
 br_ssl_engine_set_versions(br_ssl_engine_context *cc,
 	unsigned version_min, unsigned version_max)
 {
-	cc->version_min = version_min;
-	cc->version_max = version_max;
+	cc->version_min = (uint16_t)version_min;
+	cc->version_max = (uint16_t)version_max;
 }
 
 /**
@@ -1324,7 +1324,7 @@ br_ssl_engine_set_protocol_names(br_ssl_engine_context *ctx,
 	const char **names, size_t num)
 {
 	ctx->protocol_names = names;
-	ctx->protocol_names_num = num;
+	ctx->protocol_names_num = (uint16_t)num;
 }
 
 /**
@@ -2102,7 +2102,7 @@ void br_ssl_engine_sendapp_ack(br_ssl_engine_context *cc, size_t len);
 /**
  * \brief Get buffer for received application data.
  *
- * If the engine has received application data from the peer, hen this
+ * If the engine has received application data from the peer, then this
  * call returns a pointer to the buffer from where such data shall be
  * read, and its length is written in `*len`. Otherwise, `*len` is set
  * to 0 and `NULL` is returned.
@@ -4153,20 +4153,6 @@ int br_sslio_flush(br_sslio_context *cc);
  * \return  0 on success, or -1 on error.
  */
 int br_sslio_close(br_sslio_context *cc);
-
-/*
- * Run the engine, until the specified target state is achieved, or
- * an error occurs. The target state is SENDAPP, RECVAPP, or the
- * combination of both (the combination matches either). When a match is
- * achieved, this function returns 0. On error, it returns -1.
- * 
- * Static function made public since we would like to be able to
- * initialize the ssl socket in a single function
- * 
- * \return  0 on success, or -1 on error.
- */
-int
-br_run_until(br_sslio_context *ctx, unsigned target);
 
 /* ===================================================================== */
 

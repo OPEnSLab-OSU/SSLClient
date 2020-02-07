@@ -106,7 +106,7 @@ preamble {
  *     -- Extensions: extension values are processed in due order.
  *
  *        -- Basic Constraints: for all certificates except EE, must be
- *        present, indicate a CA, and have a path legnth compatible with
+ *        present, indicate a CA, and have a path length compatible with
  *        the chain length so far.
  *
  *        -- Key Usage: for the EE, if present, must allow signatures

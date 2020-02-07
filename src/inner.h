@@ -114,6 +114,10 @@
 #define BR_64   1
 #elif defined(__x86_64__) || defined(_M_X64)
 #define BR_64   1
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define BR_64   1
+#elif defined(__mips64)
+#define BR_64   1
 #endif
 #endif
 
@@ -305,9 +309,20 @@
  * values are documented on:
  *    https://sourceforge.net/p/predef/wiki/OperatingSystems/
  *
- * TODO: enrich the list of detected system. Also add detection for
- * alternate system calls like getentropy(), which are usually
- * preferable when available.
+ * Win32's CryptGenRandom() should be available on Windows systems.
+ *
+ * /dev/urandom should work on all Unix-like systems (including macOS X).
+ *
+ * getentropy() is present on Linux (Glibc 2.25+), FreeBSD (12.0+) and
+ * OpenBSD (5.6+). For OpenBSD, there does not seem to be easy to use
+ * macros to test the minimum version, so we just assume that it is
+ * recent enough (last version without getentropy() has gone out of
+ * support in May 2015).
+ *
+ * Ideally we should use getentropy() on macOS (10.12+) too, but I don't
+ * know how to test the exact OS version with preprocessor macros.
+ *
+ * TODO: enrich the list of detected system.
  */
 
 #ifndef BR_USE_URANDOM
@@ -321,6 +336,15 @@
 	|| (defined __sun && (defined __SVR4 || defined __svr4__)) \
 	|| (defined __APPLE__ && defined __MACH__)
 #define BR_USE_URANDOM   1
+#endif
+#endif
+
+#ifndef BR_USE_GETENTROPY
+#if (defined __linux__ \
+	&& (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))) \
+	|| (defined __FreeBSD__ && __FreeBSD__ >= 12) \
+	|| defined __OpenBSD__
+#define BR_USE_GETENTROPY   1
 #endif
 #endif
 
@@ -1944,6 +1968,27 @@ uint32_t br_rsa_pkcs1_sig_unpad(const unsigned char *sig, size_t sig_len,
 	unsigned char *hash_out);
 
 /*
+ * Apply proper PSS padding. The 'x' buffer is output only: it
+ * receives the value that is to be exponentiated.
+ */
+uint32_t br_rsa_pss_sig_pad(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash, size_t salt_len,
+	uint32_t n_bitlen, unsigned char *x);
+
+/*
+ * Check PSS padding. The provided value is the one _after_
+ * the modular exponentiation; it is modified by this function.
+ * This function infers the signature length from the public key
+ * size, i.e. it assumes that this has already been verified (as
+ * part of the exponentiation).
+ */
+uint32_t br_rsa_pss_sig_unpad(
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash, size_t salt_len,
+	const br_rsa_public_key *pk, unsigned char *x);
+
+/*
  * Apply OAEP padding. Returned value is the actual padded string length,
  * or zero on error.
  */
@@ -2448,8 +2493,8 @@ int br_ssl_choose_hash(unsigned bf);
 #else
 #define BR_TARGETS_X86_UP \
 	_Pragma("GCC target(\"sse2,ssse3,sse4.1,aes,pclmul\")")
-#endif
 #define BR_TARGETS_X86_DOWN
+#endif
 #pragma GCC diagnostic ignored "-Wpsabi"
 #endif
 

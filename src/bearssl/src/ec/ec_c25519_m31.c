@@ -372,8 +372,7 @@ reduce_final_f255(uint32_t *d)
 static void
 f255_mul(uint32_t *d, const uint32_t *a, const uint32_t *b)
 {
-	uint32_t t[18];
-	uint64_t cc, w;
+	uint32_t t[18], cc;
 	int i;
 
 	/*
@@ -389,21 +388,42 @@ f255_mul(uint32_t *d, const uint32_t *a, const uint32_t *b)
 	 * offset 9*30 = 270, word 9+k must be added to word k with
 	 * a factor of 19*2^15 = 622592. The extra bits in word 8 are also
 	 * added that way.
+	 *
+	 * Keeping the carry on 32 bits helps with 32-bit architectures,
+	 * and does not noticeably impact performance on 64-bit systems.
 	 */
-	cc = MUL31(t[8] >> 15, 19);
+	cc = MUL15(t[8] >> 15, 19);  /* at most 19*(2^15-1) = 622573 */
 	t[8] &= 0x7FFF;
 	for (i = 0; i < 9; i ++) {
-		w = (uint64_t)t[i] + cc + MUL31(t[i + 9], 622592);
+		uint64_t w;
+
+		w = (uint64_t)t[i] + (uint64_t)cc + MUL31(t[i + 9], 622592);
 		t[i] = (uint32_t)w & 0x3FFFFFFF;
-		cc = w >> 30;
+		cc = (uint32_t)(w >> 30);  /* at most 622592 */
 	}
-	cc = MUL31(w >> 15, 19);
+
+	/*
+	 * Original product was up to (2^256-1)^2, i.e. a 512-bit integer.
+	 * This was split into two parts (upper of 257 bits, lower of 255
+	 * bits), and the upper was added to the lower with a factor 19,
+	 * which means that the intermediate value is less than 77*2^255
+	 * (19*2^257 + 2^255). Therefore, the extra bits "t[8] >> 15" are
+	 * less than 77, and the initial carry cc is at most 76*19 = 1444.
+	 */
+	cc = MUL15(t[8] >> 15, 19);
 	t[8] &= 0x7FFF;
 	for (i = 0; i < 9; i ++) {
-		w = t[i] + cc;
-		d[i] = (uint32_t)w & 0x3FFFFFFF;
-		cc = w >> 30;
+		uint32_t z;
+
+		z = t[i] + cc;
+		d[i] = z & 0x3FFFFFFF;
+		cc = z >> 30;
 	}
+
+	/*
+	 * Final result is at most 2^255 + 1443. In particular, the last
+	 * carry is necessarily 0, since t[8] was truncated to 15 bits.
+	 */
 }
 
 /*
@@ -415,8 +435,7 @@ f255_mul(uint32_t *d, const uint32_t *a, const uint32_t *b)
 static void
 f255_square(uint32_t *d, const uint32_t *a)
 {
-	uint32_t t[18];
-	uint64_t cc, w;
+	uint32_t t[18], cc;
 	int i;
 
 	/*
@@ -428,24 +447,25 @@ f255_square(uint32_t *d, const uint32_t *a)
 
 	/*
 	 * Modular reduction: each high word is added where necessary.
-	 * Since the modulus is 2^255-19 and word 9 corresponds to
-	 * offset 9*30 = 270, word 9+k must be added to word k with
-	 * a factor of 19*2^15 = 622592. The extra bits in word 8 are also
-	 * added that way.
+	 * See f255_mul() for details on the reduction and carry limits.
 	 */
-	cc = MUL31(t[8] >> 15, 19);
+	cc = MUL15(t[8] >> 15, 19);
 	t[8] &= 0x7FFF;
 	for (i = 0; i < 9; i ++) {
-		w = (uint64_t)t[i] + cc + MUL31(t[i + 9], 622592);
+		uint64_t w;
+
+		w = (uint64_t)t[i] + (uint64_t)cc + MUL31(t[i + 9], 622592);
 		t[i] = (uint32_t)w & 0x3FFFFFFF;
-		cc = w >> 30;
+		cc = (uint32_t)(w >> 30);
 	}
-	cc = MUL31(w >> 15, 19);
+	cc = MUL15(t[8] >> 15, 19);
 	t[8] &= 0x7FFF;
 	for (i = 0; i < 9; i ++) {
-		w = t[i] + cc;
-		d[i] = (uint32_t)w & 0x3FFFFFFF;
-		cc = w >> 30;
+		uint32_t z;
+
+		z = t[i] + cc;
+		d[i] = z & 0x3FFFFFFF;
+		cc = z >> 30;
 	}
 }
 
@@ -515,20 +535,31 @@ static void
 f255_mul_a24(uint32_t *d, const uint32_t *a)
 {
 	int i;
-	uint64_t cc, w;
+	uint64_t w;
+	uint32_t cc;
 
+	/*
+	 * a[] is over 256 bits, thus a[8] has length at most 16 bits.
+	 * We single out the processing of the last word: intermediate
+	 * value w is up to 121665*2^16, yielding a carry for the next
+	 * loop of at most 19*(121665*2^16/2^15) = 4623289.
+	 */
 	cc = 0;
-	for (i = 0; i < 9; i ++) {
-		w = MUL31(a[i], 121665) + cc;
+	for (i = 0; i < 8; i ++) {
+		w = MUL31(a[i], 121665) + (uint64_t)cc;
 		d[i] = (uint32_t)w & 0x3FFFFFFF;
-		cc = w >> 30;
+		cc = (uint32_t)(w >> 30);
 	}
-	cc = MUL31((uint32_t)(w >> 15), 19);
-	d[8] &= 0x7FFF;
+	w = MUL31(a[8], 121665) + (uint64_t)cc;
+	d[8] = (uint32_t)w & 0x7FFF;
+	cc = MUL15((uint32_t)(w >> 15), 19);
+
 	for (i = 0; i < 9; i ++) {
-		w = (uint64_t)d[i] + cc;
-		d[i] = w & 0x3FFFFFFF;
-		cc = w >> 30;
+		uint32_t z;
+
+		z = d[i] + cc;
+		d[i] = z & 0x3FFFFFFF;
+		cc = z >> 30;
 	}
 }
 
@@ -623,11 +654,11 @@ api_mul(unsigned char *G, size_t Glen,
 	memset(z3, 0, sizeof z3);
 	z3[0] = 1;
 
-	memcpy(k, kb, kblen);
-	memset(k + kblen, 0, (sizeof k) - kblen);
-	k[0] &= 0xF8;
-	k[31] &= 0x7F;
-	k[31] |= 0x40;
+	memset(k, 0, (sizeof k) - kblen);
+	memcpy(k + (sizeof k) - kblen, kb, kblen);
+	k[31] &= 0xF8;
+	k[0] &= 0x7F;
+	k[0] |= 0x40;
 
 	/* obsolete
 	print_int("x1", x1);
@@ -637,7 +668,7 @@ api_mul(unsigned char *G, size_t Glen,
 	for (i = 254; i >= 0; i --) {
 		uint32_t kt;
 
-		kt = (k[i >> 3] >> (i & 7)) & 1;
+		kt = (k[31 - (i >> 3)] >> (i & 7)) & 1;
 		swap ^= kt;
 		cswap(x2, x3, swap);
 		cswap(z2, z3, swap);

@@ -81,6 +81,30 @@ extern "C" {
  * Note that the HKDF total output size (the number of bytes that
  * HKDF-Expand is willing to produce) is limited: if the hash output size
  * is _n_ bytes, then the maximum output size is _255*n_.
+ *
+ * ## SHAKE
+ *
+ * SHAKE is defined in
+ * [FIPS 202](https://csrc.nist.gov/publications/detail/fips/202/final)
+ * under two versions: SHAKE128 and SHAKE256, offering an alleged
+ * "security level" of 128 and 256 bits, respectively (SHAKE128 is
+ * about 20 to 25% faster than SHAKE256). SHAKE internally relies on
+ * the Keccak family of sponge functions, not on any externally provided
+ * hash function. Contrary to HKDF, SHAKE does not have a concept of
+ * either a "salt" or an "info" string. The API consists in four
+ * functions:
+ *
+ *  - `br_shake_init()`: initialize a SHAKE context for a given
+ *    security level.
+ *
+ *  - `br_shake_inject()`: inject more input bytes. This function may be
+ *    called repeatedly if the input data is provided by chunks.
+ *
+ *  - `br_shake_flip()`: end the data injection process, and start the
+ *    data production process.
+ *
+ *  - `br_shake_produce()`: get the next bytes of output. This function
+ *    may be called several times to obtain the full output by chunks.
  */
 
 /**
@@ -177,6 +201,81 @@ void br_hkdf_flip(br_hkdf_context *hc);
  */
 size_t br_hkdf_produce(br_hkdf_context *hc,
 	const void *info, size_t info_len, void *out, size_t out_len);
+
+/**
+ * \brief SHAKE context.
+ *
+ * The HKDF context is initialized with a "security level". The internal
+ * notion is called "capacity"; the capacity is twice the security level
+ * (for instance, SHAKE128 has capacity 256).
+ *
+ * The caller is responsible for allocating the context where
+ * appropriate. Context initialisation and usage incurs no dynamic
+ * allocation, so there is no release function.
+ */
+typedef struct {
+#ifndef BR_DOXYGEN_IGNORE
+	unsigned char dbuf[200];
+	size_t dptr;
+	size_t rate;
+	uint64_t A[25];
+#endif
+} br_shake_context;
+
+/**
+ * \brief SHAKE context initialization.
+ *
+ * The context is initialized for the provided "security level".
+ * Internally, this sets the "capacity" to twice the security level;
+ * thus, for SHAKE128, the `security_level` parameter should be 128,
+ * which corresponds to a 256-bit capacity.
+ *
+ * Allowed security levels are all multiples of 32, from 32 to 768,
+ * inclusive. Larger security levels imply lower performance; levels
+ * beyond 256 bits don't make much sense. Standard levels are 128
+ * and 256 bits (for SHAKE128 and SHAKE256, respectively).
+ *
+ * \param sc               SHAKE context to initialise.
+ * \param security_level   security level (in bits).
+ */
+void br_shake_init(br_shake_context *sc, int security_level);
+
+/**
+ * \brief SHAKE input injection.
+ *
+ * This function injects some more input bytes ("key material") into
+ * SHAKE. This function may be called several times, after `br_shake_init()`
+ * but before `br_shake_flip()`.
+ *
+ * \param sc     SHAKE context.
+ * \param data   extra input bytes.
+ * \param len    number of extra input bytes.
+ */
+void br_shake_inject(br_shake_context *sc, const void *data, size_t len);
+
+/**
+ * \brief SHAKE switch to production phase.
+ *
+ * This call terminates the input injection process, and starts the
+ * output production process.
+ *
+ * \param sc   SHAKE context.
+ */
+void br_shake_flip(br_shake_context *hc);
+
+/**
+ * \brief SHAKE output production.
+ *
+ * Produce more output bytes from the current state. This function may be
+ * called several times, but only after `br_shake_flip()`.
+ *
+ * There is no practical limit to the number of bytes that may be produced.
+ *
+ * \param sc    SHAKE context.
+ * \param out   destination buffer for the SHAKE output.
+ * \param len   the length of the requested output (in bytes).
+ */
+void br_shake_produce(br_shake_context *sc, void *out, size_t len);
 
 #ifdef __cplusplus
 }

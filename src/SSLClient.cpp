@@ -392,6 +392,13 @@ int SSLClient::m_run_until(const unsigned target) {
         unsigned state = m_update_engine();
 	// error check
         if (state == BR_SSL_CLOSED || getWriteError() != SSL_OK) {
+            if (state == BR_SSL_CLOSED) {
+                m_warn("Terminating because the ssl engine closed", func_name);
+            }
+            else {
+                m_warn("Terminating with write error: ", func_name);
+                m_warn(getWriteError(), func_name);
+            }
             return -1;
         }
         // timeout check
@@ -406,7 +413,7 @@ int SSLClient::m_run_until(const unsigned target) {
             lastState = state;
             m_info("m_run changed state:", func_name);
             if(m_debug == DebugLevel::SSL_INFO) {
-                m_info("State: ", __func__);
+                m_info("State: ", func_name);
                 if(state == 0) Serial.println("    Invalid");
                 else if (state & BR_SSL_CLOSED) Serial.println("   Connection closed");
                 else {
@@ -728,6 +735,6 @@ void SSLClient::m_print_br_error(const unsigned br_error_code, const DebugLevel 
     case BR_ERR_X509_FORBIDDEN_KEY_USAGE: Serial.println("Key Usage extension prohibits intended usage."); break;
     case BR_ERR_X509_WEAK_PUBLIC_KEY: Serial.println("Public key found in certificate is too small."); break;
     case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor."); break;
-    default: Serial.println("Unknown error code."); break;
+    default: Serial.print("Unknown error code: "); Serial.println(br_error_code); break;
   }
 }

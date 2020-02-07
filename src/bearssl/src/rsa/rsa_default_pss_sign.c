@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
+ * Copyright (c) 2018 Thomas Pornin <pornin@bolet.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the
@@ -24,33 +24,15 @@
 
 #include "inner.h"
 
-/* see inner.h */
-void
-br_i32_mulacc(uint32_t *d, const uint32_t *a, const uint32_t *b)
+/* see bearssl_rsa.h */
+br_rsa_pss_sign
+br_rsa_pss_sign_get_default(void)
 {
-	size_t alen, blen, u;
-
-	alen = (a[0] + 31) >> 5;
-	blen = (b[0] + 31) >> 5;
-	d[0] = a[0] + b[0];
-	for (u = 0; u < blen; u ++) {
-		uint32_t f;
-		size_t v;
-#if BR_64
-		uint64_t cc;
+#if BR_INT128 || BR_UMUL128
+	return &br_rsa_i62_pss_sign;
+#elif BR_LOMUL
+	return &br_rsa_i15_pss_sign;
 #else
-		uint32_t cc;
+	return &br_rsa_i31_pss_sign;
 #endif
-
-		f = b[1 + u];
-		cc = 0;
-		for (v = 0; v < alen; v ++) {
-			uint64_t z;
-
-			z = (uint64_t)d[1 + u + v] + MUL(f, a[1 + v]) + cc;
-			cc = z >> 32;
-			d[1 + u + v] = (uint32_t)z;
-		}
-		d[1 + u + alen] = (uint32_t)cc;
-	}
 }

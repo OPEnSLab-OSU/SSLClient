@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
+ * Copyright (c) 2018 Thomas Pornin <pornin@bolet.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the
@@ -24,33 +24,17 @@
 
 #include "inner.h"
 
-/* see inner.h */
-void
-br_i32_mulacc(uint32_t *d, const uint32_t *a, const uint32_t *b)
+/* see bearssl_rsa.h */
+uint32_t
+br_rsa_i31_pss_sign(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash, size_t salt_len,
+	const br_rsa_private_key *sk, unsigned char *x)
 {
-	size_t alen, blen, u;
-
-	alen = (a[0] + 31) >> 5;
-	blen = (b[0] + 31) >> 5;
-	d[0] = a[0] + b[0];
-	for (u = 0; u < blen; u ++) {
-		uint32_t f;
-		size_t v;
-#if BR_64
-		uint64_t cc;
-#else
-		uint32_t cc;
-#endif
-
-		f = b[1 + u];
-		cc = 0;
-		for (v = 0; v < alen; v ++) {
-			uint64_t z;
-
-			z = (uint64_t)d[1 + u + v] + MUL(f, a[1 + v]) + cc;
-			cc = z >> 32;
-			d[1 + u + v] = (uint32_t)z;
-		}
-		d[1 + u + alen] = (uint32_t)cc;
+	if (!br_rsa_pss_sig_pad(rng, hf_data, hf_mgf1, hash,
+		salt_len, sk->n_bitlen, x))
+	{
+		return 0;
 	}
+	return br_rsa_i31_private(x, sk);
 }

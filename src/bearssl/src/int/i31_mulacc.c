@@ -45,7 +45,20 @@ br_i31_mulacc(uint32_t *d, const uint32_t *a, const uint32_t *b)
 	for (u = 0; u < blen; u ++) {
 		uint32_t f;
 		size_t v;
+
+		/*
+		 * Carry always fits on 31 bits; we want to keep it in a
+		 * 32-bit register on 32-bit architectures (on a 64-bit
+		 * architecture, cast down from 64 to 32 bits means
+		 * clearing the high bits, which is not free; on a 32-bit
+		 * architecture, the same operation really means ignoring
+		 * the top register, which has negative or zero cost).
+		 */
+#if BR_64
 		uint64_t cc;
+#else
+		uint32_t cc;
+#endif
 
 		f = b[1 + u];
 		cc = 0;

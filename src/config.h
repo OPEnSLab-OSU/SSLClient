@@ -109,8 +109,26 @@
  */
 
 /*
+ * When BR_USE_GETENTROPY is enabled, the SSL engine will use the
+ * getentropy() function to obtain quality randomness for seeding its
+ * internal PRNG. On Linux and FreeBSD, getentropy() is implemented by
+ * the standard library with the system call getrandom(); on OpenBSD,
+ * getentropy() is the system call, and there is no getrandom() wrapper,
+ * hence the use of the getentropy() function for maximum portability.
+ *
+ * If the getentropy() call fails, and BR_USE_URANDOM is not explicitly
+ * disabled, then /dev/urandom will be used as a fallback mechanism. On
+ * FreeBSD and OpenBSD, this does not change much, since /dev/urandom
+ * will block if not enough entropy has been obtained since last boot.
+ * On Linux, /dev/urandom might not block, which can be troublesome in
+ * early boot stages, which is why getentropy() is preferred.
+ *
+#define BR_USE_GETENTROPY   1
+ */
+
+/*
  * When BR_USE_URANDOM is enabled, the SSL engine will use /dev/urandom
- * to automatically obtain quality randomness for seedings its internal
+ * to automatically obtain quality randomness for seeding its internal
  * PRNG.
  *
 #define BR_USE_URANDOM   1
@@ -119,7 +137,7 @@
 /*
  * When BR_USE_WIN32_RAND is enabled, the SSL engine will use the Win32
  * (CryptoAPI) functions (CryptAcquireContext(), CryptGenRandom()...) to
- * automatically obtain quality randomness for seedings its internal PRNG.
+ * automatically obtain quality randomness for seeding its internal PRNG.
  *
  * Note: if both BR_USE_URANDOM and BR_USE_WIN32_RAND are defined, the
  * former takes precedence.
@@ -132,9 +150,9 @@
  * the current time from the OS by calling time(), and assuming that the
  * returned value (a 'time_t') is an integer that counts time in seconds
  * since the Unix Epoch (Jan 1st, 1970, 00:00 UTC).
- *
  */
 #define BR_USE_UNIX_TIME   0
+
 
 /*
  * When BR_USE_WIN32_TIME is enabled, the X.509 validation engine obtains
@@ -143,8 +161,9 @@
  *
  * Note: if both BR_USE_UNIX_TIME and BR_USE_WIN32_TIME are defined, the
  * former takes precedence.
+ *
+#define BR_USE_WIN32_TIME   1
  */
-#define BR_USE_WIN32_TIME   0
 
 /*
  * When BR_ARMEL_CORTEXM_GCC is enabled, some operations are replaced with
@@ -158,9 +177,7 @@
  * Note: if BR_LOMUL is not explicitly enabled or disabled, then
  * enabling BR_ARMEL_CORTEXM_GCC also enables BR_LOMUL.
  */
-#ifdef ARDUINO_ARCH_SAMD
 #define BR_ARMEL_CORTEXM_GCC   1
-#endif
 
 /*
  * When BR_AES_X86NI is enabled, the AES implementation using the x86 "NI"

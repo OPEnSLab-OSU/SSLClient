@@ -214,7 +214,7 @@ api_mul(unsigned char *G, size_t Glen,
 	 *    br_i31_decode_reduce(a, G, 32, C255_P);
 	 */
 	br_i31_zero(b, 0x108);
-	b[9] = 0x0100;
+	b[9] = 0x0080;
 	br_i31_decode_mod(a, G, 32, b);
 	a[0] = 0x107;
 	br_i31_sub(a, C255_P, NOT(br_i31_sub(a, C255_P, 0)));
@@ -230,11 +230,14 @@ api_mul(unsigned char *G, size_t Glen,
 	x2[1] = 0x13000000;
 	memcpy(z3, x2, sizeof x2);
 
-	memcpy(k, kb, kblen);
-	memset(k + kblen, 0, (sizeof k) - kblen);
-	k[0] &= 0xF8;
-	k[31] &= 0x7F;
-	k[31] |= 0x40;
+	/*
+	 * kb[] is in big-endian notation, but possibly shorter than k[].
+	 */
+	memset(k, 0, (sizeof k) - kblen);
+	memcpy(k + (sizeof k) - kblen, kb, kblen);
+	k[31] &= 0xF8;
+	k[0] &= 0x7F;
+	k[0] |= 0x40;
 
 	/* obsolete
 	print_int_mont("x1", x1);
@@ -244,7 +247,7 @@ api_mul(unsigned char *G, size_t Glen,
 	for (i = 254; i >= 0; i --) {
 		uint32_t kt;
 
-		kt = (k[i >> 3] >> (i & 7)) & 1;
+		kt = (k[31 - (i >> 3)] >> (i & 7)) & 1;
 		swap ^= kt;
 		cswap(x2, x3, swap);
 		cswap(z2, z3, swap);

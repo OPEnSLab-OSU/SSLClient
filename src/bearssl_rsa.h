@@ -28,6 +28,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "bearssl_hash.h"
 #include "bearssl_rand.h"
 
 #ifdef __cplusplus
@@ -280,6 +281,55 @@ typedef uint32_t (*br_rsa_pkcs1_vrfy)(const unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk, unsigned char *hash_out);
 
 /**
+ * \brief Type for a RSA signature verification engine (PSS).
+ *
+ * Parameters are:
+ *
+ *   - The signature itself. The provided array is NOT modified.
+ *
+ *   - The hash function which was used to hash the message.
+ *
+ *   - The hash function to use with MGF1 within the PSS padding. This
+ *     is not necessarily the same hash function as the one which was
+ *     used to hash the signed message.
+ *
+ *   - The hashed message (as an array of bytes).
+ *
+ *   - The PSS salt length (in bytes).
+ *
+ *   - The public key.
+ *
+ * **Constraints:**
+ *
+ *   - Hash message length MUST be no more than 64 bytes.
+ *
+ * Note that, contrary to PKCS#1 v1.5 signature, the hash value of the
+ * signed data cannot be extracted from the signature; it must be
+ * provided to the verification function.
+ *
+ * This function verifies that the signature length (`xlen`) matches the
+ * modulus length (this function returns 0 on mismatch). If the modulus
+ * size exceeds the maximum supported RSA size, then the function also
+ * returns 0.
+ *
+ * Returned value is 1 on success, 0 on error.
+ *
+ * Implementations of this type need not be constant-time.
+ *
+ * \param x          signature buffer.
+ * \param xlen       signature length (in bytes).
+ * \param hf_data    hash function applied on the message.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hash value of the signed message.
+ * \param salt_len   PSS salt length (in bytes).
+ * \param pk         RSA public key.
+ * \return  1 on success, 0 on error.
+ */
+typedef uint32_t (*br_rsa_pss_vrfy)(const unsigned char *x, size_t xlen,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
+
+/**
  * \brief Type for a RSA encryption engine (OAEP).
  *
  * Parameters are:
@@ -386,6 +436,53 @@ typedef uint32_t (*br_rsa_pkcs1_sign)(const unsigned char *hash_oid,
 	const br_rsa_private_key *sk, unsigned char *x);
 
 /**
+ * \brief Type for a RSA signature generation engine (PSS).
+ *
+ * Parameters are:
+ *
+ *   - An initialized PRNG for salt generation. If the salt length is
+ *     zero (`salt_len` parameter), then the PRNG is optional (this is
+ *     not the typical case, as the security proof of RSA/PSS is
+ *     tighter when a non-empty salt is used).
+ *
+ *   - The hash function which was used to hash the message.
+ *
+ *   - The hash function to use with MGF1 within the PSS padding. This
+ *     is not necessarily the same function as the one used to hash the
+ *     message.
+ *
+ *   - The hashed message.
+ *
+ *   - The salt length, in bytes.
+ *
+ *   - The RSA private key.
+ *
+ *   - The output buffer, that receives the signature.
+ *
+ * Returned value is 1 on success, 0 on error. Error conditions include
+ * a too small modulus for the provided hash and salt lengths, or some
+ * invalid key parameters. The signature length is exactly
+ * `(sk->n_bitlen+7)/8` bytes.
+ *
+ * This function is expected to be constant-time with regards to the
+ * private key bytes (lengths of the modulus and the individual factors
+ * may leak, though) and to the hashed data.
+ *
+ * \param rng        PRNG for salt generation (`NULL` if `salt_len` is zero).
+ * \param hf_data    hash function used to hash the signed data.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hashed message.
+ * \param salt_len   salt length (in bytes).
+ * \param sk         RSA private key.
+ * \param x          output buffer for the signature value.
+ * \return  1 on success, 0 on error.
+ */
+typedef uint32_t (*br_rsa_pss_sign)(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash_value, size_t salt_len,
+	const br_rsa_private_key *sk, unsigned char *x);
+
+/**
  * \brief Encoded OID for SHA-1 (in RSA PKCS#1 signatures).
  */
 #define BR_HASH_OID_SHA1     \
@@ -476,7 +573,7 @@ uint32_t br_rsa_i32_public(unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk);
 
 /**
- * \brief RSA signature verification engine "i32".
+ * \brief RSA signature verification engine "i32" (PKCS#1 v1.5 signatures).
  *
  * \see br_rsa_pkcs1_vrfy
  *
@@ -493,6 +590,24 @@ uint32_t br_rsa_i32_pkcs1_vrfy(const unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk, unsigned char *hash_out);
 
 /**
+ * \brief RSA signature verification engine "i32" (PSS signatures).
+ *
+ * \see br_rsa_pss_vrfy
+ *
+ * \param x          signature buffer.
+ * \param xlen       signature length (in bytes).
+ * \param hf_data    hash function applied on the message.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hash value of the signed message.
+ * \param salt_len   PSS salt length (in bytes).
+ * \param pk         RSA public key.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i32_pss_vrfy(const unsigned char *x, size_t xlen,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
+
+/**
  * \brief RSA private key engine "i32".
  *
  * \see br_rsa_private
@@ -505,7 +620,7 @@ uint32_t br_rsa_i32_private(unsigned char *x,
 	const br_rsa_private_key *sk);
 
 /**
- * \brief RSA signature generation engine "i32".
+ * \brief RSA signature generation engine "i32" (PKCS#1 v1.5 signatures).
  *
  * \see br_rsa_pkcs1_sign
  *
@@ -518,6 +633,25 @@ uint32_t br_rsa_i32_private(unsigned char *x,
  */
 uint32_t br_rsa_i32_pkcs1_sign(const unsigned char *hash_oid,
 	const unsigned char *hash, size_t hash_len,
+	const br_rsa_private_key *sk, unsigned char *x);
+
+/**
+ * \brief RSA signature generation engine "i32" (PSS signatures).
+ *
+ * \see br_rsa_pss_sign
+ *
+ * \param rng        PRNG for salt generation (`NULL` if `salt_len` is zero).
+ * \param hf_data    hash function used to hash the signed data.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hashed message.
+ * \param salt_len   salt length (in bytes).
+ * \param sk         RSA private key.
+ * \param x          output buffer for the signature value.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i32_pss_sign(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash_value, size_t salt_len,
 	const br_rsa_private_key *sk, unsigned char *x);
 
 /*
@@ -540,7 +674,7 @@ uint32_t br_rsa_i31_public(unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk);
 
 /**
- * \brief RSA signature verification engine "i31".
+ * \brief RSA signature verification engine "i31" (PKCS#1 v1.5 signatures).
  *
  * \see br_rsa_pkcs1_vrfy
  *
@@ -557,6 +691,24 @@ uint32_t br_rsa_i31_pkcs1_vrfy(const unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk, unsigned char *hash_out);
 
 /**
+ * \brief RSA signature verification engine "i31" (PSS signatures).
+ *
+ * \see br_rsa_pss_vrfy
+ *
+ * \param x          signature buffer.
+ * \param xlen       signature length (in bytes).
+ * \param hf_data    hash function applied on the message.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hash value of the signed message.
+ * \param salt_len   PSS salt length (in bytes).
+ * \param pk         RSA public key.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i31_pss_vrfy(const unsigned char *x, size_t xlen,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
+
+/**
  * \brief RSA private key engine "i31".
  *
  * \see br_rsa_private
@@ -569,7 +721,7 @@ uint32_t br_rsa_i31_private(unsigned char *x,
 	const br_rsa_private_key *sk);
 
 /**
- * \brief RSA signature generation engine "i31".
+ * \brief RSA signature generation engine "i31" (PKCS#1 v1.5 signatures).
  *
  * \see br_rsa_pkcs1_sign
  *
@@ -582,6 +734,25 @@ uint32_t br_rsa_i31_private(unsigned char *x,
  */
 uint32_t br_rsa_i31_pkcs1_sign(const unsigned char *hash_oid,
 	const unsigned char *hash, size_t hash_len,
+	const br_rsa_private_key *sk, unsigned char *x);
+
+/**
+ * \brief RSA signature generation engine "i31" (PSS signatures).
+ *
+ * \see br_rsa_pss_sign
+ *
+ * \param rng        PRNG for salt generation (`NULL` if `salt_len` is zero).
+ * \param hf_data    hash function used to hash the signed data.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hashed message.
+ * \param salt_len   salt length (in bytes).
+ * \param sk         RSA private key.
+ * \param x          output buffer for the signature value.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i31_pss_sign(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash_value, size_t salt_len,
 	const br_rsa_private_key *sk, unsigned char *x);
 
 /*
@@ -608,7 +779,7 @@ uint32_t br_rsa_i62_public(unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk);
 
 /**
- * \brief RSA signature verification engine "i62".
+ * \brief RSA signature verification engine "i62" (PKCS#1 v1.5 signatures).
  *
  * This function is defined only on architecture that offer a 64x64->128
  * opcode. Use `br_rsa_i62_pkcs1_vrfy_get()` to dynamically obtain a pointer
@@ -629,6 +800,28 @@ uint32_t br_rsa_i62_pkcs1_vrfy(const unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk, unsigned char *hash_out);
 
 /**
+ * \brief RSA signature verification engine "i62" (PSS signatures).
+ *
+ * This function is defined only on architecture that offer a 64x64->128
+ * opcode. Use `br_rsa_i62_pss_vrfy_get()` to dynamically obtain a pointer
+ * to that function.
+ *
+ * \see br_rsa_pss_vrfy
+ *
+ * \param x          signature buffer.
+ * \param xlen       signature length (in bytes).
+ * \param hf_data    hash function applied on the message.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hash value of the signed message.
+ * \param salt_len   PSS salt length (in bytes).
+ * \param pk         RSA public key.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i62_pss_vrfy(const unsigned char *x, size_t xlen,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
+
+/**
  * \brief RSA private key engine "i62".
  *
  * This function is defined only on architecture that offer a 64x64->128
@@ -645,7 +838,7 @@ uint32_t br_rsa_i62_private(unsigned char *x,
 	const br_rsa_private_key *sk);
 
 /**
- * \brief RSA signature generation engine "i62".
+ * \brief RSA signature generation engine "i62" (PKCS#1 v1.5 signatures).
  *
  * This function is defined only on architecture that offer a 64x64->128
  * opcode. Use `br_rsa_i62_pkcs1_sign_get()` to dynamically obtain a pointer
@@ -665,6 +858,29 @@ uint32_t br_rsa_i62_pkcs1_sign(const unsigned char *hash_oid,
 	const br_rsa_private_key *sk, unsigned char *x);
 
 /**
+ * \brief RSA signature generation engine "i62" (PSS signatures).
+ *
+ * This function is defined only on architecture that offer a 64x64->128
+ * opcode. Use `br_rsa_i62_pss_sign_get()` to dynamically obtain a pointer
+ * to that function.
+ *
+ * \see br_rsa_pss_sign
+ *
+ * \param rng        PRNG for salt generation (`NULL` if `salt_len` is zero).
+ * \param hf_data    hash function used to hash the signed data.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hashed message.
+ * \param salt_len   salt length (in bytes).
+ * \param sk         RSA private key.
+ * \param x          output buffer for the signature value.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i62_pss_sign(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash_value, size_t salt_len,
+	const br_rsa_private_key *sk, unsigned char *x);
+
+/**
  * \brief Get the RSA "i62" implementation (public key operations),
  * if available.
  *
@@ -673,12 +889,20 @@ uint32_t br_rsa_i62_pkcs1_sign(const unsigned char *hash_oid,
 br_rsa_public br_rsa_i62_public_get(void);
 
 /**
- * \brief Get the RSA "i62" implementation (PKCS#1 signature verification),
+ * \brief Get the RSA "i62" implementation (PKCS#1 v1.5 signature verification),
  * if available.
  *
  * \return  the implementation, or 0.
  */
 br_rsa_pkcs1_vrfy br_rsa_i62_pkcs1_vrfy_get(void);
+
+/**
+ * \brief Get the RSA "i62" implementation (PSS signature verification),
+ * if available.
+ *
+ * \return  the implementation, or 0.
+ */
+br_rsa_pss_vrfy br_rsa_i62_pss_vrfy_get(void);
 
 /**
  * \brief Get the RSA "i62" implementation (private key operations),
@@ -689,12 +913,20 @@ br_rsa_pkcs1_vrfy br_rsa_i62_pkcs1_vrfy_get(void);
 br_rsa_private br_rsa_i62_private_get(void);
 
 /**
- * \brief Get the RSA "i62" implementation (PKCS#1 signature generation),
+ * \brief Get the RSA "i62" implementation (PKCS#1 v1.5 signature generation),
  * if available.
  *
  * \return  the implementation, or 0.
  */
 br_rsa_pkcs1_sign br_rsa_i62_pkcs1_sign_get(void);
+
+/**
+ * \brief Get the RSA "i62" implementation (PSS signature generation),
+ * if available.
+ *
+ * \return  the implementation, or 0.
+ */
+br_rsa_pss_sign br_rsa_i62_pss_sign_get(void);
 
 /**
  * \brief Get the RSA "i62" implementation (OAEP encryption),
@@ -732,7 +964,7 @@ uint32_t br_rsa_i15_public(unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk);
 
 /**
- * \brief RSA signature verification engine "i15".
+ * \brief RSA signature verification engine "i15" (PKCS#1 v1.5 signatures).
  *
  * \see br_rsa_pkcs1_vrfy
  *
@@ -749,6 +981,24 @@ uint32_t br_rsa_i15_pkcs1_vrfy(const unsigned char *x, size_t xlen,
 	const br_rsa_public_key *pk, unsigned char *hash_out);
 
 /**
+ * \brief RSA signature verification engine "i15" (PSS signatures).
+ *
+ * \see br_rsa_pss_vrfy
+ *
+ * \param x          signature buffer.
+ * \param xlen       signature length (in bytes).
+ * \param hf_data    hash function applied on the message.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hash value of the signed message.
+ * \param salt_len   PSS salt length (in bytes).
+ * \param pk         RSA public key.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i15_pss_vrfy(const unsigned char *x, size_t xlen,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
+
+/**
  * \brief RSA private key engine "i15".
  *
  * \see br_rsa_private
@@ -761,7 +1011,7 @@ uint32_t br_rsa_i15_private(unsigned char *x,
 	const br_rsa_private_key *sk);
 
 /**
- * \brief RSA signature generation engine "i15".
+ * \brief RSA signature generation engine "i15" (PKCS#1 v1.5 signatures).
  *
  * \see br_rsa_pkcs1_sign
  *
@@ -774,6 +1024,25 @@ uint32_t br_rsa_i15_private(unsigned char *x,
  */
 uint32_t br_rsa_i15_pkcs1_sign(const unsigned char *hash_oid,
 	const unsigned char *hash, size_t hash_len,
+	const br_rsa_private_key *sk, unsigned char *x);
+
+/**
+ * \brief RSA signature generation engine "i15" (PSS signatures).
+ *
+ * \see br_rsa_pss_sign
+ *
+ * \param rng        PRNG for salt generation (`NULL` if `salt_len` is zero).
+ * \param hf_data    hash function used to hash the signed data.
+ * \param hf_mgf1    hash function to use with MGF1.
+ * \param hash       hashed message.
+ * \param salt_len   salt length (in bytes).
+ * \param sk         RSA private key.
+ * \param x          output buffer for the signature value.
+ * \return  1 on success, 0 on error.
+ */
+uint32_t br_rsa_i15_pss_sign(const br_prng_class **rng,
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
+	const unsigned char *hash_value, size_t salt_len,
 	const br_rsa_private_key *sk, unsigned char *x);
 
 /**
@@ -797,7 +1066,7 @@ br_rsa_public br_rsa_public_get_default(void);
 br_rsa_private br_rsa_private_get_default(void);
 
 /**
- * \brief Get "default" RSA implementation (PKCS#1 signature verification).
+ * \brief Get "default" RSA implementation (PKCS#1 v1.5 signature verification).
  *
  * This returns the preferred implementation of RSA (signature verification)
  * on the current system.
@@ -807,7 +1076,17 @@ br_rsa_private br_rsa_private_get_default(void);
 br_rsa_pkcs1_vrfy br_rsa_pkcs1_vrfy_get_default(void);
 
 /**
- * \brief Get "default" RSA implementation (PKCS#1 signature generation).
+ * \brief Get "default" RSA implementation (PSS signature verification).
+ *
+ * This returns the preferred implementation of RSA (signature verification)
+ * on the current system.
+ *
+ * \return  the default implementation.
+ */
+br_rsa_pss_vrfy br_rsa_pss_vrfy_get_default(void);
+
+/**
+ * \brief Get "default" RSA implementation (PKCS#1 v1.5 signature generation).
  *
  * This returns the preferred implementation of RSA (signature generation)
  * on the current system.
@@ -815,6 +1094,16 @@ br_rsa_pkcs1_vrfy br_rsa_pkcs1_vrfy_get_default(void);
  * \return  the default implementation.
  */
 br_rsa_pkcs1_sign br_rsa_pkcs1_sign_get_default(void);
+
+/**
+ * \brief Get "default" RSA implementation (PSS signature generation).
+ *
+ * This returns the preferred implementation of RSA (signature generation)
+ * on the current system.
+ *
+ * \return  the default implementation.
+ */
+br_rsa_pss_sign br_rsa_pss_sign_get_default(void);
 
 /**
  * \brief Get "default" RSA implementation (OAEP encryption).

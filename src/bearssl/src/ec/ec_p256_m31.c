@@ -1089,7 +1089,7 @@ p256_decode(p256_jacobian *P, const void *src, size_t len)
 	memcpy(P->y, ty, sizeof ty);
 	memset(P->z, 0, sizeof P->z);
 	P->z[0] = 1;
-	return NEQ(bad, 0) ^ 1;
+	return EQ(bad, 0);
 }
 
 /*
