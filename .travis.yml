@@ -10,16 +10,10 @@ cache:
     - ~/.arduino15/packages/
 jobs:
   include:
-    - env:
-      - ARCH="cortex-m0plus"
-      - CORE="adafruit:samd"
-      - BOARD="adafruit:samd:adafruit_feather_m0"
-      - DEPLOY=1
-    - env:
-      - ARCH="cortex-m0plus"
-      - CORE="arduino:samd"
-      - BOARD="arduino:samd:mzero_bl"
-      - DEPLOY=0
+    - stage: "Feather M0"
+      env: BOARD_NAME="FeatherM0" ARCH="cortex-m0plus" CORE="adafruit:samd" BOARD="adafruit:samd:adafruit_feather_m0"
+    - stage: "Arduino Zero"
+      env: BOARD_NAME="ArduinoZero" ARCH="cortex-m0plus" CORE="arduino:samd" BOARD="arduino:samd:mzero_bl"
 
 before_install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
@@ -27,9 +21,11 @@ before_install:
   - arduino-cli core install arduino:samd -v
   - arduino-cli core install adafruit:samd -v --additional-urls $ADDITIONAL_URLS
   - mkdir -p $HOME/Arduino/libraries
+  - rm -rf $HOME/Arduino/libraries/EthernetLarge
   - git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/Arduino/libraries/EthernetLarge
 install:
   - ln -s $PWD $HOME/Arduino/libraries/.
+  - echo "dot_a_linkage=true" >> library.properties 
 script:
   - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetHTTPS
   - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMultiHTTPS
@@ -40,13 +36,14 @@ before_deploy:
   - rm -rf .git
   - find src/ -iname "*.c" -delete
   - find src/ -iname "*.cpp" -delete
-  - zip -r SSLClient.zip .
+  - zip -r SSLClient-$BOARD_NAME.zip .
 deploy:
   provider: releases
   api_key: $GITHUB_TOKEN
-  file: "SSLClient.zip"
+  file: "SSLClient-$BOARD_NAME.zip"
   skip_cleanup: true
-  on:
-    tags: true
-    branch: master
-    condition: $DEPLOY = 1
+  draft: true
+  overwrite: true
+#  on:
+#    tags: true
+#    branch: master

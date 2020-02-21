@@ -20,37 +20,6 @@
 
 #include "SSLClient.h"
 
-#if defined(ARDUINO_ARCH_SAMD)
-// system reset definitions
-static constexpr auto SYSRESETREQ = (1<<2);
-static constexpr auto VECTKEY = (0x05fa0000UL);
-static constexpr auto VECTKEY_MASK = (0x0000ffffUL);
-/** Trigger a software reset. Only use if in unrecoverable state */
-[[ noreturn ]] static void RESET() {
-    (*(uint32_t*)0xe000ed0cUL)=((*(uint32_t*)0xe000ed0cUL)&VECTKEY_MASK)|VECTKEY|SYSRESETREQ;
-    while(1) { }
-}
-
-#ifdef __arm__
-// should use uinstd.h to define sbrk but Due causes a conflict
-extern "C" char* sbrk(int incr);
-#else  // __ARM__
-extern char *__brkval;
-#endif  // __arm__
- 
-/** Get the free memory availible in bytes (stack - heap) */
-static int freeMemory() {
-  char top;
-#ifdef __arm__
-  return &top - reinterpret_cast<char*>(sbrk(0));
-#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
-  return &top - __brkval;
-#else  // __arm__
-  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
-#endif  // __arm__
-}
-#endif // ARDUINO_ARCH_SAMD
-
 /* see SSLClient.h */
 SSLClient::SSLClient(   Client& client, 
                         const br_x509_trust_anchor *trust_anchors, 
@@ -567,31 +536,6 @@ unsigned SSLClient::m_update_engine() {
             // do we have the record you're looking for?
             const auto avail = get_arduino_client().available();
             if (avail > 0) {
-#if defined(ARDUINO_ARCH_SAMD)
-                int mem = freeMemory();
-                // check for a stack overflow
-                // if the stack overflows we basically have to crash, and
-                // hope the user is ok with that
-                // since all memory is garbage we can't trust the cpu to
-                // execute anything properly
-                if (mem > 32 * 1024) {
-                    // software reset
-                    RESET();
-                }
-                // debug info 
-                m_info("Memory: ", func_name);
-                m_info(mem, func_name);
-                // free memory check
-                // BearSSL takes up so much memory on the stack it tends
-                // to overflow if there isn't at least 7000 bytes available
-                // when it starts
-                if(mem < 7000) {
-                    m_error("Out of memory! Decrease the number of sessions or the size of m_iobuf", func_name);
-                    setWriteError(SSL_OUT_OF_MEMORY);
-                    stop();
-                    return 0;
-                }
-#endif
                 // I suppose so!
                 int rlen = get_arduino_client().read(buf, avail < len ? avail : len);
                 if (rlen <= 0) {
