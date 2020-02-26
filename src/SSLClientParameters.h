@@ -26,17 +26,15 @@
  */
 
 #include "bearssl.h"
+#undef min
+#undef max
+#include <vector>
 
 #ifndef SSLClientParameters_H_
 #define SSLClientParameters_H_
 
 /**
- * This file contains a simple struct to package together all the data required to
- * use client certificate authentication with SSLClient.
- */
-
-/**
- * \brief This struct stores data required for SSLClient to use mutual authentication.
+ * \brief This class stores data required for SSLClient to use mutual authentication.
  * 
  * TLS mutual authentication is a process in which both the server and client
  * perform cryptographic operations to verify the authenticity of eachother, for more
@@ -49,18 +47,28 @@
  * At the moment SSLClient only supports mutual authentication using ECC client certificates.
  */
 
-struct SSLClientParameters {
-    /** 
-     * \brief Pointer to the client certificate chain. 
-     * 
-     * Must be availible in memory AT ALL TIMES, should not be a local object.
-     * Certificates must be ordered from Client->Intermediate->...->Root.
-     */
-    const br_x509_certificate* client_cert_chain;
-    /** The number of certificates in SSLClientParameters::client_cert_chain  */
-    const size_t chain_len;
-    /** The private key corresponding to the first certificate in SSLClientParameters::client_cert_chain */
-    const br_ec_private_key ec_key;
+class SSLClientParameters {
+public:
+
+    /*
+    static SSLClientParameters fromECCPEM(const char* cert_pem, const char* key_pem);
+    static SSLClientParameters fromECCDER(const char* cert_der, const char* key_der);
+    static SSLClientParameters fromRSAPEM(const char* cert_pem, const char* key_pem);
+    static SSLClientParameters fromRSADER(const char* cert_der, const char* key_der);
+    */
+
+    const br_x509_certificate* getCertChain() const { return &m_cert_struct; }
+    int getCertType() const { return br_skey_decoder_key_type(&m_key); }
+    const br_ec_private_key* getECKey() const { return br_skey_decoder_get_ec(&m_key); }
+    const br_rsa_private_key* getRSAKey() const { return br_skey_decoder_get_rsa(&m_key); }
+
+// protected:
+    SSLClientParameters(const char* cert, const size_t cert_len, const char* key, const size_t key_len, bool is_der = false);
+
+private:
+    const std::vector<char> m_cert;
+    const br_x509_certificate m_cert_struct;
+    const br_skey_decoder_context m_key;
 };
 
 #endif

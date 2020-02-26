@@ -272,17 +272,25 @@ void SSLClient::removeSession(const char* host) {
 }
 
 /* see SSLClient.h */
-void SSLClient::setMutualAuthParams(const SSLClientParameters* params) {
+void SSLClient::setMutualAuthParams(const SSLClientParameters& params) {
     // if mutual authentication if needed, configure bearssl to support it.
-    if (params != nullptr)
-        br_ssl_client_set_single_ec(    &m_sslctx, 
-                                        params->client_cert_chain, 
-                                        params->chain_len,
-                                        &params->ec_key,
+    if (params.getECKey() != NULL) {
+        br_ssl_client_set_single_ec(    &m_sslctx,
+                                        params.getCertChain(),
+                                        1,
+                                        params.getECKey(),
                                         BR_KEYTYPE_KEYX | BR_KEYTYPE_SIGN,
                                         BR_KEYTYPE_EC,
                                         br_ssl_engine_get_ec(&m_sslctx.eng),
                                         &br_ecdsa_i15_sign_asn1);
+    }
+    else if (params.getRSAKey() != NULL) {
+        br_ssl_client_set_single_rsa(   &m_sslctx,
+                                        params.getCertChain(),
+                                        1,
+                                        params.getRSAKey(),
+                                        &br_rsa_i15_pkcs1_sign);
+    }
 }
 
 bool SSLClient::m_soft_connected(const char* func_name) {

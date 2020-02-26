@@ -21,7 +21,6 @@
 #include "Client.h"
 #include "SSLSession.h"
 #include "SSLClientParameters.h"
-#include "SSLObj.h"
 #include <vector>
 
 #ifndef SSLClient_H_
@@ -313,7 +312,7 @@ public:
      * 
      * @pre SSLClient has not already started an SSL connection.
      */
-    void setMutualAuthParams(const SSLClientParameters* params);
+    void setMutualAuthParams(const SSLClientParameters& params);
 
     /**
      * @brief Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist
