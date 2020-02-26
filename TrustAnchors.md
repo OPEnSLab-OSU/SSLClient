@@ -47,7 +47,7 @@ For HTTPS, there a couple of tools you can use. Ordered from easiest to hardest:
 
 ### Other Connections
 
-For other kinds of SSL connections, you will need to find the root certificate being used by your host. You can check out [this StackExchange post](https://superuser.com/questions/97201/how-to-save-a-remote-server-ssl-certificate-locally-as-a-file) for numerous methods of acquiring this certificate from a server. If these methods are not sufficient, you may need to request this certificate from your network administrator. Once you have the certificate, convert it to PEM format if needed (I use [this website](https://www.sslshopper.com/ssl-converter.html)), and use the `pycert_bearssl.py convet --no-search` command to convert the certificate into a trust anchor header.
+For other kinds of SSL connections, you will need to find the root certificate being used by your host. You can check out [this StackExchange post](https://superuser.com/questions/97201/how-to-save-a-remote-server-ssl-certificate-locally-as-a-file) for numerous methods of acquiring this certificate from a server. If these methods are not sufficient, you may need to request this certificate from your network administrator. Once you have the certificate, convert it to PEM format if needed (I use [this website](https://www.sslshopper.com/ssl-converter.html)), and use the `pycert_bearssl.py convert --no-search` command to convert the certificate into a trust anchor header.
 
 ## Using Trust Anchors
 
