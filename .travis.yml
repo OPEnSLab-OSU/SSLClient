@@ -44,6 +44,6 @@ deploy:
   skip_cleanup: true
   draft: true
   overwrite: true
-#  on:
-#    tags: true
-#    branch: master
+  on:
+    tags: true
+    branch: master
