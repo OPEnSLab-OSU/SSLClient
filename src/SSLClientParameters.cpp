@@ -19,7 +19,15 @@ static void ssl_pem_decode_callback(void *dest_ctx, const void *src, size_t len)
     ctx->index += len;
 }
 
-static const std::vector<char> make_vector_pem(const char* data, const size_t len) {
+/**
+ * Utility function to create a vector of the DER encoded bytes from a PEM
+ * certificate. Useful if we would like to decode certificates that have
+ * been transmitted over the internet.
+ * @param data PEM certificate bytes, including the "BEGIN" and "END" statements.
+ * @param len Number of characters to process, MUST include a whole certificate.
+ * @return A vector of bytes representing the certificate in DER format.
+ */
+static std::vector<char> make_vector_pem(const char* data, const size_t len) {
     if (data == nullptr || len < 80) return {};
     // initialize the bearssl PEM context
     br_pem_decoder_context pctx;
@@ -54,6 +62,14 @@ static const std::vector<char> make_vector_pem(const char* data, const size_t le
     return temp;
 }
 
+/**
+ * Use the br_skey api family to decode a private key into the important numbers.
+ * This function supports both RSA and EC private keys, and returns a context
+ * which can be used by BearSSL later to authenticate with mTLS.
+ * @param der DER encoded certificate, as a vector of bytes.
+ * @returns context used by BearSSL to store information about the keys. You can
+ * use the br_skey_* family of APIs to access information from this context.
+ */
 static br_skey_decoder_context make_key_from_der(const std::vector<char>& der) {
     br_skey_decoder_context out;
     br_skey_decoder_init(&out);
@@ -61,7 +77,18 @@ static br_skey_decoder_context make_key_from_der(const std::vector<char>& der) {
     return out;
 }
 
+/* See SSLClientParams.h */
 SSLClientParameters::SSLClientParameters(const char* cert, const size_t cert_len, const char* key, const size_t key_len, bool is_der)
     : m_cert(is_der ? std::vector<char>(cert, cert + cert_len) : make_vector_pem(cert, cert_len))
     , m_cert_struct{ const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(m_cert.data())), m_cert.size() }
-    , m_key{ make_key_from_der(is_der ? std::vector<char>(key, key + key_len) : make_vector_pem(key, key_len)) } {}
+    , m_key_struct{ make_key_from_der( is_der ? std::vector<char>(key, key + key_len) : make_vector_pem(key, key_len) ) } {}
+
+/* See SSLClientParams.h */
+SSLClientParameters SSLClientParameters::fromPEM(const char* cert_pem, const size_t cert_len, const char* key_pem, const size_t key_len) {
+    return SSLClientParameters(cert_pem, cert_len, key_pem, key_len, false);
+}
+
+/* See SSLClientParams.h */
+SSLClientParameters SSLClientParameters::fromDER(const char* cert_der, const size_t cert_len, const char* key_der, const size_t key_len) {
+    return SSLClientParameters(cert_der, cert_len, key_der, key_len, true);
+}

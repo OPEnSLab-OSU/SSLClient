@@ -687,6 +687,7 @@ void SSLClient::m_print_br_error(const unsigned br_error_code, const DebugLevel 
     case BR_ERR_X509_FORBIDDEN_KEY_USAGE: Serial.println("Key Usage extension prohibits intended usage."); break;
     case BR_ERR_X509_WEAK_PUBLIC_KEY: Serial.println("Public key found in certificate is too small."); break;
     case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor."); break;
+    case 296: Serial.println("Server denied access (did you setup mTLS correctly?)"); break;
     default: Serial.print("Unknown error code: "); Serial.println(br_error_code); break;
   }
 }
