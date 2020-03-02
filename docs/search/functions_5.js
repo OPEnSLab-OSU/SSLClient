@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['operator_20bool',['operator bool',['../class_s_s_l_client.html#a4192ee3562c4806d4a6829356ca2636b',1,'SSLClient']]]
+  ['peek',['peek',['../class_s_s_l_client.html#a0c0b6f2ad25701d1e45adb613d072d86',1,'SSLClient']]]
 ];

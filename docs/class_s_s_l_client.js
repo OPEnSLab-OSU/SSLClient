@@ -30,7 +30,7 @@ var class_s_s_l_client =
     [ "read", "class_s_s_l_client.html#a4c5420541a06213133ae308a3bca1c95", null ],
     [ "read", "class_s_s_l_client.html#aef1b52f4ad9633126cb68739175920eb", null ],
     [ "removeSession", "class_s_s_l_client.html#ad5d9d8a4187a3f8918bf66af83e733c4", null ],
-    [ "setMutualAuthParams", "class_s_s_l_client.html#a9e7ce7f8a72d7cdc071be3fa7a4c8f29", null ],
+    [ "setMutualAuthParams", "class_s_s_l_client.html#aeee217b5558dfb0724f2319888a77256", null ],
     [ "setTimeout", "class_s_s_l_client.html#a8da354f30537c1064d554921937a73ae", null ],
     [ "stop", "class_s_s_l_client.html#ad8ed697371748e31e01c3f697bc36cbe", null ],
     [ "write", "class_s_s_l_client.html#a03c7926938acd57cfc3b982edf725a86", null ],

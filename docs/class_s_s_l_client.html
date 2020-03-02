@@ -166,9 +166,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5488f01ccfddfd9e41f54dfbda48bcae"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a5488f01ccfddfd9e41f54dfbda48bcae">connected</a> () override</td></tr>
 <tr class="memdesc:a5488f01ccfddfd9e41f54dfbda48bcae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the device is connected.  <a href="#a5488f01ccfddfd9e41f54dfbda48bcae">More...</a><br /></td></tr>
 <tr class="separator:a5488f01ccfddfd9e41f54dfbda48bcae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e7ce7f8a72d7cdc071be3fa7a4c8f29"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a9e7ce7f8a72d7cdc071be3fa7a4c8f29">setMutualAuthParams</a> (const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *params)</td></tr>
-<tr class="memdesc:a9e7ce7f8a72d7cdc071be3fa7a4c8f29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a client certificate and enable support for mutual auth.  <a href="#a9e7ce7f8a72d7cdc071be3fa7a4c8f29">More...</a><br /></td></tr>
-<tr class="separator:a9e7ce7f8a72d7cdc071be3fa7a4c8f29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeee217b5558dfb0724f2319888a77256"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#aeee217b5558dfb0724f2319888a77256">setMutualAuthParams</a> (const <a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a> &amp;params)</td></tr>
+<tr class="memdesc:aeee217b5558dfb0724f2319888a77256"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a client certificate and enable support for mutual auth.  <a href="#aeee217b5558dfb0724f2319888a77256">More...</a><br /></td></tr>
+<tr class="separator:aeee217b5558dfb0724f2319888a77256"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bd012ef6f01df9694ba9fd0a3c227c3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_s_l_session.html">SSLSession</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_s_l_client.html#a2bd012ef6f01df9694ba9fd0a3c227c3">getSession</a> (const char *host)</td></tr>
 <tr class="memdesc:a2bd012ef6f01df9694ba9fd0a3c227c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a session reference corresponding to a host and IP, or a reference to a empty session if none exist.  <a href="#a2bd012ef6f01df9694ba9fd0a3c227c3">More...</a><br /></td></tr>
 <tr class="separator:a2bd012ef6f01df9694ba9fd0a3c227c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -810,8 +810,8 @@ There must be a trust anchor given to the constructor that corresponds to the ce
 
 </div>
 </div>
-<a id="a9e7ce7f8a72d7cdc071be3fa7a4c8f29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9e7ce7f8a72d7cdc071be3fa7a4c8f29">&#9670;&nbsp;</a></span>setMutualAuthParams()</h2>
+<a id="aeee217b5558dfb0724f2319888a77256"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeee217b5558dfb0724f2319888a77256">&#9670;&nbsp;</a></span>setMutualAuthParams()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -819,7 +819,7 @@ There must be a trust anchor given to the constructor that corresponds to the ce
         <tr>
           <td class="memname">void SSLClient::setMutualAuthParams </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="struct_s_s_l_client_parameters.html">SSLClientParameters</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a> &amp;&#160;</td>
           <td class="paramname"><em>params</em></td><td>)</td>
           <td></td>
         </tr>

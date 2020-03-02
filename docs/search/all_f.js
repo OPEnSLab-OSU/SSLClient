@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vect',['vect',['../structssl__pem__decode__state.html#a95f2366376d5f958f9bc1e859b59bae9',1,'ssl_pem_decode_state']]]
+  ['write',['write',['../class_s_s_l_client.html#a03c7926938acd57cfc3b982edf725a86',1,'SSLClient::write(const uint8_t *buf, size_t size) override'],['../class_s_s_l_client.html#a7343a58457b4659f83b61cac1f442c3d',1,'SSLClient::write(uint8_t b) override']]]
 ];

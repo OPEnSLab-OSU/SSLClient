@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.15"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SSLClient: Class List</title>
+<title>SSLClient: Member List</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -67,7 +67,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
-$(document).ready(function(){initNavTree('annotated.html','');});
+$(document).ready(function(){initNavTree('class_s_s_l_client_parameters.html','');});
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -87,18 +87,20 @@ $(document).ready(function(){initNavTree('annotated.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Class List</div>  </div>
+<div class="title">SSLClientParameters Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">Here are the classes, structs, unions and interfaces with brief descriptions:</div><div class="directory">
+
+<p>This is the complete list of members for <a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a>, including all inherited members.</p>
 <table class="directory">
-<tr id="row_0_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="structssl__pem__decode__state.html" target="_self">ssl_pem_decode_state</a></td><td class="desc"></td></tr>
-<tr id="row_1_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="class_s_s_l_client.html" target="_self">SSLClient</a></td><td class="desc">The main <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> class. Check out <a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a> for more info </td></tr>
-<tr id="row_2_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="class_s_s_l_client_parameters.html" target="_self">SSLClientParameters</a></td><td class="desc">This class stores data required for <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> to use mutual authentication </td></tr>
-<tr id="row_3_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">C</span></span><a class="el" href="class_s_s_l_session.html" target="_self">SSLSession</a></td><td class="desc">This class stores values which allow <a class="el" href="class_s_s_l_client.html" title="The main SSLClient class. Check out README.md for more info.">SSLClient</a> to save and resume SSL sessions </td></tr>
-</table>
-</div><!-- directory -->
-</div><!-- contents -->
+  <tr class="even"><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#a12e44f4b8340ef7f1dcbbed7649e4bef">fromDER</a>(const char *cert_der, const size_t cert_len, const char *key_der, const size_t key_len)</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#ac5ddf993f7d560581297471593051ea6">fromPEM</a>(const char *cert_pem, const size_t cert_len, const char *key_pem, const size_t key_len)</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#af5686b2c601812f55477a7089b3b2c2d">getCertChain</a>() const</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#a90d581703308881714d64d1ada785ad2">getCertType</a>() const</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#ad9beb80ce98ed9aa34db28783f0264c5">getECKey</a>() const</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#a82c21b0ae4690a6b7842a0d74b12f67f">getRSAKey</a>() const</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html#a97213b5554e90908fbf284669b5f22f3">SSLClientParameters</a>(const char *cert, const size_t cert_len, const char *key, const size_t key_len, bool is_der)</td><td class="entry"><a class="el" href="class_s_s_l_client_parameters.html">SSLClientParameters</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+</table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
