@@ -6,7 +6,7 @@
 
 You can also view this README in [doxygen](https://openslab-osu.github.io/SSLClient/index.html).
 
-SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, SSLClient implements encrypted communication through SSL on devices that do not otherwise support it.
+SSLClient is a simple library to add [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes (though it is better to prefer WiFClient.connectSSL if implemented). In other words, SSLClient implements encrypted communication through TLS on devices that do not otherwise support it.
 
 SSLClient has been tested on the SAMD21, ESP32, TIVA C, and STM32 (in progress). SSClient does not currently support the ESP8266 (see [this issue](https://github.com/OPEnSLab-OSU/SSLClient/issues/5#issuecomment-569968546)).
 
@@ -14,12 +14,12 @@ SSLClient has been tested on the SAMD21, ESP32, TIVA C, and STM32 (in progress).
 
 Using SSLClient should be similar to using any other Arduino-based Client class, since this library was developed around compatibility with [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient). There are a few extra things, however, that you will need to get started:
 
-1. A board with a lot of resources (>110kb flash and >7kb RAM), and a network peripheral with a large internal buffer (>7kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Gotchas](#sslclient-with-ethernet)).
-2. A header containing array of trust anchors, which will look like [this file](./readme/cert.h). These are used to verify the SSL connection later on, and without them you will be unable to use this library. Check out [this document](./TrustAnchors.md) on how to generate this file for your project, and for more information about what a trust anchor is.
-3. A Client class associated with a network interface. We tested this library using [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient), however in theory it will work for any class implementing Client.
-4. An analog pin, used for generating random data at the start of the connection (see the [Implementation Gotchas](#implementation-gotchas)).
+1. **Board and Network Peripheral** - Your board should have a lot of resources (>110kb flash and >7kb RAM), and your network peripheral should have a large internal buffer (>7kb). This library was tested with the [Adafruit Feather M0](https://www.adafruit.com/product/2772) (256K flash, 32K RAM) and the [Adafruit Ethernet Featherwing](https://www.adafruit.com/product/3201) (16kb Buffer), and we still had to modify the Arduino Ethernet library to support larger internal buffers per socket (see the [Implementation Gotchas](#sslclient-with-ethernet)).
+2. **Trust Anchors** - You will need a header containing array of trust anchors ([example](./readme/cert.h)), which are used to verify the SSL connection later on. **This file must generated for every project.** Check out [TrustAnchors.md](./TrustAnchors.md) on how to generate this file for your project, and for more information about what a trust anchor is.
+3. **Network Peripheral Driver Implementing `Client`** - Examples include `EthernetClient`, `WiFiClient`, and so on—SSLClient will run on top of any network driver exposing the `Client` interface. We tested this library using [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient).
+4. **Analog Pin** - Used for generating random data at the start of the connection (see the [Implementation Gotchas](#implementation-gotchas)).
 
-Once all those are ready, you can create a simple SSLClient object like this:
+Once all those are ready, you can create an SSLClient object like this:
 ```C++
 BaseClientType baseClientInstance;
 SSLClient client(baseClientInstance, TAs, (size_t)TAs_NUM, AnalogPin);
@@ -36,7 +36,7 @@ Where:
 EthernetClient baseClient;
 SSLClient client(baseClient, TAs, 2, A7);
  ```
-Once that is setup, simply use SSLClient as you would the base client class:
+Given this client, simply use SSLClient as you would the base client class:
 ```C++
 // connect to ardiuino.cc over ssl (port 443 for websites)
 client.connect("www.arduino.cc", 443);
@@ -135,6 +135,47 @@ SSLClient client(baseClient, TAs, (size_t)2, A7, 3);
 Sessions are managed internally using the SSLSession::getSession function. This function will cycle through sessions in a rotating order, allowing the session cache to continually overwrite old sessions. In general, it is a good idea to use a SessionCache size equal to the number of domains you plan on connecting to.
 
 If you need to clear a session, you can do so using the SSLSession::removeSession function.
+
+### mTLS
+
+As of `v1.6.0`, SSLClient supports [mutual TLS authentication](https://developers.cloudflare.com/access/service-auth/mtls/). mTLS is a varient of TLS that verifys both the server and device identities before a connection, and is commonly used in IoT protocols as a secure layer (MQTT over TLS, HTTPS over TLS, etc.).
+
+To use mTLS with SSLClient you will need to a client certificate and client private key associated with the server you are attempting to connect to. Depending on your use case, you will either generate these yourself (ex. [Mosquito MQTT setup](http://www.steves-internet-guide.com/creating-and-using-client-certificates-with-mqtt-and-mosquitto/)), or have them generated for you (ex. [AWS IoT Certificate Generation](https://docs.aws.amazon.com/iot/latest/developerguide/create-device-certificate.html)). Given this cryptographic information, you can modify the standard SSLClient connection sketch to enable mTLS authentication:
+```C++
+...
+/* Somewhere above setup() */
+
+// The client certificate, can be PEM or DER format
+// DER format will be an array of raw bytes, and PEM format will be a string
+// PEM format is shown below
+const char my_cert[] = 
+"-----BEGIN CERTIFICATE-----\n"
+"MIIDpDCCAowCCQC7mCk5Iu3YmDANBgkqhkiG9w0BAQUFADCBkzELMAkGA1UEBhMC\n"
+...
+"-----END CERTIFICATE-----\n";
+
+// The client private key, must be the same format as the client certificate
+// Both RSA and ECC are supported, ECC is shown below
+const char my_key[] = 
+"-----BEGIN EC PRIVATE KEY-----\n"
+...
+"-----END EC PRIVATE KEY-----\n";
+
+// This line will parse and store the above information so SSLClient can use it later
+// Replace `fromPEM` with `fromDER` if you are using DER formatted certificates.
+SSLClientParameters mTLS = SSLClientParameters::fromPEM(my_cert, sizeof(cert), my_key, sizeof(key));
+SSLClient my_client(...);
+...
+void setup() {
+    ...
+    /* Before SSLClient connects */
+
+    my_client.setMutualAuthParams(mTLS);
+    ...
+}
+...
+```
+Note that both the above client information *as well as* the correct trust anchors associated with the server are needed for the connection to succeed. Additionally, the certificate must be formatted correctly (according to [BearSSL's specification](https://bearssl.org/apidoc/bearssl__pem_8h.html)) in order for mTLS to work. If the certificate is improperly formatted, SSLClient will attempt to make a regular TLS connection instead of an mTLS one, and fail to connect as a result. Because of this, if you are seeing errors similar to `"peer did not send certificate chain"` on your server, check that your certificate and key are formatted correctly (see https://github.com/OPEnSLab-OSU/SSLClient/issues/7#issuecomment-593704969). For more information on SSLClient's mTLS functionality, please see the [SSLClientParameters documentation](https://openslab-osu.github.io/SSLClient/class_s_s_l_client_parameters.html).
 
 ## Implementation Gotchas
 
