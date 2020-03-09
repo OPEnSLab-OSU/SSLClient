@@ -19,12 +19,11 @@ jobs:
     - name: "ESP32"
       env: CORE="esp32:esp32" BOARD="esp32:esp32:d32"
     - name: "STM32"
-      env: CORE="STM32:stm32" BOARD="STM32:stm32:Nucleo_144"
+      env: CORE="STM32:stm32" BOARD="STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI"
       script:
-        - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/stm32/EthernetHTTPSstm32
+        - arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/stm32/EthernetHTTPSstm32
     - stage: "Deploy"
       if: branch = master AND tag is present
-      env: DEPLOY=1
       script: skip
       deploy:
         provider: releases
@@ -46,6 +45,6 @@ install:
   - ln -s $PWD $HOME/Arduino/libraries/.
 
 script:
-  - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetHTTPS
-  - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMultiHTTPS
-  - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMQTT
+  - arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/EthernetHTTPS
+  - arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/EthernetMultiHTTPS
+  - arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/EthernetMQTT
