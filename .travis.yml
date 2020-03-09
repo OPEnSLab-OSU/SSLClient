@@ -3,47 +3,49 @@ env:
   global:
      # You can uncomment this to explicitly choose an (old) version of the Arduino IDE
      #- ARDUINO_IDE_VERSION="1.8.7"
-    - ADDITIONAL_URLS="https://adafruit.github.io/arduino-board-index/package_adafruit_index.json"
+    - ADDITIONAL_URLS="https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
 cache:
   directories:
     - ~/arduino_ide
     - ~/.arduino15/packages/
+
 jobs:
   include:
-    - stage: "Feather M0"
-      env: BOARD_NAME="FeatherM0" ARCH="cortex-m0plus" CORE="adafruit:samd" BOARD="adafruit:samd:adafruit_feather_m0"
-    - stage: "Arduino Zero"
-      env: BOARD_NAME="ArduinoZero" ARCH="cortex-m0plus" CORE="arduino:samd" BOARD="arduino:samd:mzero_bl"
+    - stage: "Build"
+      name: "Feather M0"
+      env: CORE="adafruit:samd" BOARD="adafruit:samd:adafruit_feather_m0"
+    - name: "Arduino Zero"
+      env: CORE="arduino:samd" BOARD="arduino:samd:mzero_bl"
+    - name: "ESP32"
+      env: CORE="esp32:esp32" BOARD="esp32:esp32:d32"
+    - name: "STM32"
+      env: CORE="STM32:stm32" BOARD="STM32:stm32:Nucleo_144"
+      script:
+        - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/stm32/EthernetHTTPSstm32
+    - stage: "Deploy"
+      if: branch = master AND tag is present
+      env: DEPLOY=1
+      script: skip
+      deploy:
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file: "SSLClient.zip"
+        skip_cleanup: true
 
-before_install:
+
+install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
   - arduino-cli core update-index --additional-urls $ADDITIONAL_URLS
   - arduino-cli core install arduino:samd -v
-  - arduino-cli core install adafruit:samd -v --additional-urls $ADDITIONAL_URLS
+  - arduino-cli core install $CORE -v --additional-urls $ADDITIONAL_URLS
   - mkdir -p $HOME/Arduino/libraries
   - rm -rf $HOME/Arduino/libraries/EthernetLarge
   - git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/Arduino/libraries/EthernetLarge
-install:
+  - arduino-cli lib install "STM32duino STM32Ethernet"
+  - arduino-cli lib install "PubSubClient"
   - ln -s $PWD $HOME/Arduino/libraries/.
-  - echo "dot_a_linkage=true" >> library.properties 
+
 script:
   - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetHTTPS
   - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMultiHTTPS
-before_deploy:
-  - mkdir src/$ARCH
-  - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" src/$ARCH/
-  - cp .travis/library.properties .
-  - rm -rf .git
-  - find src/ -iname "*.c" -delete
-  - find src/ -iname "*.cpp" -delete
-  - zip -r SSLClient-$BOARD_NAME.zip .
-deploy:
-  provider: releases
-  api_key: $GITHUB_TOKEN
-  file: "SSLClient-$BOARD_NAME.zip"
-  skip_cleanup: true
-  draft: true
-  overwrite: true
-  on:
-    tags: true
-    branch: master
+  - arduino-cli compile --verbose --warnings all --fqbn $BOARD $PWD/examples/EthernetMQTT
