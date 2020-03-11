@@ -48,13 +48,15 @@ jobs:
         github_token: $GITHUB_TOKEN
 
     - stage: "Deploy"
-      if: branch = master AND tag is present
+      if: tag is present
       script: skip
       deploy:
         provider: releases
         api_key: $GITHUB_TOKEN
         file: "SSLClient.zip"
         skip_cleanup: true
+        on:
+          branch: master
 
 install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
