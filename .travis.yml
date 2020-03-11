@@ -56,6 +56,8 @@ jobs:
         api_key: $GITHUB_TOKEN
         file: "SSLClient.zip"
         skip_cleanup: true
+        on:
+          tags: true
 
 install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
