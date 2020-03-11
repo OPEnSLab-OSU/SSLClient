@@ -49,6 +49,7 @@ jobs:
 
     - stage: "Deploy"
       if: tag is present
+      install: skip
       script: skip
       deploy:
         provider: releases
