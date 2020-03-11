@@ -4,10 +4,27 @@ env:
      # You can uncomment this to explicitly choose an (old) version of the Arduino IDE
      #- ARDUINO_IDE_VERSION="1.8.7"
     - ADDITIONAL_URLS="https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
+    - DOXYFILE=$TRAVIS_BUILD_DIR/.travis/Doxyfile
+
 cache:
   directories:
     - ~/arduino_ide
     - ~/.arduino15/packages/
+
+# Blacklist
+branches:
+  except:
+    - gh-pages
+
+# Install dependencies
+addons:
+  apt:
+    packages:
+      - doxygen
+      - doxygen-doc
+      - doxygen-latex
+      - doxygen-gui
+      - graphviz
 
 jobs:
   include:
@@ -22,6 +39,18 @@ jobs:
       env: CORE="STM32:stm32" BOARD="STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI"
       script:
         - arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/stm32/EthernetHTTPSstm32
+    
+    - stage: "Documentation"
+      if: branch = master
+      install: skip
+      script:
+        - doxygen $DOXYFILE
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        local_dir: docs/html
+        github_token: $GITHUB_TOKEN
+
     - stage: "Deploy"
       if: branch = master AND tag is present
       script: skip
@@ -30,7 +59,6 @@ jobs:
         api_key: $GITHUB_TOKEN
         file: "SSLClient.zip"
         skip_cleanup: true
-
 
 install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
