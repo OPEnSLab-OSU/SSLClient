@@ -61,7 +61,7 @@ jobs:
         - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/cortex-m0plus/SSLClient.a
         - rm -rf /tmp/arduino-sketch*
         # cortex-m7
-        - arduino-cli compile --fqbn STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI $PWD/examples/EthernetHTTPS
+        - arduino-cli compile --fqbn STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI $PWD/examples/stm32/EthernetHTTPSstm32
         - mkdir tmp-bin/cortex-m7
         - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/cortex-m7/SSLClient.a
         - rm -rf /tmp/arduino-sketch*
