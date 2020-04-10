@@ -48,16 +48,40 @@ jobs:
         github_token: $GITHUB_TOKEN
 
     - stage: "Deploy"
-      if: tag is present
-      install: skip
+      # if: tag is present
+      env: CORE="arduino:samd esp32:esp32 STM32:stm32" ARCH="cortex-m0plus"
       script: skip
+      before_deploy:
+        - mkdir tmp-bin
+        - echo "dot_a_linkage=true" >> library.properties 
+        - rm -rf /tmp/arduino-sketch*
+        # cortex-m0plus
+        - arduino-cli compile --fqbn arduino:samd:mzero_bl $PWD/examples/EthernetHTTPS
+        - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/cortex-m0plus/SSLClient.a
+        - rm -rf /tmp/arduino-sketch*
+        # cortex-m7
+        - arduino-cli compile --fqbn STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI $PWD/examples/EthernetHTTPS
+        - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/cortex-m7/SSLClient.a
+        - rm -rf /tmp/arduino-sketch*
+        # esp32
+        - arduino-cli compile --fqbn esp32:esp32:d32 $PWD/examples/EthernetHTTPS
+        - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/esp32/SSLClient.a
+        # bundle it up!
+        - echo "precompiled=true" >> library.properties
+        - mv tmp-bin/* src/
+        - rm -rf tmp-bin
+        - rm -rf .git
+        - find src/ -iname "*.c" -delete
+        - find src/ -iname "*.cpp" -delete
+        - zip -r SSLClient-precompiled.zip .
       deploy:
         provider: releases
         api_key: $GITHUB_TOKEN
-        file: "SSLClient.zip"
         skip_cleanup: true
-        on:
-          tags: true
+        file: "SSLClient-precompiled.zip"
+        draft: true
+        #on:
+        #  tags: true
 
 install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
