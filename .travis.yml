@@ -84,7 +84,6 @@ jobs:
         api_key: $GITHUB_TOKEN
         skip_cleanup: true
         file: "SSLClient-precompiled.zip"
-        draft: true
         on:
           tags: true
 
