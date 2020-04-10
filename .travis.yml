@@ -48,11 +48,12 @@ jobs:
         github_token: $GITHUB_TOKEN
 
     - stage: "Deploy"
-      # if: tag is present
+      if: tag is present
       env: CORE="arduino:samd esp32:esp32 STM32:stm32"
       script: skip
       before_deploy:
         - mkdir tmp-bin
+        - cp library.properties library.properties.old
         - echo "dot_a_linkage=true" >> library.properties 
         - rm -rf /tmp/arduino-sketch*
         # cortex-m0plus
@@ -70,6 +71,7 @@ jobs:
         - mkdir tmp-bin/esp32
         - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/esp32/SSLClient.a
         # bundle it up!
+        - mv library.properties.old library.properties
         - echo "precompiled=true" >> library.properties
         - mv tmp-bin/* src/
         - rm -rf tmp-bin
@@ -83,8 +85,8 @@ jobs:
         skip_cleanup: true
         file: "SSLClient-precompiled.zip"
         draft: true
-        #on:
-        #  tags: true
+        on:
+          tags: true
 
 install:
   - curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
