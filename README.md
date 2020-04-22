@@ -6,7 +6,7 @@ You can also view this README in [doxygen](https://openslab-osu.github.io/SSLCli
 
 SSLClient adds [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes. Unlike [ArduinoBearSSL](https://github.com/arduino-libraries/ArduinoBearSSL), SSLClient is completly self-contained, and does not require any additional hardware (other than a network connection).
 
-SSLClient officially supports SAMD21, ESP32, TIVA C, and STM32, but should work on any board with at least 110kb flash and 7kb RAM. SSClient does not currently support ESP8266 (see [this issue](https://github.com/OPEnSLab-OSU/SSLClient/issues/5#issuecomment-569968546)) or AVR due to memory contraints on both platforms.
+SSLClient officially supports SAMD21, ESP32, TIVA C, and STM32; but it should work on any board with at least 110kb flash and 7kb RAM. SSClient does not currently support ESP8266 (see [this issue](https://github.com/OPEnSLab-OSU/SSLClient/issues/5#issuecomment-569968546)) or AVR due to memory contraints on both platforms.
 
 ## Overview
 
