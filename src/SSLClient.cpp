@@ -101,35 +101,31 @@ size_t SSLClient::write(const uint8_t *buf, size_t size) {
     size_t alen;
     unsigned char *br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
     size_t cur_idx = 0;
-    bool did_overflow = false;
     // while there are still elements to write
     while (cur_idx < size) {
-        // run until the ssl socket is ready to write, unless we've already written
-        // to the buffer in which we conclude it's already safe to write
-        if(m_write_idx == 0) {
+        // if we're about to fill the buffer, we need to send the data and then wait
+        // for another oppurtinity to send
+        // so we only send the smallest of the buffer size or our data size - how much we've already sent
+        const size_t cpamount = size - cur_idx >= alen - m_write_idx ? alen - m_write_idx : size - cur_idx;
+        memcpy(br_buf + m_write_idx, buf + cur_idx, cpamount);
+        // increment write idx
+        m_write_idx += cpamount;
+        // increment the buffer pointer
+        cur_idx += cpamount;
+        // if we filled the buffer, reset m_write_idx, and mark the data for sending
+        if(m_write_idx == alen) {
+            // indicate to bearssl that we are done writing
+            br_ssl_engine_sendapp_ack(&m_sslctx.eng, m_write_idx);
+            // reset the write index
+            m_write_idx = 0;
+            // write to the socket immediatly
             if (m_run_until(BR_SSL_SENDAPP) < 0) {
                 m_error("Failed while waiting for the engine to enter BR_SSL_SENDAPP", func_name);
                 return 0;
             }
             // reset the buffer pointer
-            br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
+            br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
         }
-        // if we're about to fill the buffer, we need to send the data and then wait
-        // for another oppurtinity to send
-        // so we only send the smallest of the buffer size or our data size - how much we've already sent
-        const size_t cpamount = m_write_idx + (size - cur_idx) > alen ? alen : size - cur_idx;
-        memcpy(br_buf + m_write_idx, buf + cur_idx, cpamount);
-        // if we filled the buffer, reset m_write_idx, and mark the data for sending
-        // or if we've overflowed since we're writing to the network already we may as well finish
-        if (cpamount == alen || did_overflow) {
-            m_write_idx = 0;
-            br_ssl_engine_sendapp_ack(&m_sslctx.eng, alen);
-            did_overflow = true;
-        }
-        // else increment
-        else m_write_idx += cpamount;
-        // increment the buffer pointer
-        cur_idx += cpamount;
     } 
     // works oky
     return size;
@@ -686,7 +682,7 @@ void SSLClient::m_print_br_error(const unsigned br_error_code, const DebugLevel 
     case BR_ERR_X509_NOT_CA: Serial.println("Not a CA, or path length constraint violation."); break;
     case BR_ERR_X509_FORBIDDEN_KEY_USAGE: Serial.println("Key Usage extension prohibits intended usage."); break;
     case BR_ERR_X509_WEAK_PUBLIC_KEY: Serial.println("Public key found in certificate is too small."); break;
-    case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor."); break;
+    case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor. See https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md"); break;
     case 296: Serial.println("Server denied access (did you setup mTLS correctly?)"); break;
     default: Serial.print("Unknown error code: "); Serial.println(br_error_code); break;
   }
