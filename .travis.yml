@@ -32,7 +32,7 @@ jobs:
     - name: "ESP32"
       env: CORE="esp32:esp32" BOARD="esp32:esp32:d32"
     - name: "STM32"
-      env: CORE="STM32:stm32" BOARD="STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI"
+      env: CORE="STM32:stm32@1.8.0" BOARD="STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI"
       script:
         - arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/stm32/EthernetHTTPSstm32
     
@@ -49,7 +49,7 @@ jobs:
 
     - stage: "Deploy"
       if: tag is present
-      env: CORE="arduino:samd esp32:esp32 STM32:stm32"
+      env: CORE="arduino:samd esp32:esp32 STM32:stm32@1.8.0"
       script: skip
       before_deploy:
         - mkdir tmp-bin
