@@ -1,7 +1,7 @@
 #include "SSLClientParameters.h"
 
-// fix for non-exception arduino platforms
-#ifdef ADAFRUIT_FEATHER_M0
+// fix for non-exception arduino platforms (Feather and Teensy 4.0)
+#if defined ADAFRUIT_FEATHER_M0 || defined __IMXRT1062__
 namespace std {
     void __throw_length_error(char const*) {}
 }
