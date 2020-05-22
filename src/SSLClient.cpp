@@ -182,7 +182,14 @@ int SSLClient::peek() {
 /* see SSLClient.h */
 void SSLClient::flush() {
     if (m_write_idx > 0)
-        if(m_run_until(BR_SSL_RECVAPP) < 0) m_error("Could not flush write buffer!", __func__);
+        if(m_run_until(BR_SSL_RECVAPP) < 0) {
+            m_error("Could not flush write buffer!", __func__);
+            int error = br_ssl_engine_last_error(&m_sslctx.eng);
+            if(error != BR_ERR_OK) 
+                m_print_br_error(error, SSL_ERROR);
+            if (getWriteError()) 
+                m_print_ssl_error(getWriteError(), SSL_ERROR);
+        }
 }
 
 /* see SSLClient.h */
@@ -293,7 +300,7 @@ bool SSLClient::m_soft_connected(const char* func_name) {
     // check if the socket is still open and such
     if (getWriteError()) {
         m_error("Cannot operate if the write error is not reset: ", func_name); 
-        m_print_ssl_error(getWriteError(), SSL_ERROR);      
+        m_print_ssl_error(getWriteError(), SSL_ERROR);
         return false;
     }
     // check if the ssl engine is still open
