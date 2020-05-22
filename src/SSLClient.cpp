@@ -465,6 +465,7 @@ unsigned SSLClient::m_update_engine() {
 
             buf = br_ssl_engine_sendrec_buf(&m_sslctx.eng, &len);
             wlen = get_arduino_client().write(buf, len);
+            get_arduino_client().flush();
             if (wlen <= 0) {
                 // if the arduino client encountered an error
                 if (get_arduino_client().getWriteError() || !get_arduino_client().connected()) {
