@@ -1,11 +1,10 @@
 #include "SSLClientParameters.h"
 
 // fix for non-exception arduino platforms (Feather and Teensy 4.0)
-#if defined ADAFRUIT_FEATHER_M0 || defined __IMXRT1062__
-namespace std {
-    void __throw_length_error(char const*) {}
+extern "C"{
+    int attribute((weak)) __exidx_start(){ return -1;}
+    int attribute((weak)) __exidx_end(){ return -1; }
 }
-#endif
 
 struct ssl_pem_decode_state {
     std::vector<char>* vect;
