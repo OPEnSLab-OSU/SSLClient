@@ -81,7 +81,7 @@ static br_skey_decoder_context make_key_from_der(const std::vector<char>& der) {
 SSLClientParameters::SSLClientParameters(const char* cert, const size_t cert_len, const char* key, const size_t key_len, bool is_der)
     : m_cert(is_der ? std::vector<char>(cert, cert + cert_len) : make_vector_pem(cert, cert_len))
     , m_cert_struct{ const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(m_cert.data())), m_cert.size() }
-    , m_key_struct{ make_key_from_der( is_der ? std::vector<char>(key, key + key_len) : make_vector_pem(key, key_len) ) } {}
+    , m_key_struct( make_key_from_der( is_der ? std::vector<char>(key, key + key_len) : make_vector_pem(key, key_len) ) ) {}
 
 /* See SSLClientParams.h */
 SSLClientParameters SSLClientParameters::fromPEM(const char* cert_pem, const size_t cert_len, const char* key_pem, const size_t key_len) {

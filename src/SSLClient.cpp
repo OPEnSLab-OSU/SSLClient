@@ -181,7 +181,7 @@ int SSLClient::peek() {
 
 /* see SSLClient.h */
 void SSLClient::flush() {
-    if (m_write_idx > 0)
+    if (m_write_idx > 0) {
         if(m_run_until(BR_SSL_RECVAPP) < 0) {
             m_error("Could not flush write buffer!", __func__);
             int error = br_ssl_engine_last_error(&m_sslctx.eng);
@@ -190,6 +190,7 @@ void SSLClient::flush() {
             if (getWriteError()) 
                 m_print_ssl_error(getWriteError(), SSL_ERROR);
         }
+    }
 }
 
 /* see SSLClient.h */
