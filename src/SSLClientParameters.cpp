@@ -1,10 +1,10 @@
 #include "SSLClientParameters.h"
 
 // fix for non-exception arduino platforms (Feather and Teensy 4.0)
-extern "C"{
-    int __attribute__((weak)) __exidx_start(){ return -1;}
-    int __attribute__((weak)) __exidx_end(){ return -1; }
+namespace std {
+    void __attribute__((weak)) __throw_length_error(char const*) {}
 }
+
 
 struct ssl_pem_decode_state {
     std::vector<char>* vect;
