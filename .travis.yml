@@ -29,6 +29,8 @@ jobs:
       env: CORE="adafruit:samd" BOARD="adafruit:samd:adafruit_feather_m0"
     - name: "Arduino Zero"
       env: CORE="arduino:samd" BOARD="arduino:samd:mzero_bl"
+    - name: "Arduino Due"
+      env: CORE="arduino:sam" BOARD="arduino:sam:arduino_due_x"
     - name: "ESP32"
       env: CORE="esp32:esp32" BOARD="esp32:esp32:d32"
     - name: "STM32"
@@ -49,7 +51,7 @@ jobs:
 
     - stage: "Deploy"
       if: tag is present
-      env: CORE="arduino:samd esp32:esp32 STM32:stm32"
+      env: CORE="arduino:samd arduino:sam esp32:esp32 STM32:stm32"
       script: skip
       before_deploy:
         - mkdir tmp-bin
@@ -60,6 +62,11 @@ jobs:
         - arduino-cli compile --fqbn arduino:samd:mzero_bl $PWD/examples/EthernetHTTPS
         - mkdir tmp-bin/cortex-m0plus
         - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/cortex-m0plus/SSLClient.a
+        - rm -rf /tmp/arduino-sketch*
+        # cortex-m3
+        - arduino-cli compile --fqbn arduino:sam:arduino_due_x $PWD/examples/EthernetHTTPS
+        - mkdir tmp-bin/cortex-m3
+        - cp "$(find /tmp/ -maxdepth 1 -type d -name "arduino-sketch*" -print | head -n 1)/libraries/SSLClient/SSLClient.a" tmp-bin/cortex-m3/SSLClient.a
         - rm -rf /tmp/arduino-sketch*
         # cortex-m7
         - arduino-cli compile --fqbn STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI $PWD/examples/stm32/EthernetHTTPSstm32
