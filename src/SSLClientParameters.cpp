@@ -2,8 +2,8 @@
 
 // fix for non-exception arduino platforms (Feather and Teensy 4.0)
 extern "C"{
-    int attribute((weak)) __exidx_start(){ return -1;}
-    int attribute((weak)) __exidx_end(){ return -1; }
+    int __attribute__((weak)) __exidx_start(){ return -1;}
+    int __attribute__((weak)) __exidx_end(){ return -1; }
 }
 
 struct ssl_pem_decode_state {
