@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
+Write some steps to reproduce the behavior. Be sure to include the vant hardware required, if any.
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
