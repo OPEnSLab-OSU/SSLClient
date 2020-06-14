@@ -192,22 +192,22 @@ void SSLClient::flush() {
 /* see SSLClient.h */
 void SSLClient::stop() {
     // tell the SSL connection to gracefully close
-    br_ssl_engine_close(&m_sslctx.eng);
+    // Disabled to prevent close_notify from hanging SSLClient
+    // br_ssl_engine_close(&m_sslctx.eng);
     // if the engine isn't closed, and the socket is still open
-    const auto state = br_ssl_engine_current_state(&m_sslctx.eng);
-    while (getWriteError() == SSL_OK
-        && m_is_connected
-        && state != BR_SSL_CLOSED
+    auto state = br_ssl_engine_current_state(&m_sslctx.eng);
+    if (state != BR_SSL_CLOSED
         && state != 0
-        && m_run_until(BR_SSL_SENDAPP | BR_SSL_RECVAPP) == 0) {
+        && connected()) {
         /*
 		 * Discard any incoming application data.
 		 */
 		size_t len;
-
 		if (br_ssl_engine_recvapp_buf(&m_sslctx.eng, &len) != nullptr) {
 			br_ssl_engine_recvapp_ack(&m_sslctx.eng, len);
 		}
+        // run SSL to finish any existing transactions
+        flush();
 	}
     // close the ethernet socket
     get_arduino_client().flush();
