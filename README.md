@@ -264,3 +264,10 @@ to this:
 br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
 ```
 If for some unfortunate reason you need SSL 3.0 or SSL 2.0, you will need to modify the BearSSL profile to enable support. Check out the [BearSSL profiles documentation](https://bearssl.org/api1.html#profiles) and I wish you the best of luck.
+
+### Known Issues
+ * In some drivers (Ethernet), calls to `Client::flush` will hang if internet is available but there is no route to the destination. Unfortunately SSLClient cannot correct for this without modifying the driver itself, and as a result the recommended solution is ensuring you choose a driver with built-in timeouts to prevent freezing. [More information here](https://github.com/OPEnSLab-OSU/SSLClient/issues/13#issuecomment-643855923).
+ * When using PubSubClient on the ESP32, a stack overflow will occur if the user does not flush the buffer immediately after writing. The cause of this issue is under active investigation. More information in issue https://github.com/OPEnSLab-OSU/SSLClient/issues/9.
+ * Previous to SSLClient v1.6.7, calls to `SSLClient::stop` would sometimes hang the device. More information in issue https://github.com/OPEnSLab-OSU/SSLClient/issues/13.
+ * Previous to SSLClient v1.6.6, calls to `SSLClient::connect` would fail if the driver indicated that a socket was already opened (`Client::connected` returned true). This behavior created unintentional permanent failures when `Client::stop` would fail to close the socket, and as a result was downgraded to a warning in v1.6.6.
+ * Previous to SSLClient v1.6.3, calling `SSLClient::write` with more than 2Kb of total data before flushing the write buffer would cause a buffer overflow.
