@@ -35,9 +35,15 @@ static const br_x509_trust_anchor TAs[] = {
     },
 };
 ```
-A full example of a trust anchor header can be found in [this file](./readme/cert.h). Full documentation for the format of these variables can be found in the [BearSSL documentation for br_x509_trust_anchor](https://bearssl.org/apidoc/structbr__x509__trust__anchor.html).
+A full example of a trust anchor header can be found in [this file](./readme/cert.h). Full documentation for the format of these variables can be found in the [BearSSL documentation for br_x509_trust_anchor](https://bearssl.org/apidoc/structbr__x509__trust__anchor.html). 
+
+
 
 ## Generating Trust Anchors
+
+Typically a trust anchor header file is generated using [brssl](https://bearssl.org/gitweb/?p=BearSSL;a=tree;f=tools;h=0fa053e41d6bf88a28472f3b22dde41b21f14292;hb=dda1f8a0c46e15b4a235163470ff700b2f13dcc5), a command-line utility included in BearSSL. As it is a fairly involded process to get brssl working, SSLClient provides a number of alternative tools to make the generation process a bit easier.
+
+**Note:** When working with certificates (particularly in complicated mTLS setups), it can easily become confusing which certificate does what. If you aren't sure what certificate to put into the Trust Anchor tool, remember that Trust Anchors *only care about the verifying the server*: in other words, the certificate that goes into a Trust Anchor generation tool should be the certificate used to generate the server's certificate (usually a CA). Trust Anchors will never contain any information about client certificates, which should be passed into [SSLClientParams](https://github.com/OPEnSLab-OSU/SSLClient#mtls) instead.
 
 ### HTTPS
 
