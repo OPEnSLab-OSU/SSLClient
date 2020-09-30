@@ -143,7 +143,7 @@ int SSLClient::available() {
     }
     else if (state == BR_SSL_CLOSED) m_info("Engine closed after update", func_name);
     // flush the buffer if it's stuck in the SENDAPP state
-    else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
+    // else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
     // other state, or client is closed
     return 0;
 }
