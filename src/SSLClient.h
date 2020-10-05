@@ -72,6 +72,8 @@ public:
         SSL_WARN = 2,
         /** Output errors, warnings, and internal information (very verbose) */
         SSL_INFO = 3,
+        /** In addition to the above logs, dumps every byte in SSLClient::write to the Serial monitor */
+        SSL_DUMP = 4,
     };
 
     /**
@@ -394,6 +396,9 @@ private:
     /** @brief Print the text string associated with a BearSSL error code */
     void m_print_br_error(const unsigned br_error_code, const DebugLevel level) const;
 
+    /** @brief Print the text string associated with the BearSSL state */
+    void m_print_br_state(const unsigned br_state, const DebugLevel level) const;
+
     /** @brief debugging print function, only prints if m_debug is true */
     template<typename T>
     void m_print(const T str, const char* func_name, const DebugLevel level) const { 
@@ -453,6 +458,8 @@ private:
     // so we can send our records all at once to prevent
     // weird timing issues
     size_t m_write_idx;
+    // store the last BearSSL state so we can print changes to the console
+    unsigned m_br_last_state;
 };
 
 #endif /** SSLClient_H_ */

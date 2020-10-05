@@ -33,7 +33,8 @@ SSLClient::SSLClient(   Client& client,
     , m_analog_pin(analog_pin)
     , m_debug(debug)
     , m_is_connected(false)
-    , m_write_idx(0) {
+    , m_write_idx(0)
+    , m_br_last_state(0) {
 
     setTimeout(30*1000);
     // zero the iobuf just in case it's still garbage
@@ -91,6 +92,8 @@ int SSLClient::connect(const char *host, uint16_t port) {
 /* see SSLClient.h*/
 size_t SSLClient::write(const uint8_t *buf, size_t size) {
     const char* func_name = __func__;
+    // super debug
+    if (m_debug >= DebugLevel::SSL_DUMP) Serial.write(buf, size);
     // check if the socket is still open and such
     if (!m_soft_connected(func_name) || !buf || !size) return 0;
     // add to the bearssl io buffer, simply appending whatever we want to write
@@ -143,7 +146,7 @@ int SSLClient::available() {
     }
     else if (state == BR_SSL_CLOSED) m_info("Engine closed after update", func_name);
     // flush the buffer if it's stuck in the SENDAPP state
-    // else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
+    else if (state & BR_SSL_SENDAPP) br_ssl_engine_flush(&m_sslctx.eng, 0);
     // other state, or client is closed
     return 0;
 }
@@ -367,7 +370,7 @@ int SSLClient::m_run_until(const unsigned target) {
     const unsigned long start = millis();
     for (;;) {
         unsigned state = m_update_engine();
-	// error check
+	    // error check
         if (state == BR_SSL_CLOSED || getWriteError() != SSL_OK) {
             if (state == BR_SSL_CLOSED) {
                 m_warn("Terminating because the ssl engine closed", func_name);
@@ -389,17 +392,7 @@ int SSLClient::m_run_until(const unsigned target) {
         if (state != lastState || lastState == 0) {
             lastState = state;
             m_info("m_run changed state:", func_name);
-            if(m_debug == DebugLevel::SSL_INFO) {
-                m_info("State: ", func_name);
-                if(state == 0) Serial.println("    Invalid");
-                else if (state & BR_SSL_CLOSED) Serial.println("   Connection closed");
-                else {
-                    if (state & BR_SSL_SENDREC) Serial.println("   SENDREC");
-                    if (state & BR_SSL_RECVREC) Serial.println("   RECVREC");
-                    if (state & BR_SSL_SENDAPP) Serial.println("   SENDAPP");
-                    if (state & BR_SSL_RECVAPP) Serial.println("   RECVAPP");
-                }
-            }
+            m_print_br_state(state, DebugLevel::SSL_INFO);
         }
         if (state & BR_SSL_RECVREC) {
             size_t len;
@@ -457,6 +450,11 @@ unsigned SSLClient::m_update_engine() {
     for(;;) {
         // get the state
         unsigned state = br_ssl_engine_current_state(&m_sslctx.eng);
+        // debug
+        if (m_br_last_state == 0 || state != m_br_last_state) {
+            m_br_last_state = state;
+            m_print_br_state(state, DebugLevel::SSL_INFO);
+        }
         if (state & BR_SSL_CLOSED) return state;
         /*
         * If there is some record data to send, do it. This takes
@@ -627,68 +625,84 @@ void SSLClient::m_print_ssl_error(const int ssl_error, const DebugLevel level) c
 
 /* See SSLClient.h */
 void SSLClient::m_print_br_error(const unsigned br_error_code, const DebugLevel level) const {
-  if (level > m_debug) return;
-  m_print_prefix(__func__, level);
-  switch (br_error_code) {
-    case BR_ERR_BAD_PARAM: Serial.println("Caller-provided parameter is incorrect."); break;
-    case BR_ERR_BAD_STATE: Serial.println("Operation requested by the caller cannot be applied with the current context state (e.g. reading data while outgoing data is waiting to be sent)."); break;
-    case BR_ERR_UNSUPPORTED_VERSION: Serial.println("Incoming protocol or record version is unsupported."); break;
-    case BR_ERR_BAD_VERSION: Serial.println("Incoming record version does not match the expected version."); break;
-    case BR_ERR_BAD_LENGTH: Serial.println("Incoming record length is invalid."); break;
-    case BR_ERR_TOO_LARGE: Serial.println("Incoming record is too large to be processed, or buffer is too small for the handshake message to send."); break;
-    case BR_ERR_BAD_MAC: Serial.println("Decryption found an invalid padding, or the record MAC is not correct."); break;
-    case BR_ERR_NO_RANDOM: Serial.println("No initial entropy was provided, and none can be obtained from the OS."); break;
-    case BR_ERR_UNKNOWN_TYPE: Serial.println("Incoming record type is unknown."); break;
-    case BR_ERR_UNEXPECTED: Serial.println("Incoming record or message has wrong type with regards to the current engine state."); break;
-    case BR_ERR_BAD_CCS: Serial.println("ChangeCipherSpec message from the peer has invalid contents."); break;
-    case BR_ERR_BAD_ALERT: Serial.println("Alert message from the peer has invalid contents (odd length)."); break;
-    case BR_ERR_BAD_HANDSHAKE: Serial.println("Incoming handshake message decoding failed."); break;
-    case BR_ERR_OVERSIZED_ID: Serial.println("ServerHello contains a session ID which is larger than 32 bytes."); break;
-    case BR_ERR_BAD_CIPHER_SUITE: Serial.println("Server wants to use a cipher suite that we did not claim to support. This is also reported if we tried to advertise a cipher suite that we do not support."); break;
-    case BR_ERR_BAD_COMPRESSION: Serial.println("Server wants to use a compression that we did not claim to support."); break;
-    case BR_ERR_BAD_FRAGLEN: Serial.println("Server's max fragment length does not match client's."); break;
-    case BR_ERR_BAD_SECRENEG: Serial.println("Secure renegotiation failed."); break;
-    case BR_ERR_EXTRA_EXTENSION: Serial.println("Server sent an extension type that we did not announce, or used the same extension type several times in a single ServerHello."); break;
-    case BR_ERR_BAD_SNI: Serial.println("Invalid Server Name Indication contents (when used by the server, this extension shall be empty)."); break;
-    case BR_ERR_BAD_HELLO_DONE: Serial.println("Invalid ServerHelloDone from the server (length is not 0)."); break;
-    case BR_ERR_LIMIT_EXCEEDED: Serial.println("Internal limit exceeded (e.g. server's public key is too large)."); break;
-    case BR_ERR_BAD_FINISHED: Serial.println("Finished message from peer does not match the expected value."); break;
-    case BR_ERR_RESUME_MISMATCH: Serial.println("Session resumption attempt with distinct version or cipher suite."); break;
-    case BR_ERR_INVALID_ALGORITHM: Serial.println("Unsupported or invalid algorithm (ECDHE curve, signature algorithm, hash function)."); break;
-    case BR_ERR_BAD_SIGNATURE: Serial.println("Invalid signature in ServerKeyExchange or CertificateVerify message."); break;
-    case BR_ERR_WRONG_KEY_USAGE: Serial.println("Peer's public key does not have the proper type or is not allowed for the requested operation."); break;
-    case BR_ERR_NO_CLIENT_AUTH: Serial.println("Client did not send a certificate upon request, or the client certificate could not be validated."); break;
-    case BR_ERR_IO: Serial.println("I/O error or premature close on transport stream."); break;
-    case BR_ERR_X509_INVALID_VALUE: Serial.println("Invalid value in an ASN.1 structure."); break;
-    case BR_ERR_X509_TRUNCATED: Serial.println("Truncated certificate or other ASN.1 object."); break;
-    case BR_ERR_X509_EMPTY_CHAIN: Serial.println("Empty certificate chain (no certificate at all)."); break;
-    case BR_ERR_X509_INNER_TRUNC: Serial.println("Decoding error: inner element extends beyond outer element size."); break;
-    case BR_ERR_X509_BAD_TAG_CLASS: Serial.println("Decoding error: unsupported tag class (application or private)."); break;
-    case BR_ERR_X509_BAD_TAG_VALUE: Serial.println("Decoding error: unsupported tag value."); break;
-    case BR_ERR_X509_INDEFINITE_LENGTH: Serial.println("Decoding error: indefinite length."); break;
-    case BR_ERR_X509_EXTRA_ELEMENT: Serial.println("Decoding error: extraneous element."); break;
-    case BR_ERR_X509_UNEXPECTED: Serial.println("Decoding error: unexpected element."); break;
-    case BR_ERR_X509_NOT_CONSTRUCTED: Serial.println("Decoding error: expected constructed element, but is primitive."); break;
-    case BR_ERR_X509_NOT_PRIMITIVE: Serial.println("Decoding error: expected primitive element, but is constructed."); break;
-    case BR_ERR_X509_PARTIAL_BYTE: Serial.println("Decoding error: BIT STRING length is not multiple of 8."); break;
-    case BR_ERR_X509_BAD_BOOLEAN: Serial.println("Decoding error: BOOLEAN value has invalid length."); break;
-    case BR_ERR_X509_OVERFLOW: Serial.println("Decoding error: value is off-limits."); break;
-    case BR_ERR_X509_BAD_DN: Serial.println("Invalid distinguished name."); break;
-    case BR_ERR_X509_BAD_TIME: Serial.println("Invalid date/time representation."); break;
-    case BR_ERR_X509_UNSUPPORTED: Serial.println("Certificate contains unsupported features that cannot be ignored."); break;
-    case BR_ERR_X509_LIMIT_EXCEEDED: Serial.println("Key or signature size exceeds internal limits."); break;
-    case BR_ERR_X509_WRONG_KEY_TYPE: Serial.println("Key type does not match that which was expected."); break;
-    case BR_ERR_X509_BAD_SIGNATURE: Serial.println("Signature is invalid."); break;
-    case BR_ERR_X509_TIME_UNKNOWN: Serial.println("Validation time is unknown."); break;
-    case BR_ERR_X509_EXPIRED: Serial.println("Certificate is expired or not yet valid."); break;
-    case BR_ERR_X509_DN_MISMATCH: Serial.println("Issuer/Subject DN mismatch in the chain."); break;
-    case BR_ERR_X509_BAD_SERVER_NAME: Serial.println("Expected server name was not found in the chain."); break;
-    case BR_ERR_X509_CRITICAL_EXTENSION: Serial.println("Unknown critical extension in certificate."); break;
-    case BR_ERR_X509_NOT_CA: Serial.println("Not a CA, or path length constraint violation."); break;
-    case BR_ERR_X509_FORBIDDEN_KEY_USAGE: Serial.println("Key Usage extension prohibits intended usage."); break;
-    case BR_ERR_X509_WEAK_PUBLIC_KEY: Serial.println("Public key found in certificate is too small."); break;
-    case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor. See https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md"); break;
-    case 296: Serial.println("Server denied access (did you setup mTLS correctly?)"); break;
-    default: Serial.print("Unknown error code: "); Serial.println(br_error_code); break;
-  }
+    if (level > m_debug) return;
+    m_print_prefix(__func__, level);
+    switch (br_error_code) {
+        case BR_ERR_BAD_PARAM: Serial.println("Caller-provided parameter is incorrect."); break;
+        case BR_ERR_BAD_STATE: Serial.println("Operation requested by the caller cannot be applied with the current context state (e.g. reading data while outgoing data is waiting to be sent)."); break;
+        case BR_ERR_UNSUPPORTED_VERSION: Serial.println("Incoming protocol or record version is unsupported."); break;
+        case BR_ERR_BAD_VERSION: Serial.println("Incoming record version does not match the expected version."); break;
+        case BR_ERR_BAD_LENGTH: Serial.println("Incoming record length is invalid."); break;
+        case BR_ERR_TOO_LARGE: Serial.println("Incoming record is too large to be processed, or buffer is too small for the handshake message to send."); break;
+        case BR_ERR_BAD_MAC: Serial.println("Decryption found an invalid padding, or the record MAC is not correct."); break;
+        case BR_ERR_NO_RANDOM: Serial.println("No initial entropy was provided, and none can be obtained from the OS."); break;
+        case BR_ERR_UNKNOWN_TYPE: Serial.println("Incoming record type is unknown."); break;
+        case BR_ERR_UNEXPECTED: Serial.println("Incoming record or message has wrong type with regards to the current engine state."); break;
+        case BR_ERR_BAD_CCS: Serial.println("ChangeCipherSpec message from the peer has invalid contents."); break;
+        case BR_ERR_BAD_ALERT: Serial.println("Alert message from the peer has invalid contents (odd length)."); break;
+        case BR_ERR_BAD_HANDSHAKE: Serial.println("Incoming handshake message decoding failed."); break;
+        case BR_ERR_OVERSIZED_ID: Serial.println("ServerHello contains a session ID which is larger than 32 bytes."); break;
+        case BR_ERR_BAD_CIPHER_SUITE: Serial.println("Server wants to use a cipher suite that we did not claim to support. This is also reported if we tried to advertise a cipher suite that we do not support."); break;
+        case BR_ERR_BAD_COMPRESSION: Serial.println("Server wants to use a compression that we did not claim to support."); break;
+        case BR_ERR_BAD_FRAGLEN: Serial.println("Server's max fragment length does not match client's."); break;
+        case BR_ERR_BAD_SECRENEG: Serial.println("Secure renegotiation failed."); break;
+        case BR_ERR_EXTRA_EXTENSION: Serial.println("Server sent an extension type that we did not announce, or used the same extension type several times in a single ServerHello."); break;
+        case BR_ERR_BAD_SNI: Serial.println("Invalid Server Name Indication contents (when used by the server, this extension shall be empty)."); break;
+        case BR_ERR_BAD_HELLO_DONE: Serial.println("Invalid ServerHelloDone from the server (length is not 0)."); break;
+        case BR_ERR_LIMIT_EXCEEDED: Serial.println("Internal limit exceeded (e.g. server's public key is too large)."); break;
+        case BR_ERR_BAD_FINISHED: Serial.println("Finished message from peer does not match the expected value."); break;
+        case BR_ERR_RESUME_MISMATCH: Serial.println("Session resumption attempt with distinct version or cipher suite."); break;
+        case BR_ERR_INVALID_ALGORITHM: Serial.println("Unsupported or invalid algorithm (ECDHE curve, signature algorithm, hash function)."); break;
+        case BR_ERR_BAD_SIGNATURE: Serial.println("Invalid signature in ServerKeyExchange or CertificateVerify message."); break;
+        case BR_ERR_WRONG_KEY_USAGE: Serial.println("Peer's public key does not have the proper type or is not allowed for the requested operation."); break;
+        case BR_ERR_NO_CLIENT_AUTH: Serial.println("Client did not send a certificate upon request, or the client certificate could not be validated."); break;
+        case BR_ERR_IO: Serial.println("I/O error or premature close on transport stream."); break;
+        case BR_ERR_X509_INVALID_VALUE: Serial.println("Invalid value in an ASN.1 structure."); break;
+        case BR_ERR_X509_TRUNCATED: Serial.println("Truncated certificate or other ASN.1 object."); break;
+        case BR_ERR_X509_EMPTY_CHAIN: Serial.println("Empty certificate chain (no certificate at all)."); break;
+        case BR_ERR_X509_INNER_TRUNC: Serial.println("Decoding error: inner element extends beyond outer element size."); break;
+        case BR_ERR_X509_BAD_TAG_CLASS: Serial.println("Decoding error: unsupported tag class (application or private)."); break;
+        case BR_ERR_X509_BAD_TAG_VALUE: Serial.println("Decoding error: unsupported tag value."); break;
+        case BR_ERR_X509_INDEFINITE_LENGTH: Serial.println("Decoding error: indefinite length."); break;
+        case BR_ERR_X509_EXTRA_ELEMENT: Serial.println("Decoding error: extraneous element."); break;
+        case BR_ERR_X509_UNEXPECTED: Serial.println("Decoding error: unexpected element."); break;
+        case BR_ERR_X509_NOT_CONSTRUCTED: Serial.println("Decoding error: expected constructed element, but is primitive."); break;
+        case BR_ERR_X509_NOT_PRIMITIVE: Serial.println("Decoding error: expected primitive element, but is constructed."); break;
+        case BR_ERR_X509_PARTIAL_BYTE: Serial.println("Decoding error: BIT STRING length is not multiple of 8."); break;
+        case BR_ERR_X509_BAD_BOOLEAN: Serial.println("Decoding error: BOOLEAN value has invalid length."); break;
+        case BR_ERR_X509_OVERFLOW: Serial.println("Decoding error: value is off-limits."); break;
+        case BR_ERR_X509_BAD_DN: Serial.println("Invalid distinguished name."); break;
+        case BR_ERR_X509_BAD_TIME: Serial.println("Invalid date/time representation."); break;
+        case BR_ERR_X509_UNSUPPORTED: Serial.println("Certificate contains unsupported features that cannot be ignored."); break;
+        case BR_ERR_X509_LIMIT_EXCEEDED: Serial.println("Key or signature size exceeds internal limits."); break;
+        case BR_ERR_X509_WRONG_KEY_TYPE: Serial.println("Key type does not match that which was expected."); break;
+        case BR_ERR_X509_BAD_SIGNATURE: Serial.println("Signature is invalid."); break;
+        case BR_ERR_X509_TIME_UNKNOWN: Serial.println("Validation time is unknown."); break;
+        case BR_ERR_X509_EXPIRED: Serial.println("Certificate is expired or not yet valid."); break;
+        case BR_ERR_X509_DN_MISMATCH: Serial.println("Issuer/Subject DN mismatch in the chain."); break;
+        case BR_ERR_X509_BAD_SERVER_NAME: Serial.println("Expected server name was not found in the chain."); break;
+        case BR_ERR_X509_CRITICAL_EXTENSION: Serial.println("Unknown critical extension in certificate."); break;
+        case BR_ERR_X509_NOT_CA: Serial.println("Not a CA, or path length constraint violation."); break;
+        case BR_ERR_X509_FORBIDDEN_KEY_USAGE: Serial.println("Key Usage extension prohibits intended usage."); break;
+        case BR_ERR_X509_WEAK_PUBLIC_KEY: Serial.println("Public key found in certificate is too small."); break;
+        case BR_ERR_X509_NOT_TRUSTED: Serial.println("Chain could not be linked to a trust anchor. See https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md"); break;
+        case 296: Serial.println("Server denied access (did you setup mTLS correctly?)"); break;
+        default: Serial.print("Unknown error code: "); Serial.println(br_error_code); break;
+    }
+}
+
+
+void SSLClient::m_print_br_state(const unsigned state, const DebugLevel level) const {
+    const char* func_name = __func__;
+    if (level > m_debug) return;
+    m_print_prefix(func_name, level);
+    m_info("State: ", func_name);
+    if(state == 0) Serial.println("    Invalid");
+    else if (state & BR_SSL_CLOSED) Serial.println("   Connection closed");
+    else {
+        if (state & BR_SSL_SENDREC) Serial.println("   SENDREC");
+        if (state & BR_SSL_RECVREC) Serial.println("   RECVREC");
+        if (state & BR_SSL_SENDAPP) Serial.println("   SENDAPP");
+        if (state & BR_SSL_RECVAPP) Serial.println("   RECVAPP");
+    }
 }
