@@ -86,7 +86,11 @@ def download(port, cert_var, cert_length_var, output, use_store, keep_dupes, dom
         # append cert to array
         down_certs.append(cert)
     # Combine PEMs and write output header.
-    cert_util.x509_to_header(down_certs, cert_var, cert_length_var, output, keep_dupes, domains=domain)
+    try:
+      cert_util.x509_to_header(down_certs, cert_var, cert_length_var, output, keep_dupes, domains=domain)
+    except Exception as E:
+      click.echo(f'Recieved error when converting certificate to header: {E}')
+      exit(1)
 
 
 @pycert_bearssl.command(short_help='Convert PEM certs into a C header.')
@@ -144,8 +148,11 @@ def convert(cert_var, cert_length_var, output, use_store, keep_dupes, no_search,
         else:
           root_certs.append(cert_dict[cn_hash])
     # Combine PEMs and write output header.
-    cert_util.x509_to_header(root_certs, cert_var, cert_length_var, output, keep_dupes)
-
+    try:
+      cert_util.x509_to_header(root_certs, cert_var, cert_length_var, output, keep_dupes)
+    except Exception as E:
+      click.echo(f'Recieved error when converting certificate to header: {E}')
+      exit(1)
 
 if __name__ == '__main__':
     pycert_bearssl()
