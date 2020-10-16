@@ -20,7 +20,6 @@ import socket
 import textwrap
 import math
 import os
-import cryptography
 
 CERT_PATTERN = re.compile("^\-\-\-\-\-BEGIN CERTIFICATE\-\-\-\-\-[a-z,A-Z,0-9,\n,\/,+]+={0,2}\n\-\-\-\-\-END CERTIFICATE-\-\-\-\-", re.MULTILINE)
 
@@ -291,7 +290,8 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
         # next, the RSA public numbers
         pubkey = cert.get_pubkey()
         numbers = pubkey.to_cryptography_key().public_numbers()
-        if type(numbers) is cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicNumbers:
+        numbers_typename = type(numbers).__name__
+        if 'RSA' in numbers_typename:
             # starting with the modulous
             n_bytes_str = bytes_to_c_data(numbers.n.to_bytes(pubkey.bits() // 8, byteorder="big"))
             static_arrays.append(CRAY_TEMPLATE.format(
@@ -309,7 +309,7 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
                 ta_dn_name=DN_PRE + str(cert_index), 
                 rsa_number_name=RSA_N_PRE + str(cert_index), 
                 rsa_exp_name=RSA_E_PRE + str(cert_index)))
-        elif type(numbers) is cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicNumbers:
+        elif 'Elliptic' in numbers_typename:
             # starting with the modulous
             curve_bytes = b'\x04' + numbers.x.to_bytes(pubkey.bits() // 8, byteorder="big") + numbers.y.to_bytes(
                 pubkey.bits() // 8, byteorder="big")
@@ -325,6 +325,8 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
                 ec_number_name=EC_CURVE_PRE + str(cert_index),
                 ec_curve_name=EC_CURVE_NAME_PRE + curve_name
             ))
+        else:
+            raise Exception(f'Unknown public key type {numbers_typename}')
     # concatonate it all into the big header file template
     # cert descriptions
     cert_desc_out = '\n * \n'.join(cert_desc)
