@@ -20,6 +20,7 @@ import socket
 import textwrap
 import math
 import os
+import cryptography
 
 CERT_PATTERN = re.compile("^\-\-\-\-\-BEGIN CERTIFICATE\-\-\-\-\-[a-z,A-Z,0-9,\n,\/,+]+={0,2}\n\-\-\-\-\-END CERTIFICATE-\-\-\-\-", re.MULTILINE)
 
@@ -32,6 +33,10 @@ DN_PRE = "TA_DN"
 RSA_N_PRE = "TA_RSA_N"
 # RSA public key exponent prefix
 RSA_E_PRE = "TA_RSA_E"
+# EC public key number prefix
+EC_CURVE_PRE = "TA_EC_CURVE"
+# EC curve type enum prefix
+EC_CURVE_NAME_PRE = "BR_EC_"
 
 
 # Template that defines the C header output format.
@@ -81,7 +86,7 @@ static const {ray_type} {ray_name}[] = {{
 {ray_data}
 }};"""
 
-# Template that defines a single root certificate entry in the BearSSL trust
+# Template that defines a single root RSA certificate entry in the BearSSL trust
 # anchor list
 # This takes in a few named parameters:
 #  - ta_dn_name: The name of the static byte array containing the distunguished
@@ -100,6 +105,25 @@ CROOTCA_TEMPLATE = """\
             }} }}
         }}
     }},"""
+
+# Template that defines a single root EC certificate entry in the BearSSL trust
+# anchor list
+# This takes in a few named parameters:
+#  - ta_dn_name: The name of the static byte array containing the distunguished
+#    name of the certificate.
+#  - ec_number_name: Varible name of the static array containing ec public key
+#  - ec_curve_name: Varible name of the enum that describes curve type
+CROOTCA_EC_TEMPLATE = """\
+    {{
+        {{ (unsigned char *){ta_dn_name}, sizeof {ta_dn_name} }},
+        BR_X509_TA_CA,
+        {{
+            BR_KEYTYPE_EC,
+            {{ .ec = {{{ec_curve_name}, (unsigned char *){ec_number_name}, sizeof {ec_number_name}}}
+        }}
+        }}
+    }},"""
+
 
 # Template that defines a description of the certificate, so that the header
 # file can be slightly more human readable
@@ -267,23 +291,40 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
         # next, the RSA public numbers
         pubkey = cert.get_pubkey()
         numbers = pubkey.to_cryptography_key().public_numbers()
-        # starting with the modulous
-        n_bytes_str = bytes_to_c_data(numbers.n.to_bytes(pubkey.bits() // 8, byteorder="big"))
-        static_arrays.append(CRAY_TEMPLATE.format(
-            ray_type="unsigned char", 
-            ray_name=RSA_N_PRE + str(cert_index), 
-            ray_data=n_bytes_str))
-        # and then the exponent
-        e_bytes_str = bytes_to_c_data(numbers.e.to_bytes(math.ceil(numbers.e.bit_length() / 8), byteorder="big"))
-        static_arrays.append(CRAY_TEMPLATE.format(
-            ray_type="unsigned char", 
-            ray_name=RSA_E_PRE + str(cert_index), 
-            ray_data=e_bytes_str))
-        # format the root certificate entry
-        CAs.append(CROOTCA_TEMPLATE.format(
-            ta_dn_name=DN_PRE + str(cert_index), 
-            rsa_number_name=RSA_N_PRE + str(cert_index), 
-            rsa_exp_name=RSA_E_PRE + str(cert_index)))
+        if type(numbers) is cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicNumbers:
+            # starting with the modulous
+            n_bytes_str = bytes_to_c_data(numbers.n.to_bytes(pubkey.bits() // 8, byteorder="big"))
+            static_arrays.append(CRAY_TEMPLATE.format(
+                ray_type="unsigned char", 
+                ray_name=RSA_N_PRE + str(cert_index), 
+                ray_data=n_bytes_str))
+            # and then the exponent
+            e_bytes_str = bytes_to_c_data(numbers.e.to_bytes(math.ceil(numbers.e.bit_length() / 8), byteorder="big"))
+            static_arrays.append(CRAY_TEMPLATE.format(
+                ray_type="unsigned char", 
+                ray_name=RSA_E_PRE + str(cert_index), 
+                ray_data=e_bytes_str))
+            # format the root certificate entry
+            CAs.append(CROOTCA_TEMPLATE.format(
+                ta_dn_name=DN_PRE + str(cert_index), 
+                rsa_number_name=RSA_N_PRE + str(cert_index), 
+                rsa_exp_name=RSA_E_PRE + str(cert_index)))
+        elif type(numbers) is cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicNumbers:
+            # starting with the modulous
+            curve_bytes = b'\x04' + numbers.x.to_bytes(pubkey.bits() // 8, byteorder="big") + numbers.y.to_bytes(
+                pubkey.bits() // 8, byteorder="big")
+            curve_str = bytes_to_c_data(curve_bytes)
+            curve_name = numbers.curve.name
+            static_arrays.append(CRAY_TEMPLATE.format(
+                ray_type="unsigned char",
+                ray_name=EC_CURVE_PRE + str(cert_index),
+                ray_data=curve_str))
+            # and then the exponent
+            CAs.append(CROOTCA_EC_TEMPLATE.format(
+                ta_dn_name=DN_PRE + str(cert_index),
+                ec_number_name=EC_CURVE_PRE + str(cert_index),
+                ec_curve_name=EC_CURVE_NAME_PRE + curve_name
+            ))
     # concatonate it all into the big header file template
     # cert descriptions
     cert_desc_out = '\n * \n'.join(cert_desc)
