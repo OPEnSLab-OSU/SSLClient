@@ -221,7 +221,8 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	//* Alternate: set implementations explicitly.
 	// br_ssl_client_set_rsapub(cc, &br_rsa_i31_public);
 	br_ssl_engine_set_rsavrfy(&cc->eng, &br_rsa_i15_pkcs1_vrfy);
-	br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+	// br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+	br_ssl_engine_set_ec(&cc->eng, &br_ec_prime_fast_256);
 	br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 	//*/
 
@@ -439,7 +440,7 @@ br_client_init_TLS12_only(br_ssl_client_context *cc,
 	// br_x509_minimal_set_ecdsa(xc,
 	//	&br_ec_prime_i31, &br_ecdsa_i31_vrfy_asn1);
 	br_x509_minimal_set_ecdsa(xc,
-		&br_ec_prime_fast_256,
+		br_ssl_engine_get_ec(&cc->eng),
 		br_ssl_engine_get_ecdsa(&cc->eng));
 
 	/*
