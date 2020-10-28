@@ -1,5 +1,5 @@
 /*
-  Connect to AWS IOT using Teensy and Wiz850io Ethernet Mdoule
+  Connect to AWS IOT using Teensy 4.0 and Wiz850io Ethernet Mdoule
 
    AWS_Root_CA.h is the trust anchor created using the Root CA from:
    https://www.amazontrust.com/repository/AmazonRootCA1.pem
