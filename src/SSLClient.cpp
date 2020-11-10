@@ -296,6 +296,11 @@ void SSLClient::setMutualAuthParams(const SSLClientParameters& params) {
     }
 }
 
+/* see SSLClient.h */
+void SSLClient::setVerificationTime(uint32_t days, uint32_t seconds) {
+    br_x509_minimal_set_time(&m_x509ctx, days, seconds);
+}
+
 bool SSLClient::m_soft_connected(const char* func_name) {
     // check if the socket is still open and such
     if (getWriteError()) {

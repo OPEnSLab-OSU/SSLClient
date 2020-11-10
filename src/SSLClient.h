@@ -371,6 +371,19 @@ public:
      */
     unsigned int getTimeout() const { return m_timeout; }
 
+    /**
+     * @brief Change the time used during x509 verification to a different value.
+     * 
+     * This function directly calls br_x509_minimal_set_time to change the validation
+     * time used by the minimal verification engine. You can use this function if the default value
+     * of the compile time is causing issues. See https://bearssl.org/apidoc/bearssl__x509_8h.html#a7f3558b1999ce904084d578700b1002c
+     * for more information what this function does and how to use it.
+     * 
+     * @param days Days are counted in a proleptic Gregorian calendar since January 1st, 0 AD.
+     * @param seconds Seconds are counted since midnight, from 0 to 86400 (a count of 86400 is possible only if a leap second happened).
+     */
+    void setVerificationTime(uint32_t days, uint32_t seconds);
+
 private:
     /** @brief Returns an instance of m_client that is polymorphic and can be used by SSLClientImpl */
     Client& get_arduino_client() { return m_client; }

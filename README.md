@@ -64,7 +64,7 @@ SSLClient client(baseClient, TAs, (size_t)2, A7, 1, SSLClient::SSL_INFO);
 Logging is always outputted through the [Arduino Serial interface](https://www.arduino.cc/reference/en/language/functions/communication/serial/), so you'll need to setup Serial before you can view the SSL logs. Log levels are enumerated in ::DebugLevel. The log level is set to `SSL_WARN` by default.
 
 ### Errors
-When SSLClient encounters an error, it will attempt to terminate the SSL session gracefully if possible, and then close the socket. Simple error information can be found from SSLClient::getWriteError(), which will return a value from the ::Error enum. For more detailed diagnostics, you can look at the serial logs, which will be displayed if the log level is at `SSL_ERROR` or lower.
+When SSLClient encounters an error, it will attempt to terminate the SSL session gracefully if possible, and then close the socket. Simple error information can be found from SSLClient::getWriteError, which will return a value from the ::Error enum. For more detailed diagnostics, you can look at the serial logs, which will be displayed if the log level is at `SSL_ERROR` or lower.
 
 ### Write Buffering
 As you may have noticed in the documentation for SSLClient::write, calling this function does not actually write to the network. Instead, you must call SSLClient::available or SSLClient::flush, which will detect that the buffer is ready and write to the network (see SSLClient::write for details).
@@ -233,7 +233,7 @@ SSLClient uses BearSSL's [minimal x509 verification engine](https://bearssl.org/
 BearSSL also features a [known certificate validation engine](https://bearssl.org/x509.html#the-known-key-engine), which only allows for a single domain in exchange for a significantly reduced resource usage (flash and CPU time). This functionality is planned to be implemented in the future.
 
 #### Time
-The minimal x509 verification engine requires an accurate source of time to properly verify the creation and expiration dates of a certificate. As most embedded devices do not have a reliable source of time, SSLClient opts to use the compilation timestamp ([`__DATE__` and `__TIME__`](https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html)) as the "current time" during the verification process. While this approach reduces the complexity of using SSLClient, it is inherently insecure, and can cause errors if certificates are redeployed (see [#27](https://github.com/OPEnSLab-OSU/SSLClient/issues/27)).
+The minimal x509 verification engine requires an accurate source of time to properly verify the creation and expiration dates of a certificate. As most embedded devices do not have a reliable source of time, by default SSLClient opts to use the compilation timestamp ([`__DATE__` and `__TIME__`](https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html)) as the "current time" during the verification process. While this approach reduces the complexity of using SSLClient, it is inherently insecure, and can cause errors if certificates are redeployed (see [#27](https://github.com/OPEnSLab-OSU/SSLClient/issues/27)): to accommodate these edge cases, SSLClient::setVerificationTime can be used to update the timestamp before connecting, resolving the above issues.
 
 ### Resources
 The SSL protocol recommends a device support many different encryption algorithms, as well as protocols for SSL itself. The complexity of both of those components results in many medium sized components forming an extremely large whole. Additionally, most embedded processors lack the sophisticated math hardware commonly found in a modern CPU, and as a result require more instructions to create the encryption algorithms SSL requires. This not only increases size but makes the algorithms slow and memory intensive.
@@ -247,7 +247,7 @@ SSL is a buffered protocol, and since most microcontrollers have limited resourc
 
 In order to remedy this problem, the device must be able to read the data faster than it is being received, or alternatively have a cache large enough to store the entire payload. Since SSL's encryption forces the device to read slowly, this means we must increase the cache size. Depending on your platform, there are a number of ways this can be done:
 * Sometimes your communication shield will have an internal buffer, which can be expanded through the driver code. This is the case with the Arduino Ethernet library (in the form of the MAX_SOCK_NUM and ETHERNET_LARGE_BUFFERS macros), however the library must be modified for the change to take effect.
-* SSLClient has an internal buffer SSLClientImpl::m_iobuf, which can be expanded. BearSSL limits the amount of data that can be processed based on the stage in the SSL handshake, and so this will change will have limited usefulness. 
+* SSLClient has an internal buffer SSLClient::m_iobuf, which can be expanded. BearSSL limits the amount of data that can be processed based on the stage in the SSL handshake, and so this will change will have limited usefulness. 
 * In some cases, a website will send so much data that even with the above solutions, SSLClient will be unable to keep up (a website with a lot of HTML is an example). In these cases you will have to find another method of retrieving the data you need.
 * If none of the above are viable, it is possible to implement your own Client class which has an internal buffer much larger than both the driver and BearSSL. This would require in-depth knowledge of programming and the communication shield you are working with, as well as a microcontroller with a significant amount of RAM.
 
@@ -267,7 +267,7 @@ br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_
 If for some unfortunate reason you need SSL 3.0 or SSL 2.0, you will need to modify the BearSSL profile to enable support. Check out the [BearSSL profiles documentation](https://bearssl.org/api1.html#profiles) and I wish you the best of luck.
 
 ### Security
-Unlike BearSSL, SSLClient is not rigourously vetted to be secure. If your project has security requirements, I recommend you utilize BearSSL directly.
+Unlike BearSSL, SSLClient is not rigorously vetted to be secure. If your project has security requirements, I recommend you utilize BearSSL directly.
 
 ### Known Issues
  * In some drivers (Ethernet), calls to `Client::flush` will hang if internet is available but there is no route to the destination. Unfortunately SSLClient cannot correct for this without modifying the driver itself, and as a result the recommended solution is ensuring you choose a driver with built-in timeouts to prevent freezing. [More information here](https://github.com/OPEnSLab-OSU/SSLClient/issues/13#issuecomment-643855923).
