@@ -236,6 +236,9 @@ SSLClient uses BearSSL's [minimal x509 verification engine](https://bearssl.org/
 
 BearSSL also features a [known certificate validation engine](https://bearssl.org/x509.html#the-known-key-engine), which only allows for a single domain in exchange for a significantly reduced resource usage (flash and CPU time). This functionality is planned to be implemented in the future.
 
+#### Time
+The minimal x509 verification engine requires an accurate source of time to properly verify the creation and expiration dates of a certificate. As most embedded devices do not have a reliable source of time, SSLClient opts to use the compilation timestamp ([`__DATE__` and `__TIME__`](https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html)) as the "current time" during the verification process. While this approach reduces the complexity of using SSLClient, it is inherently insecure, and can cause errors if certificates are redeployed (see [#27](https://github.com/OPEnSLab-OSU/SSLClient/issues/27)).
+
 ### Resources
 The SSL protocol recommends a device support many different encryption algorithms, as well as protocols for SSL itself. The complexity of both of those components results in many medium sized components forming an extremely large whole. Additionally, most embedded processors lack the sophisticated math hardware commonly found in a modern CPU, and as a result require more instructions to create the encryption algorithms SSL requires. This not only increases size but makes the algorithms slow and memory intensive.
 
