@@ -2,11 +2,11 @@
 
 [![Build Status](https://travis-ci.org/OPEnSLab-OSU/SSLClient.svg?branch=master)](https://travis-ci.org/OPEnSLab-OSU/SSLClient)
 
-You can also view this README in [doxygen](https://openslab-osu.github.io/SSLClient/index.html).
-
-SSLClient adds [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes. Unlike [ArduinoBearSSL](https://github.com/arduino-libraries/ArduinoBearSSL), SSLClient is completly self-contained, and does not require any additional hardware (other than a network connection).
+SSLClient adds [TLS 1.2](https://www.websecurity.symantec.com/security-topics/what-is-ssl-tls-https) functionality to any network library implementing the [Arduino Client interface](https://www.arduino.cc/en/Reference/ClientConstructor), including the Arduino [EthernetClient](https://www.arduino.cc/en/Reference/EthernetClient) and [WiFiClient](https://www.arduino.cc/en/Reference/WiFiClient) classes. SSLClient was created to integrate TLS seamlessly with the Arduino infrastructure, and uses [BearSSL](https://bearssl.org/) as the underlying TLS engine. Unlike [ArduinoBearSSL](https://github.com/arduino-libraries/ArduinoBearSSL), SSLClient is completly self-contained, and does not require any additional hardware (other than a network connection).
 
 SSLClient officially supports SAMD21, SAM3X, ESP32, TIVA C, STM32, and Teensy 4.x; but it should work on any board with at least 110kb flash and 7kb RAM. SSClient does not currently support ESP8266 (see [this issue](https://github.com/OPEnSLab-OSU/SSLClient/issues/5#issuecomment-569968546)) or AVR due to memory constraints on both platforms.
+
+You can also view this README in [doxygen](https://openslab-osu.github.io/SSLClient/index.html).
 
 ## Overview
 
@@ -49,13 +49,9 @@ client.flush();
 // read and print the data
 ...
 ```
-**Note**: `client.connect("www.arduino.cc", 443)` can take 5-15 seconds to finish. This an unavoidable consequence of the SSL protocol, and is detailed in [Implementation Notes](#resources).
+**Note**: `client.connect("www.arduino.cc", 443)` can take 5-15 seconds to finish on some low-power devices. This an unavoidable consequence of the SSL protocol, and is detailed more in [Implementation Gotchas](#resources).
 
 For more information on SSLClient, check out the [examples](./examples), [API documentation](https://openslab-osu.github.io/SSLClient/html/index.html), or the rest of this README.
-
-## How It Works
-
-SSLClient was created to integrate SSL seamlessly with the Arduino infrastructure, and so it does just that: implementing the brilliant [BearSSL](https://bearssl.org/) as a proxy in front of any Arduino socket library. BearSSL is designed with low flash footprint in mind, and as a result does little verification of improper programming, relying on the developer to ensure the code is correct. Since SSLClient is built specifically for the Arduino ecosystem, most of SSLClient's code adds those programming checks back in, making debugging a fast and simple process.
 
 ## Other Features
 
@@ -269,6 +265,9 @@ to this:
 br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
 ```
 If for some unfortunate reason you need SSL 3.0 or SSL 2.0, you will need to modify the BearSSL profile to enable support. Check out the [BearSSL profiles documentation](https://bearssl.org/api1.html#profiles) and I wish you the best of luck.
+
+### Security
+Unlike BearSSL, SSLClient is not rigourously vetted to be secure. If your project has security requirements, I recommend you utilize BearSSL directly.
 
 ### Known Issues
  * In some drivers (Ethernet), calls to `Client::flush` will hang if internet is available but there is no route to the destination. Unfortunately SSLClient cannot correct for this without modifying the driver itself, and as a result the recommended solution is ensuring you choose a driver with built-in timeouts to prevent freezing. [More information here](https://github.com/OPEnSLab-OSU/SSLClient/issues/13#issuecomment-643855923).
