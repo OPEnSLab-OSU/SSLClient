@@ -30,7 +30,7 @@ jobs:
             example: stm32/EthernetHTTPSstm32
     env:
       ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
-      ARDUINO_DIRECTORIES_DATA: arduinoData
+      ARDUINO_DIRECTORIES_DATA: ${{ github.workspace}}/arduinoData
       DOXYFILE: .travis/Doxyfile
     steps:    
       - name: Install Arduino CLI
