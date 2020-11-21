@@ -1,0 +1,53 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build-examples:
+    name: Build Example ${{ matrix.board.example }} for ${{ matrix.board.fqbn }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: 
+          - EthernetHTTPS
+          - EthernetMultiHTTPS
+          - EthernetMQTT
+        board:
+          # Arduino Zero
+          - arduino-platform: arduino:samd
+            fqbn: arduino:samd:mzero_bl
+          # Adafruit Feather M0
+          - arduino-platform: arduino:samd adafruit:samd
+            fqbn: adafruit:samd:adafruit_feather_m0
+          # Arduino Due
+          - arduino-platform: arduino:sam
+            fqbn: arduino:sam:arduino_due_x
+        include:
+          # STM32 Nucleo 144
+          - arduino-platform: STM32:stm32
+            fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
+            example: stm32/EthernetHTTPSstm32
+    env:
+      ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
+      DOXYFILE: .travis/Doxyfile
+    steps:    
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v1.1.1
+      
+      # Install Dependencies
+      - name: Update Index
+        run: arduino-cli core update-index --additional-urls ${{ env.ADDITIONAL_URLS }}
+      - name: Install Core(s)
+        run: arduino-cli core install ${{ matrix.board.arduino-platform }} --additional-urls ${{ env.ADDITIONAL_URLS }}
+      - name: Install EtherenetLarge
+        run: git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git $HOME/Arduino/libraries/EthernetLarge
+      - name: Install Other Libraries
+        run: arduino-cli lib install "STM32duino STM32Ethernet PubSubClient"
+      
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      # TODO: Cache dependencies
+      - name: Compile Sketch
+        run: arduino-cli compile --warnings all --fqbn ${{ matrix.board.fqbn }} examples/${{ matrix.example }}
