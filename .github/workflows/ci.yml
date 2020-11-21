@@ -29,7 +29,8 @@ jobs:
               fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
             example: stm32/EthernetHTTPSstm32
     env:
-      ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
+      ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
+      ARDUINO_DIRECTORIES_DATA: "${{ env.GITHUB_WORKSPACE }}/arduinoData"
       DOXYFILE: .travis/Doxyfile
     steps:    
       - name: Install Arduino CLI
@@ -37,9 +38,9 @@ jobs:
       
       # Install Dependencies
       - name: Update Index
-        run: arduino-cli core update-index --additional-urls ${{ env.ADDITIONAL_URLS }} -v
+        run: arduino-cli core update-index -v
       - name: Install Core(s)
-        run: arduino-cli core install ${{ matrix.board.arduino-platform }} --additional-urls ${{ env.ADDITIONAL_URLS }} -v
+        run: arduino-cli core install ${{ matrix.board.arduino-platform }} -v
       - name: Install EthernetLarge
         run: git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git ~/Arduino/libraries/EthernetLarge
       - name: Install Other Libraries
