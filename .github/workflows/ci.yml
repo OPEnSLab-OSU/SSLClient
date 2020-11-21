@@ -48,7 +48,10 @@ jobs:
       # Checkout
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          path: SSLClient
       
       # TODO: Cache dependencies
+      # Compile
       - name: Compile Sketch
-        run: arduino-cli compile --warnings all --fqbn ${{ matrix.board.fqbn }} examples/${{ matrix.example }}
+        run: arduino-cli compile --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
