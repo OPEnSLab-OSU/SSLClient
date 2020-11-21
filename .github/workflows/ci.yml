@@ -37,13 +37,13 @@ jobs:
       
       # Install Dependencies
       - name: Update Index
-        run: arduino-cli core update-index --additional-urls ${{ env.ADDITIONAL_URLS }}
+        run: arduino-cli core update-index --additional-urls ${{ env.ADDITIONAL_URLS }} -v
       - name: Install Core(s)
-        run: arduino-cli core install ${{ matrix.board.arduino-platform }} --additional-urls ${{ env.ADDITIONAL_URLS }}
+        run: arduino-cli core install ${{ matrix.board.arduino-platform }} --additional-urls ${{ env.ADDITIONAL_URLS }} -v
       - name: Install EthernetLarge
         run: git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git ~/Arduino/libraries/EthernetLarge
       - name: Install Other Libraries
-        run: arduino-cli lib install "STM32duino STM32Ethernet" PubSubClient
+        run: arduino-cli lib install "STM32duino STM32Ethernet" PubSubClient -v
       
       # Checkout
       - name: Checkout
@@ -54,4 +54,4 @@ jobs:
       # TODO: Cache dependencies
       # Compile
       - name: Compile Sketch
-        run: arduino-cli compile --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+        run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
