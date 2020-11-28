@@ -84,9 +84,9 @@ jobs:
       matrix:
         # Copy of the above matrix (no anchors :( )
         example: 
-          - EthernetHTTPS/EthernetHTTPS.ino
-          - EthernetMultiHTTPS/EthernetMulitHTTPS.ino
-          - EthernetMQTT/EthernetMQTT.ino
+          - EthernetHTTPS
+          - EthernetMultiHTTPS
+          - EthernetMQTT
         board:
           # Arduino Zero
           - pio-platform: zeroUSB
@@ -100,11 +100,11 @@ jobs:
           # STM32 Nucleo 144
           - board:
               pio-platform: nucleo_f767zi
-            example: stm32/EthernetHTTPSstm32/EthernetHTTPSstm32.ino
+            example: stm32/EthernetHTTPSstm32
           # TIVA-C
           - board:
               pio-platform: lptm4c1294ncpdt
-            example: tivac/EthernetHTTPStivac/EthernetHTTPStivac.ino
+            example: tivac/EthernetHTTPStivac
     steps:    
       # Setup python for platformio
       - name: Setup Python
