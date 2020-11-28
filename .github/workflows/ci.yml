@@ -58,7 +58,7 @@ jobs:
 
       # Compile
       - name: Compile Sketch
-        run: arduino-cli compile -v --build-path build --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+        run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
 
       # Compile with dot-a-linkage
       - name: Compile with Archive
