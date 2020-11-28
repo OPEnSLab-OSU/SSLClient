@@ -121,9 +121,9 @@ jobs:
       # Install Dependencies
       - name: Install Libraries
         run: |
-          pio lib -g -v install stm32duino/STM32Ethernet
-          pio lib -g -v install PubSubClient
-          pio lib -g -v install https://github.com/OPEnSLab-OSU/EthernetLarge.git
+          pio lib -g install stm32duino/STM32Ethernet
+          pio lib -g install PubSubClient
+          pio lib -g install https://github.com/OPEnSLab-OSU/EthernetLarge.git
       
       # Checkout
       - name: Checkout
@@ -131,7 +131,7 @@ jobs:
 
       # Compile
       - name: Compile Sketch
-        run: pio ci -v -l . -b ${{ matrix.board.pio-platform }}
+        run: pio ci -l . -b ${{ matrix.board.pio-platform }}
         env:
           PLATFORMIO_CI_SRC: ${{ matrix.example }}
   
