@@ -9,9 +9,10 @@ jobs:
       fail-fast: false
       matrix:
         example: 
-          - EthernetHTTPS
-          - EthernetMultiHTTPS
-          - EthernetMQTT
+          - path: EthernetHTTPS
+            archive: true
+          - path: EthernetMultiHTTPS
+          - path: EthernetMQTT
         board:
           # Arduino Zero
           - arduino-platform: arduino:samd
@@ -35,7 +36,9 @@ jobs:
               arduino-platform: STM32:stm32
               fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
               arch: cortex-m7
-            example: stm32/EthernetHTTPSstm32
+            example: 
+              path: stm32/EthernetHTTPSstm32
+              archive: true
     env:
       ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
     steps:    
@@ -71,18 +74,18 @@ jobs:
 
       # Compile
       - name: Compile Sketch
-        run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+        run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example.path }}
 
       # Compile with dot-a-linkage
       - name: Compile with Archive
-        if: matrix.board.arch
+        if: matrix.board.arch && matrix.example.archive
         run: |
           echo "dot_a_linkage=true" >> SSLClient/library.properties 
-          arduino-cli compile -v --build-path ${{ github.workspace }}/build --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+          arduino-cli compile -v --build-path ${{ github.workspace }}/build --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example.path }}
       
       # Upload as an artifact
       - name: Emit Compiled SSLClient
-        if: matrix.board.arch
+        if: matrix.board.arch && matrix.example.archive
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.board.arch }}
