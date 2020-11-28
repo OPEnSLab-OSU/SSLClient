@@ -41,12 +41,12 @@ jobs:
     steps:    
       # Setup pyserial for esptool.py
       - name: Setup Python
-        if: matrix.board.arduino-platform == "esp32:esp32"
+        if: matrix.board.arduino-platform == 'esp32:esp32'
         uses: actions/setup-python@v2
         with:
           python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
       - name: Install Pyserial
-        if: matrix.board.arduino-platform == "esp32:esp32"
+        if: matrix.board.arduino-platform == 'esp32:esp32'
         run: |
           python -m pip install --upgrade pip
           pip install pyserial
