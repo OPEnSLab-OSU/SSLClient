@@ -121,7 +121,7 @@ jobs:
       # Install Dependencies
       - name: Install Libraries
         run: |
-          pio lib -g -v install "STM32duino STM32Ethernet"
+          pio lib -g -v install stm32duino/STM32Ethernet
           pio lib -g -v install PubSubClient
           pio lib -g -v install https://github.com/OPEnSLab-OSU/EthernetLarge.git
       
