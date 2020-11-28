@@ -10,51 +10,37 @@ on:
 env:
   ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
 
-
-board-matrix:
-  &board-matrix
-  example: 
-    - EthernetHTTPS
-    - EthernetMultiHTTPS
-    - EthernetMQTT
-  board:
-    # Arduino Zero
-    - arduino-platform: arduino:samd
-      fqbn: arduino:samd:mzero_bl
-      pio-platform: zeroUSB
-    # Adafruit Feather M0
-    - arduino-platform: arduino:samd adafruit:samd
-      fqbn: adafruit:samd:adafruit_feather_m0
-      pio-platform: adafruit_feather_m0
-    # Arduino Due
-    - arduino-platform: arduino:sam
-      fqbn: arduino:sam:arduino_due_x
-      pio-platform: dueUSB
-    # ESP32
-    - arduino-platform: esp32:esp32
-      fqbn: esp32:esp32:d32
-      pio-platform: lolin32
-  include:
-    # STM32 Nucleo 144
-    - board:
-        arduino-platform: STM32:stm32
-        fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
-        pio-platform: nucleo_f767zi
-      example: stm32/EthernetHTTPSstm32
-    # TIVA-C
-    - board:
-        fqbn: tivac:tivac
-        pio-platform: lptm4c1294ncpdt
-      example: tivac/EthernetHTTPStivac
-
 jobs:
   build-examples-arduino:
     name: Build ${{ matrix.example }} for ${{ matrix.board.fqbn }}
-    if: ${{ matrix.board.arduino-platform }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: *board-matrix
+      matrix:
+        example: 
+          - EthernetHTTPS
+          - EthernetMultiHTTPS
+          - EthernetMQTT
+        board:
+          # Arduino Zero
+          - arduino-platform: arduino:samd
+            fqbn: arduino:samd:mzero_bl
+          # Adafruit Feather M0
+          - arduino-platform: arduino:samd adafruit:samd
+            fqbn: adafruit:samd:adafruit_feather_m0
+          # Arduino Due
+          - arduino-platform: arduino:sam
+            fqbn: arduino:sam:arduino_due_x
+          # ESP32
+          - arduino-platform: esp32:esp32
+            fqbn: esp32:esp32:d32
+        include:
+          # STM32 Nucleo 144
+          - board:
+              arduino-platform: STM32:stm32
+              fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
+              pio-platform: nucleo_f767zi
+            example: stm32/EthernetHTTPSstm32
     steps:    
       # Setup pyserial for esptool.py
       - name: Setup Python
@@ -91,12 +77,34 @@ jobs:
         run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
 
   build-examples-platformio:
-    name: Build ${{ matrix.example }} for ${{ matrix.board.fqbn }}
-    if: ${{ matrix.board.pio-platform }}
+    name: Build ${{ matrix.example }} for ${{ matrix.board.pio-platform }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: *board-matrix
+      matrix:
+        # Copy of the above matrix (no anchors :( )
+        example: 
+          - EthernetHTTPS/EthernetHTTPS.ino
+          - EthernetMultiHTTPS/EthernetMulitHTTPS.ino
+          - EthernetMQTT/EthernetMQTT.ino
+        board:
+          # Arduino Zero
+          - pio-platform: zeroUSB
+          # Adafruit Feather M0
+          - pio-platform: adafruit_feather_m0
+          # Arduino Due
+          - pio-platform: dueUSB
+          # ESP32
+          - pio-platform: lolin32
+        include:
+          # STM32 Nucleo 144
+          - board:
+              pio-platform: nucleo_f767zi
+            example: stm32/EthernetHTTPSstm32/EthernetHTTPSstm32.ino
+          # TIVA-C
+          - board:
+              pio-platform: lptm4c1294ncpdt
+            example: tivac/EthernetHTTPStivac/EthernetHTTPStivac.ino
     steps:    
       # Setup python for platformio
       - name: Setup Python
