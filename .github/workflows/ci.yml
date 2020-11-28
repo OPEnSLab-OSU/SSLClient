@@ -7,6 +7,9 @@ on:
       - gh-pages
   pull_request:
 
+env:
+  ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
+
 jobs:
   build-examples:
     name: Build ${{ matrix.example }} for ${{ matrix.board.fqbn }}
@@ -37,8 +40,6 @@ jobs:
               arduino-platform: STM32:stm32
               fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
             example: stm32/EthernetHTTPSstm32
-    env:
-      ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
     steps:    
       # Setup pyserial for esptool.py
       - name: Setup Python
