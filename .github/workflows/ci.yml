@@ -133,7 +133,7 @@ jobs:
       - name: Compile Sketch
         run: pio ci -l . -b ${{ matrix.board.pio-platform }}
         env:
-          PLATFORMIO_CI_SRC: ${{ matrix.example }}
+          PLATFORMIO_CI_SRC: ${{ github.workspace }}/examples/${{ matrix.example }}
   
   compile-archives:
     name: Compile Archives
