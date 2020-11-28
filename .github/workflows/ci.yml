@@ -12,7 +12,7 @@ env:
 
 jobs:
   build-examples-arduino:
-    name: Build ${{ matrix.example }} for ${{ matrix.board.fqbn }}
+    name: Arduino ${{ matrix.example }} for ${{ matrix.board.fqbn }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -77,7 +77,7 @@ jobs:
         run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
 
   build-examples-platformio:
-    name: Build ${{ matrix.example }} for ${{ matrix.board.pio-platform }}
+    name: PIO ${{ matrix.example }} for ${{ matrix.board.pio-platform }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -121,7 +121,7 @@ jobs:
       # Install Dependencies
       - name: Install Libraries
         run: |
-          pio lib -g install STM32duino/LwIP
+          pio lib -g install "stm32duino/STM32duino LwIP"
           pio lib -g install stm32duino/STM32Ethernet
           pio lib -g install PubSubClient
           pio lib -g install https://github.com/OPEnSLab-OSU/EthernetLarge.git
