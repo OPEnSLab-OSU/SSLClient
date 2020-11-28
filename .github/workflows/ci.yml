@@ -10,36 +10,51 @@ on:
 env:
   ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
 
+
+board-matrix:
+  &board-matrix
+  example: 
+    - EthernetHTTPS
+    - EthernetMultiHTTPS
+    - EthernetMQTT
+  board:
+    # Arduino Zero
+    - arduino-platform: arduino:samd
+      fqbn: arduino:samd:mzero_bl
+      pio-platform: zeroUSB
+    # Adafruit Feather M0
+    - arduino-platform: arduino:samd adafruit:samd
+      fqbn: adafruit:samd:adafruit_feather_m0
+      pio-platform: adafruit_feather_m0
+    # Arduino Due
+    - arduino-platform: arduino:sam
+      fqbn: arduino:sam:arduino_due_x
+      pio-platform: dueUSB
+    # ESP32
+    - arduino-platform: esp32:esp32
+      fqbn: esp32:esp32:d32
+      pio-platform: lolin32
+  include:
+    # STM32 Nucleo 144
+    - board:
+        arduino-platform: STM32:stm32
+        fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
+        pio-platform: nucleo_f767zi
+      example: stm32/EthernetHTTPSstm32
+    # TIVA-C
+    - board:
+        fqbn: tivac:tivac
+        pio-platform: lptm4c1294ncpdt
+      example: tivac/EthernetHTTPStivac
+
 jobs:
-  build-examples:
+  build-examples-arduino:
     name: Build ${{ matrix.example }} for ${{ matrix.board.fqbn }}
+    if: ${{ matrix.board.arduino-platform }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        example: 
-          - EthernetHTTPS
-          - EthernetMultiHTTPS
-          - EthernetMQTT
-        board:
-          # Arduino Zero
-          - arduino-platform: arduino:samd
-            fqbn: arduino:samd:mzero_bl
-          # Adafruit Feather M0
-          - arduino-platform: arduino:samd adafruit:samd
-            fqbn: adafruit:samd:adafruit_feather_m0
-          # Arduino Due
-          - arduino-platform: arduino:sam
-            fqbn: arduino:sam:arduino_due_x
-          # ESP32
-          - arduino-platform: esp32:esp32
-            fqbn: esp32:esp32:d32
-        include:
-          # STM32 Nucleo 144
-          - board:
-              arduino-platform: STM32:stm32
-              fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
-            example: stm32/EthernetHTTPSstm32
+      matrix: *board-matrix
     steps:    
       # Setup pyserial for esptool.py
       - name: Setup Python
@@ -74,11 +89,48 @@ jobs:
       # Compile
       - name: Compile Sketch
         run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+
+  build-examples-platformio:
+    name: Build ${{ matrix.example }} for ${{ matrix.board.fqbn }}
+    if: ${{ matrix.board.pio-platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: *board-matrix
+    steps:    
+      # Setup python for platformio
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+     
+      # Setup PlatformIO     
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyserial platformio
+      
+      # Install Dependencies
+      - name: Install Libraries
+        run: |
+          pio lib -g -v install "STM32duino STM32Ethernet"
+          pio lib -g -v install PubSubClient
+          pio lib -g -v install https://github.com/OPEnSLab-OSU/EthernetLarge.git
+      
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Compile
+      - name: Compile Sketch
+        run: pio ci -v -l . -b ${{ matrix.board.pio-platform }}
+        env:
+          PLATFORMIO_CI_SRC: ${{ matrix.example }}
   
   compile-archives:
     name: Compile Archives
     runs-on: ubuntu-latest
-    needs: build-examples
+    needs: [build-examples-arduino, build-examples-platformio]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     strategy:
       fail-fast: true
@@ -182,7 +234,7 @@ jobs:
       # Build the release changelog
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@{latest-release}
+        uses: mikepenz/release-changelog-builder-action@v1.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
