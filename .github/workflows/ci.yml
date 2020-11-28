@@ -16,17 +16,25 @@ jobs:
           # Arduino Zero
           - arduino-platform: arduino:samd
             fqbn: arduino:samd:mzero_bl
+            arch: false
           # Adafruit Feather M0
           - arduino-platform: arduino:samd adafruit:samd
             fqbn: adafruit:samd:adafruit_feather_m0
+            arch: cortex-m0plus
           # Arduino Due
           - arduino-platform: arduino:sam
             fqbn: arduino:sam:arduino_due_x
+            arch: cortex-m3
+          # ESP32
+          - arduino-platform: esp32:esp32
+            fqbn: esp32:esp32:d32
+            arch: esp32
         include:
           # STM32 Nucleo 144
           - board:
               arduino-platform: STM32:stm32
               fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
+              arch: cortex-m7
             example: stm32/EthernetHTTPSstm32
     env:
       ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
@@ -48,8 +56,23 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: SSLClient
-      
-      # TODO: Cache dependencies
+
       # Compile
       - name: Compile Sketch
-        run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+        run: arduino-cli compile -v --build-path build --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+
+      # Compile with dot-a-linkage
+      - name: Compile with Archive
+        if: matrix.board.arch
+        run: |
+          echo "dot_a_linkage=true" >> SSLClient/library.properties 
+          arduino-cli compile -v --build-path ${{ github.workspace }}/build --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+      
+      # Upload as an artifact
+      - name: Emit Compiled SSLClient
+        if: matrix.board.arch
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.board.arch }}
+          path: build/libraries/SSLClient/SSLClient.a
+
