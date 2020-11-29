@@ -100,6 +100,14 @@ jobs:
           - pio-platform: lolin32
           # Teensy 4.0
           - pio-platform: teensy40
+          # Teensy 3.6
+          - pio-platform: teensy36
+          # Teensy 3.5
+          - pio-platform: teensy35
+          # Teensy 3.2
+          - pio-platform: teensy32
+          # Teensy 3.0
+          - pio-platform: teensy30
         include:
           # STM32 Nucleo 144
           - board:
