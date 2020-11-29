@@ -1,0 +1,281 @@
+name: CI
+on: 
+  push:
+    tags:
+      - v*
+    branches-ignore:
+      - gh-pages
+  pull_request:
+
+env:
+  ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json"
+
+jobs:
+  build-examples-arduino:
+    name: Arduino ${{ matrix.example }} for ${{ matrix.board.fqbn }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: 
+          - EthernetHTTPS
+          - EthernetMultiHTTPS
+          - EthernetMQTT
+          - EthernetAWSIoT
+        board:
+          # Arduino Zero
+          - arduino-platform: arduino:samd
+            fqbn: arduino:samd:mzero_bl
+          # Adafruit Feather M0
+          - arduino-platform: arduino:samd adafruit:samd
+            fqbn: adafruit:samd:adafruit_feather_m0
+          # Arduino Due
+          - arduino-platform: arduino:sam
+            fqbn: arduino:sam:arduino_due_x
+          # ESP32
+          - arduino-platform: esp32:esp32
+            fqbn: esp32:esp32:d32
+        include:
+          # STM32 Nucleo 144
+          - board:
+              arduino-platform: STM32:stm32
+              fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
+              pio-platform: nucleo_f767zi
+            example: stm32/EthernetHTTPSstm32
+    steps:    
+      # Setup pyserial for esptool.py
+      - name: Setup Python
+        if: matrix.board.arduino-platform == 'esp32:esp32'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+      - name: Install Pyserial
+        if: matrix.board.arduino-platform == 'esp32:esp32'
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyserial
+
+      # Setup Arduino-CLI
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v1.1.1
+      
+      # Install Dependencies
+      - name: Install Core(s)
+        run: arduino-cli core install ${{ matrix.board.arduino-platform }} -v
+      - name: Install EthernetLarge
+        run: git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git ~/Arduino/libraries/EthernetLarge
+      - name: Install Other Libraries
+        run: arduino-cli lib install "STM32duino STM32Ethernet" PubSubClient -v
+      
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: SSLClient
+
+      # Compile
+      - name: Compile Sketch
+        run: arduino-cli compile -v --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+
+  build-examples-platformio:
+    name: PIO ${{ matrix.example }} for ${{ matrix.board.pio-platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Copy of the above matrix (no anchors :( )
+        example: 
+          - EthernetHTTPS
+          - EthernetMultiHTTPS
+          - EthernetMQTT
+          - EthernetAWSIoT
+        board:
+          # Arduino Zero
+          - pio-platform: zeroUSB
+          # Adafruit Feather M0
+          - pio-platform: adafruit_feather_m0
+          # Arduino Due
+          - pio-platform: dueUSB
+          # ESP32
+          - pio-platform: lolin32
+          # Teensy 4.0
+          - pio-platform: teensy40
+          # Teensy 3.6
+          - pio-platform: teensy36
+          # Teensy 3.5
+          - pio-platform: teensy35
+          # Teensy 3.1/3.2
+          - pio-platform: teensy31
+          # Teensy 3.0
+          - pio-platform: teensy30
+        include:
+          # STM32 Nucleo 144
+          - board:
+              pio-platform: nucleo_f767zi
+            example: stm32/EthernetHTTPSstm32
+          # TIVA-C
+          - board:
+              pio-platform: lptm4c1294ncpdt
+              extra-flags: -O "lib_deps=SPI"
+            example: tivac/EthernetHTTPStivac
+    steps:    
+      # Setup python for platformio
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+     
+      # Setup PlatformIO     
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyserial platformio
+      
+      # Install Dependencies
+      - name: Install Libraries
+        run: |
+          pio lib -g install "stm32duino/STM32duino LwIP"
+          pio lib -g install stm32duino/STM32Ethernet
+          pio lib -g install PubSubClient
+          pio lib -g install https://github.com/OPEnSLab-OSU/EthernetLarge.git
+      
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Compile
+      - name: Compile Sketch
+        run: pio ci -l . -b ${{ matrix.board.pio-platform }} ${{ matrix.board.extra-flags }} ${{ github.workspace }}/examples/${{ matrix.example }}
+  
+  compile-archives:
+    name: Compile Archives
+    runs-on: ubuntu-latest
+    needs: [build-examples-arduino, build-examples-platformio]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    strategy:
+      fail-fast: true
+      matrix:
+          include:
+            # Adafruit Feather M0
+            - board:
+                arduino-platform: arduino:samd adafruit:samd
+                fqbn: adafruit:samd:adafruit_feather_m0
+                arch: cortex-m0plus
+              example: EthernetHTTPS
+            # Arduino Due
+            - board:
+                arduino-platform: arduino:sam
+                fqbn: arduino:sam:arduino_due_x
+                arch: cortex-m3
+              example: EthernetHTTPS
+            # ESP32
+            - board:
+                arduino-platform: esp32:esp32
+                fqbn: esp32:esp32:d32
+                arch: esp32
+              example: EthernetHTTPS
+            # STM32
+            - board:
+                arduino-platform: STM32:stm32
+                fqbn: STM32:stm32:Nucleo_144:pnum=NUCLEO_F767ZI
+                arch: cortex-m7
+              example: stm32/EthernetHTTPSstm32
+    steps:
+      # Setup pyserial for esptool.py
+      - name: Setup Python
+        if: matrix.board.arduino-platform == 'esp32:esp32'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+      - name: Install Pyserial
+        if: matrix.board.arduino-platform == 'esp32:esp32'
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyserial
+
+      # Setup Arduino-CLI
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v1.1.1
+      
+      # Install Dependencies
+      - name: Install Core(s)
+        run: arduino-cli core install ${{ matrix.board.arduino-platform }} -v
+      - name: Install EthernetLarge
+        run: git clone https://github.com/OPEnSLab-OSU/EthernetLarge.git ~/Arduino/libraries/EthernetLarge
+      - name: Install Other Libraries
+        run: arduino-cli lib install "STM32duino STM32Ethernet" PubSubClient -v
+      
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: SSLClient
+
+      # Compile with dot-a-linkage
+      - name: Compile with Archive
+        run: |
+          echo "dot_a_linkage=true" >> SSLClient/library.properties 
+          arduino-cli compile -v --build-path ${{ github.workspace }}/build --libraries . --warnings all --fqbn ${{ matrix.board.fqbn }} SSLClient/examples/${{ matrix.example }}
+      
+      # Upload as an artifact
+      - name: Emit Compiled SSLClient
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.board.arch }}
+          path: build/libraries/SSLClient/SSLClient.a
+
+  generate-release:
+    name: Generate Release
+    runs-on: ubuntu-latest
+    needs: compile-archives
+    steps:
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Build the release changelog
+      - name: Build Changelog
+        id: build_changelog
+        uses: heineiuo/create-changelogs@master
+        
+      # Create a release
+      - name: Publish Release
+        id: publish_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{ steps.build_changelog.outputs.changelogs }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create SSLClient-precompiled
+      - name: Convert Library to Precompiled Format
+        run: |
+          echo "precompiled=true" >> library.properties
+          rm -rf .git
+          find src/ -iname "*.c" -delete
+          find src/ -iname "*.cpp" -delete
+
+      # Download all the artifacts
+      - name: Add Precompiled Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: src
+
+      # Zip the result
+      - name: Generate SSLClient-precompiled
+        run: zip -r SSLClient-precompiled.zip .
+      
+      # Upload SSLClient-precompiled.zip to the release created
+      - name: Upload SSLClient-precompiled
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.publish_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./SSLClient-precompiled.zip
+          asset_name: SSLClient-precompiled.zip
+          asset_content_type: application/zip  
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
