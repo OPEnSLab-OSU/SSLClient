@@ -21,6 +21,7 @@ jobs:
           - EthernetHTTPS
           - EthernetMultiHTTPS
           - EthernetMQTT
+          - EthernetAWSIoT
         board:
           # Arduino Zero
           - arduino-platform: arduino:samd
@@ -87,6 +88,7 @@ jobs:
           - EthernetHTTPS
           - EthernetMultiHTTPS
           - EthernetMQTT
+          - EthernetAWSIoT
         board:
           # Arduino Zero
           - pio-platform: zeroUSB
