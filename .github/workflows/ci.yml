@@ -224,6 +224,24 @@ jobs:
       # Checkout
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Build the release changelog
+      - name: Build Changelog
+        id: build_changelog
+        uses: heineiuo/create-changelogs@master
+        
+      # Create a release
+      - name: Publish Release
+        id: publish_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{ steps.build_changelog.outputs.changelogs }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Create SSLClient-precompiled
       - name: Convert Library to Precompiled Format
@@ -242,24 +260,6 @@ jobs:
       # Zip the result
       - name: Generate SSLClient-precompiled
         run: zip -r SSLClient-precompiled.zip .
-
-      # Build the release changelog
-      - name: Build Changelog
-        id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v1.2.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-      # Create a release
-      - name: Publish Release
-        id: publish_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: ${{ steps.build_changelog.outputs.changelog }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       # Upload SSLClient-precompiled.zip to the release created
       - name: Upload SSLClient-precompiled
