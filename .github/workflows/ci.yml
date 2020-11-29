@@ -104,6 +104,7 @@ jobs:
           # TIVA-C
           - board:
               pio-platform: lptm4c1294ncpdt
+              extra-flags: -O "lib_deps=SPI"
             example: tivac/EthernetHTTPStivac
     steps:    
       # Setup python for platformio
@@ -132,9 +133,7 @@ jobs:
 
       # Compile
       - name: Compile Sketch
-        run: pio ci -l . -b ${{ matrix.board.pio-platform }}
-        env:
-          PLATFORMIO_CI_SRC: ${{ github.workspace }}/examples/${{ matrix.example }}
+        run: pio ci -l . -b ${{ matrix.board.pio-platform }} ${{ extra-flags }} ${{ github.workspace }}/examples/${{ matrix.example }}
   
   compile-archives:
     name: Compile Archives
