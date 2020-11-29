@@ -96,6 +96,8 @@ jobs:
           - pio-platform: dueUSB
           # ESP32
           - pio-platform: lolin32
+          # Teensy 4.0
+          - pio-platform: teensy40
         include:
           # STM32 Nucleo 144
           - board:
