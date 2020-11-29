@@ -19,7 +19,7 @@
 */
 
 #include <SPI.h>
-#include <Ethernet.h>
+#include <EthernetLarge.h>
 #include <SSLClient.h>
 #include <PubSubClient.h>
 #include "AWS_Root_CA.h" // This file is created using AmazonRootCA1.pem from https://www.amazontrust.com/repository/AmazonRootCA1.pem
