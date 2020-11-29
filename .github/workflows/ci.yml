@@ -133,7 +133,7 @@ jobs:
 
       # Compile
       - name: Compile Sketch
-        run: pio ci -l . -b ${{ matrix.board.pio-platform }} ${{ extra-flags }} ${{ github.workspace }}/examples/${{ matrix.example }}
+        run: pio ci -l . -b ${{ matrix.board.pio-platform }} ${{ matrix.board.extra-flags }} ${{ github.workspace }}/examples/${{ matrix.example }}
   
   compile-archives:
     name: Compile Archives
