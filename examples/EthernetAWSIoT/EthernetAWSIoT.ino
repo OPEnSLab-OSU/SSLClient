@@ -162,5 +162,8 @@ void MQTTPublish(const char *topic, char *payload)
 {
   mqtt.publish(topic, payload);
   ethClientSSL.flush();
-  Serial.printf("Published [%s] %s\r\n", topic, payload);  
+  Serial.print("Published [");
+  Serial.print(topic);
+  Serial.print("] ");
+  Serial.println(payload);
 }
