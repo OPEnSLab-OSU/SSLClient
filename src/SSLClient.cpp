@@ -96,10 +96,19 @@ size_t SSLClient::write(const uint8_t *buf, size_t size) {
     if (m_debug >= DebugLevel::SSL_DUMP) Serial.write(buf, size);
     // check if the socket is still open and such
     if (!m_soft_connected(func_name) || !buf || !size) return 0;
+    // wait until bearssl is ready to send
+    if (m_run_until(BR_SSL_SENDAPP) < 0) {
+        m_error("Failed while waiting for the engine to enter BR_SSL_SENDAPP", func_name);
+        return 0;
+    }
     // add to the bearssl io buffer, simply appending whatever we want to write
     size_t alen;
     unsigned char *br_buf = br_ssl_engine_sendapp_buf(&m_sslctx.eng, &alen);
     size_t cur_idx = 0;
+    if (alen == 0) {
+        m_error("BearSSL returned zero length buffer for sending, did an internal error occur?", func_name);
+        return 0;
+    }
     // while there are still elements to write
     while (cur_idx < size) {
         // if we're about to fill the buffer, we need to send the data and then wait
