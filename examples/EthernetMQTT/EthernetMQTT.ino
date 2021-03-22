@@ -51,12 +51,8 @@ void reconnect() {
       Serial.println("connected");
       // Once connected, publish an announcement...
       client.publish("outTopic","hello world");
-      // This is a workaround to address https://github.com/OPEnSLab-OSU/SSLClient/issues/9
-      ethClientSSL.flush();
       // ... and resubscribe
       client.subscribe("inTopic");
-      // This is a workaround to address https://github.com/OPEnSLab-OSU/SSLClient/issues/9
-      ethClientSSL.flush();
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());

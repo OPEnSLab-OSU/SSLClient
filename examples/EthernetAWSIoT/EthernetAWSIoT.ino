@@ -93,7 +93,6 @@ void reconnect()
       {
 //        Serial.println(subscribeTopic[i]);
         mqtt.subscribe(subscribeTopic[i]);
-        ethClientSSL.flush();
       }
         Serial.println("Started updateThing ");
         updateThing();
@@ -161,7 +160,6 @@ void updateThing()
 void MQTTPublish(const char *topic, char *payload)
 {
   mqtt.publish(topic, payload);
-  ethClientSSL.flush();
   Serial.print("Published [");
   Serial.print(topic);
   Serial.print("] ");
