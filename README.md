@@ -169,6 +169,9 @@ void setup() {
 }
 ...
 ```
+
+> NOTE: Certificates are finicky, and it is easy to make mistakes when generating a certificate chain yourself. If SSLClient raises an error that says `Expected server name not found in chain`, double check that the common name, distinguished name, and issuer name are being set correctly (check out [this article](https://medium.com/@superseb/get-your-certificate-chain-right-4b117a9c0fce) for how to do that). 
+
 The client certificate must be formatted correctly (according to [BearSSL's specification](https://bearssl.org/apidoc/bearssl__pem_8h.html)) in order for mTLS to work. If the certificate is improperly formatted, SSLClient will attempt to make a regular TLS connection instead of an mTLS one, and fail to connect as a result. Because of this, if you are seeing errors similar to `"peer did not send certificate chain"` on your server, check that your certificate and key are formatted correctly (see https://github.com/OPEnSLab-OSU/SSLClient/issues/7#issuecomment-593704969). For more information on SSLClient's mTLS functionality, please see the [SSLClientParameters documentation](https://openslab-osu.github.io/SSLClient/class_s_s_l_client_parameters.html).
 
 Note that both the above client certificate information *as well as* the correct trust anchors associated with the server are needed for the connection to succeed. Trust anchors will typically be generated from the CA used to generate the server certificate. More information on generating trust anchors can be found in [TrustAnchors.md](./TrustAnchors.md). 
@@ -275,3 +278,4 @@ Unlike BearSSL, SSLClient is not rigorously vetted to be secure. If your project
  * Previous to SSLClient v1.6.7, calls to `SSLClient::stop` would sometimes hang the device. More information in issue https://github.com/OPEnSLab-OSU/SSLClient/issues/13.
  * Previous to SSLClient v1.6.6, calls to `SSLClient::connect` would fail if the driver indicated that a socket was already opened (`Client::connected` returned true). This behavior created unintentional permanent failures when `Client::stop` would fail to close the socket, and as a result was downgraded to a warning in v1.6.6.
  * Previous to SSLClient v1.6.3, calling `SSLClient::write` with more than 2Kb of total data before flushing the write buffer would cause a buffer overflow.
+ * Previous to SSLClient v1.6.11, `SSLClient::write` would sometimes call `br_ssl_engine_sendapp_ack` with zero bytes, which resulted in a variety of issues including (but not limited to) and infinite recursion loop on the esp32 ( [#9](https://github.com/OPEnSLab-OSU/SSLClient/issues/9), [#30](https://github.com/OPEnSLab-OSU/SSLClient/issues/30)).
