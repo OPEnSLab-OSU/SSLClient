@@ -136,6 +136,10 @@ def convert(cert_var, cert_length_var, output, use_store, keep_dupes, no_search,
         else:
           click.echo('Loaded certificate {0}'.format(c.name))
           cert_objs.append(cert_parsed)
+
+          if no_search and cert_parsed.get_subject() != cert_parsed.get_issuer():
+            click.echo(f'Warning: certificate {c.name} is an end entity certificate (not a CA). '
+                        'SSLClient may fail to validate if the server certificate changes.')
     # find a root certificate for each
     root_certs = []
     if no_search:
@@ -149,7 +153,8 @@ def convert(cert_var, cert_length_var, output, use_store, keep_dupes, no_search,
           root_certs.append(cert_dict[cn_hash])
     # Combine PEMs and write output header.
     try:
-      cert_util.x509_to_header(root_certs, cert_var, cert_length_var, output, keep_dupes)
+      written = cert_util.x509_to_header(root_certs, cert_var, cert_length_var, output, keep_dupes)
+      click.echo(f'Wrote {written} trust anchors to {output.name}')
     except Exception as E:
       click.echo(f'Recieved error when converting certificate to header: {E}')
       exit(1)

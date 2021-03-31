@@ -36,6 +36,8 @@ RSA_E_PRE = "TA_RSA_E"
 EC_CURVE_PRE = "TA_EC_CURVE"
 # EC curve type enum prefix
 EC_CURVE_NAME_PRE = "BR_EC_"
+# CA flag
+CA_FLAG = "BR_X509_TA_CA"
 
 
 # Template that defines the C header output format.
@@ -95,7 +97,7 @@ static const {ray_type} {ray_name}[] = {{
 CROOTCA_TEMPLATE = """\
     {{
         {{ (unsigned char *){ta_dn_name}, sizeof {ta_dn_name} }},
-        BR_X509_TA_CA,
+        {ca_flag},
         {{
             BR_KEYTYPE_RSA,
             {{ .rsa = {{
@@ -135,7 +137,8 @@ CROOTCA_EC_TEMPLATE = """\
 CCERT_DESC_TEMPLATE = """\
  * Index:    {cert_num}
  * Label:    {cert_label}
- * Subject:  {cert_subject}"""
+ * Subject:  {cert_subject}
+ * Type:     {cert_type}"""
 
 def PEM_split(cert_pem):
     """Split a certificate / certificate chain in PEM format into multiple
@@ -228,12 +231,17 @@ def decribe_cert_object(cert, cert_num, domain=None):
         label = com[b'OU'].decode("utf-8")
     elif b'O' in com:
         label = com[b'O'].decode("utf-8")
+    if cert.get_issuer() == cert.get_subject():
+        cert_type = "Certificate Authority"
+    else:
+        cert_type = "End Entity"
     # return the formated string
     crypto = cert.to_cryptography()
     out_str = CCERT_DESC_TEMPLATE.format(
         cert_num=cert_num,
         cert_label=label,
         cert_subject=crypto.subject.rfc4514_string(),
+        cert_type=cert_type
     )
     # if domain, then add domain entry
     if domain is not None:
@@ -279,6 +287,8 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
             cert_desc.append(decribe_cert_object(cert, cert_index))
         else:
             cert_desc.append(decribe_cert_object(cert, cert_index, domain=domains[i]))
+        # detect if the cert is a CA
+        is_ca = cert.get_issuer() == cert.get_subject()
         # build static arrays containing all the keys of the certificate
         # start with distinguished name
         # get the distinguished name in bytes
@@ -307,6 +317,7 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
             # format the root certificate entry
             CAs.append(CROOTCA_TEMPLATE.format(
                 ta_dn_name=DN_PRE + str(cert_index), 
+                ca_flag=CA_FLAG if is_ca else "0",
                 rsa_number_name=RSA_N_PRE + str(cert_index), 
                 rsa_exp_name=RSA_E_PRE + str(cert_index)))
         elif 'Elliptic' in numbers_typename:
@@ -322,6 +333,7 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
             # and then the exponent
             CAs.append(CROOTCA_EC_TEMPLATE.format(
                 ta_dn_name=DN_PRE + str(cert_index),
+                ca_flag=CA_FLAG if is_ca else "0",
                 ec_number_name=EC_CURVE_PRE + str(cert_index),
                 ec_curve_name=EC_CURVE_NAME_PRE + curve_name
             ))
@@ -344,3 +356,5 @@ def x509_to_header(x509Certs, cert_var, cert_length_var, output_file, keep_dupes
         cert_length=str(len(CAs)),
         cert_data=cert_data_out,
     ))
+
+    return len(cert_ser)
