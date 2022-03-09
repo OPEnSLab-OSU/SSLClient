@@ -252,6 +252,10 @@ The SSL/TLS protocol recommends a device support many different encryption and h
 | Teensy 3.5 | <pre>`RAM:   [          ]   5.0% (used 12996 bytes from 262136 bytes)`<br/>`Flash: [==        ]  20.1% (used 105476 bytes from 524288 bytes)`</pre>
 | Teensy 3.6 | <pre>`RAM:   [          ]   5.0% (used 13060 bytes from 262144 bytes)`<br/>`Flash: [=         ]  10.2% (used 106828 bytes from 1048576 bytes)`</pre> |
 | Teensy 4.0 | <pre>`RAM:   [===       ]  25.9% (used 135860 bytes from 524288 bytes)`<br/>`Flash: [=         ]   5.7% (used 115344 bytes from 2031616 bytes)`</pre> |
+| STM32F401CC | <pre>`RAM:   [==        ]  19.8% (used 12944 bytes from 65536 bytes)`<br/>`Flash: [====      ]  37.6% (used 98552 bytes from 262144 bytes)`</pre> |
+| STM32F411CE | <pre>`RAM:   [=         ]   9.9% (used 12944 bytes from 131072 bytes)`<br/>`Flash: [==        ]  18.8% (used 98784 bytes from 524288 bytes)`</pre> |
+
+
 
 In addition to the above, most embedded processors lack the sophisticated math hardware commonly found in a modern CPU, which results in slow and memory intensive execution of these algorithms. Because of this, it is recommended that SSLClient have 8kb of memory available on the stack during a connection, and 4-10 seconds should be allowed for the connection to complete. Note that this requirement is based on the SAMD21—more powerful processors (such as the ESP32) will see faster connection times.
 
