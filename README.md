@@ -266,6 +266,28 @@ In order to remedy this problem, the device must be able to read the data faster
 * In some cases, a website will send so much data that even with the above solutions SSLClient will be unable to keep up. In these cases you will have to find another method of retrieving the data you need.
 * If none of the above are viable, it is possible to implement your own Client class which has an internal buffer much larger than both the driver and BearSSL. This implementation would require in-depth knowledge of communication shield you are working with and a microcontroller with a significant amount of RAM, but would be the most robust solution available.
 
+### Changing internal buffer size
+The internal buffer size can causes issues when using protocols like MQTT that are bidirectional. To fix that the internal buffer size that is used for receving and sending data to and from the server needs to be increases. There are three ways to do that:
+
+1. Adjust harcoded `#define DefaultBufferSize 2048` to the size needed in the `SSLClient.h` file directly and continue using the `SSLClient`
+2. Define the `DefaultBufferSize` before including the `SSLClient.h` file and overriding it this way
+
+```C++
+...
+#define DefaultBufferSize BR_SSL_BUFSIZE_BIDI
+#include <SSLClient.h>
+...
+```
+
+3. Or lastly replace `SSLClient` in your code with `SSLClientSized` and add the optional template argument
+
+```C++
+...
+#define SSL_SIZE BR_SSL_BUFSIZE_BIDI
+SSLClientSized<SSL_SIZE> client(baseClient, TAs, (size_t)2, A7, SomeNumber);
+...
+```
+
 ### Cipher Support
 By default, SSLClient supports only TLS1.2 and the ciphers listed in [this file](./src/TLS12_only_profile.c) under `suites[]`, and the list is relatively small to keep the connection secure and the flash footprint down. These ciphers should work for most applications, however if for some reason you would like to use an older version of TLS or a different cipher you can change the BearSSL profile being used by SSLClient to an [alternate one with support for older protocols](./src/bearssl/src/ssl/ssl_client_full.c). To do this, edit `SSLClientImpl::SSLClientImpl` to change these lines:
 ```C++

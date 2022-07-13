@@ -29,7 +29,9 @@
 #ifndef SSLClient_H_
 #define SSLClient_H_
 
+#ifndef DefaultBufferSize
 #define DefaultBufferSize 2048
+#endif /** DefaultBufferSize */
 
 /**
  * @brief The main SSLClient class.
