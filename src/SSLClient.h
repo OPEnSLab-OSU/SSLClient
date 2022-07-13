@@ -991,7 +991,7 @@ private:
 
     /** @brief debugging print function, only prints if m_debug is true */
     template<typename T>
-    void m_print(const T str, const char* func_name, const SSLDebugLevel level) const { 
+    inline void m_print(const T str, const char* func_name, const SSLDebugLevel level) const { 
         // check the current debug level and serial status
         if (level > m_debug || !Serial) return;
         // print prefix
@@ -1002,13 +1002,13 @@ private:
 
     /** @brief Prints a info message to serial, if info messages are enabled */
     template<typename T>
-    void m_info(const T str, const char* func_name) const { m_print(str, func_name, SSLDebugLevel::SSL_INFO); }
+    inline void m_info(const T str, const char* func_name) const { m_print(str, func_name, SSLDebugLevel::SSL_INFO); }
 
     template<typename T>
-    void m_warn(const T str, const char* func_name) const { m_print(str, func_name, SSLDebugLevel::SSL_WARN); }
+    inline void m_warn(const T str, const char* func_name) const { m_print(str, func_name, SSLDebugLevel::SSL_WARN); }
 
     template<typename T>
-    void m_error(const T str, const char* func_name) const { m_print(str, func_name, SSLDebugLevel::SSL_ERROR); }
+    inline void m_error(const T str, const char* func_name) const { m_print(str, func_name, SSLDebugLevel::SSL_ERROR); }
 
     //============================================
     //= Data Members
@@ -1017,7 +1017,7 @@ private:
     Client& m_client;
     // also store an array of SSLSessions, so we can resume communication with multiple websites
     std::vector<SSLSession> m_sessions;
-    // as well as the maximmum number of sessions we can store
+    // as well as the maximum number of sessions we can store
     const size_t m_max_sessions;
     // store the pin to fetch an RNG see from
     const int m_analog_pin;
