@@ -22,7 +22,7 @@ var class_s_s_l_client =
     [ "connect", "class_s_s_l_client.html#ab97c0745f65a6c6009ac938b3b9912c3", null ],
     [ "connected", "class_s_s_l_client.html#a5488f01ccfddfd9e41f54dfbda48bcae", null ],
     [ "flush", "class_s_s_l_client.html#aaf2192a6621fdf2f89cc26a9a1584f8c", null ],
-    [ "getClient", "class_s_s_l_client.html#a9a4e9c9877ab73cf7e82d6942cc7db21", null ],
+    [ "getClient", "class_s_s_l_client.html#a73b2cbbb79dce7a86c64e3ad7fe46c97", null ],
     [ "getSession", "class_s_s_l_client.html#a2bd012ef6f01df9694ba9fd0a3c227c3", null ],
     [ "getSessionCount", "class_s_s_l_client.html#ae3f9e6f8e8a50e520c936239abecfd22", null ],
     [ "getTimeout", "class_s_s_l_client.html#a2a178251978e0622f7e241da702ae498", null ],
