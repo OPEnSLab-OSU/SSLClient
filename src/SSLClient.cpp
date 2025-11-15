@@ -26,10 +26,13 @@ SSLClient::SSLClient(   Client& client,
                         const size_t trust_anchors_num, 
                         const int analog_pin, 
                         const size_t max_sessions,
+                        const size_t buffer_size,
                         const DebugLevel debug)
     : m_client(client) 
     , m_sessions()
     , m_max_sessions(max_sessions)
+    , m_iobuf(nullptr) 
+    , m_iobuf_size(buffer_size)
     , m_analog_pin(analog_pin)
     , m_debug(debug)
     , m_is_connected(false)
@@ -37,15 +40,25 @@ SSLClient::SSLClient(   Client& client,
     , m_br_last_state(0) {
 
     setTimeout(30*1000);
+    // Allocate buffer dynamically
+    m_iobuf = new unsigned char[m_iobuf_size];
     // zero the iobuf just in case it's still garbage
-    memset(m_iobuf, 0, sizeof m_iobuf);
+    memset(m_iobuf, 0, m_iobuf_size);
     // initlalize the various bearssl libraries so they're ready to go when we connect
     br_client_init_TLS12_only(&m_sslctx, &m_x509ctx, trust_anchors, trust_anchors_num);
     // comment the above line and uncomment the line below if you're having trouble connecting over SSL
     // br_ssl_client_init_full(&m_sslctx, &m_x509ctx, m_trust_anchors, m_trust_anchors_num);
     // check if the buffer size is half or full duplex
-    constexpr auto duplex = sizeof m_iobuf <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
-    br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, sizeof m_iobuf, duplex);
+    const auto duplex = m_iobuf_size <= BR_SSL_BUFSIZE_MONO ? 0 : 1;
+    br_ssl_engine_set_buffer(&m_sslctx.eng, m_iobuf, m_iobuf_size, duplex);
+}
+
+/**
+ * @brief Destructor
+ * Frees the dynamically allocated m_iobuf.
+ */
+SSLClient::~SSLClient() {
+    delete[] m_iobuf; // Added destructor body
 }
 
 /* see SSLClient.h*/

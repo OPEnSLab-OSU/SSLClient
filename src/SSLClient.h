@@ -91,6 +91,7 @@ public:
      * @param trust_anchors_num The number of objects in the trust_anchors array.
      * @param analog_pin An analog pin to pull random bytes from, used in seeding the RNG.
      * @param max_sessions The maximum number of SSL sessions to store connection information from.
+     * @param buffer_size The size of the buffer used for SSL communication.
      * @param debug The level of debug logging (use the ::DebugLevel enum).
      */
     explicit SSLClient( Client& client, 
@@ -98,7 +99,32 @@ public:
                         const size_t trust_anchors_num, 
                         const int analog_pin, 
                         const size_t max_sessions = 1,
+                        const size_t buffer_size = 2048, 
                         const DebugLevel debug = SSL_WARN);
+
+
+    /**
+     * @brief ORIGINAL (6-argument) Constructor for backward compatibility.
+     * This calls the new 7-argument constructor, passing a default buffer size of 2048.
+     */
+    explicit SSLClient( Client& client, 
+                const br_x509_trust_anchor *trust_anchors, 
+                const size_t trust_anchors_num, 
+                const int analog_pin, 
+                const size_t max_sessions = 1,
+                const DebugLevel debug = SSL_WARN)
+        // This is a "delegating constructor"
+        // It calls the main 7-argument constructor with the default buffer size
+        : SSLClient(client, trust_anchors, trust_anchors_num, analog_pin, max_sessions, 2048, debug)
+    {
+        // Body is empty, all work is done by the main constructor
+    }                       
+
+    /**
+     * @brief Destructor
+     * Frees the dynamically allocated m_iobuf.
+     */
+    ~SSLClient();
 
     //========================================
     //= Functions implemented in SSLClient.cpp
@@ -466,7 +492,8 @@ private:
      * As a rule of thumb SSLClient will fail if it does not have at least 8000 bytes when starting a
      * connection.
      */
-    unsigned char m_iobuf[2048];
+    unsigned char* m_iobuf;
+    size_t m_iobuf_size;
     // store the index of where we are writing in the buffer
     // so we can send our records all at once to prevent
     // weird timing issues
